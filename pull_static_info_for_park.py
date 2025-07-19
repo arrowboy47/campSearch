@@ -175,7 +175,6 @@ def scrape_forest_static_data(forest_path):
 
     return df
 
-
 # usable for the scrape_forest_static_data() function
 r05_urls = [
     "r05/angeles",
