@@ -210,5 +210,8 @@ r06_urls = [
 # full list of URLs
 all_urls = r05_urls + r04_urls + r06_urls
 
-test1_df = scrape_forest_static_data(all_urls[-3])
-test1_df.to_csv("data/tahoe.csv")
+half = len(all_urls) // 2
+for i, url in enumerate(all_urls[:half]):
+    name = all_urls[i].split("/")[-1]
+    df = scrape_forest_static_data(url)
+    df.to_csv(f"data/{name}.csv")
