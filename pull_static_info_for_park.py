@@ -25,7 +25,7 @@ def scrape_forest_static_data(forest_path):
     # until there are no more pages to scrape
     # saving all the site names and urls in the lists
     while True:  
-        full_url = f"{forest_url}{rest_of_it}?items_per_page=50&page={page}"
+        full_url = f"{forest_url}{rest_of_it}?items_per_page=50&page=,{page}"
         print(f"Scraping list page {page}: {full_url}")
         r = requests.get(full_url)
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -210,5 +210,5 @@ r06_urls = [
 # full list of URLs
 all_urls = r05_urls + r04_urls + r06_urls
 
-test1_df = scrape_forest_static_data(all_urls[-4])
-test1_df.to_csv("klamath.csv")
+test1_df = scrape_forest_static_data(all_urls[-3])
+test1_df.to_csv("data/tahoe.csv")
