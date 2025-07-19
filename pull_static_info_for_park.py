@@ -13,27 +13,46 @@ def get_accordion_text_by_label(soup, label):
     return None
 
 def scrape_forest_static_data(forest_path):
+    page = 0
+    site_name = []
+    site_url = []
+    
     base_url = "https://www.fs.usda.gov"
     rest_of_it = "/recreation/camping-cabins"
     forest_url = f"{base_url}/{forest_path}"
-    full_url = f"{forest_url}{rest_of_it}?items_per_page=50"
+    
+    # looping through all the pages for a given forest path 
+    # until there are no more pages to scrape
+    # saving all the site names and urls in the lists
+    while True:  
+        full_url = f"{forest_url}{rest_of_it}?items_per_page=50&page={page}"
+        print(f"Scraping list page {page}: {full_url}")
+        r = requests.get(full_url)
+        soup = BeautifulSoup(r.text, 'html.parser')
 
-    # Get all campsite links on the page
-    r = requests.get(full_url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    container = soup.find("div", class_="rows__container")
-    if not container:
-        print(f"No campsite list found for {forest_path}")
-        return pd.DataFrame()
+        container = soup.find("div", class_="rows__container")
+        if not container:
+            print("No more results or container missing.")
+            break
 
-    site_name = []
-    site_url = []
-    for site in container.find_all("div", class_="main-view-item"):
-        link_tag = site.find("a")
-        if link_tag:
-            site_name.append(link_tag.get_text(strip=True))
-            site_url.append(base_url + link_tag.get("href"))
+        cards = container.find_all("div", class_="main-view-item")
+        if not cards:
+            break
 
+        for card in cards:
+            link_tag = card.find("a")
+            if link_tag:
+                site_name.append(link_tag.get_text(strip=True))
+                site_url.append(base_url + link_tag.get("href"))
+
+        # Check for 'pager-next' button
+        pager_next = soup.find("a", class_="usa-pagination__next-page")
+        if pager_next:
+            page += 1
+            time.sleep(random.uniform(1, 2))  # polite delay
+        else:
+            break
+        
     # Grab the park name
     pr = requests.get(forest_url)
     soup = BeautifulSoup(pr.text, "html.parser")
