@@ -82,7 +82,8 @@ def scrape_forest_static_data(forest_path):
         "restrooms": [],
         "water": [],
         "overview": [],
-        "amenities": []
+        "amenities": [],
+        "body_of_water": []
     }
 
     for i, camp_url in enumerate(df["site_url"]):
@@ -126,6 +127,24 @@ def scrape_forest_static_data(forest_path):
                     break
             fields["restrooms"].append(restrooms)
             fields["water"].append(water)
+            
+            
+            # recreation opportunities
+            body_of_water = False  # default
+
+            recop = soup.find("div", class_="opportunities margin-top-5")
+            if recop:
+                # Find all opportunities listed
+                opp_items = recop.find_all("a", class_="opportunity__item")
+                for item in opp_items:
+                    text = item.get_text(strip=True).lower()
+                    if "water" in text or "swimming" in text or "boating" in text or "lake" in text:
+                        body_of_water = True
+                        break 
+            
+            # for appending to df
+            fields["body_of_water"].append(body_of_water)
+
 
             # Overview & Amenities
             overview_div = soup.find("div", class_="rec-intro")
@@ -214,3 +233,7 @@ for i, url in enumerate(all_urls[:half]):
     name = all_urls[i].split("/")[-1]
     df = scrape_forest_static_data(url)
     df.to_csv(f"data/{name}.csv")
+
+
+
+
