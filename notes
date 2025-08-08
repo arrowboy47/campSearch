@@ -1,0 +1,21 @@
+campsites table and df:
+name = site_name
+latitude -> same
+longitude -> same
+address -> directions
+managing_unit -> info_center
+reservation_type -> none
+fs_usda_url -> park_url
+reservation_url -> none
+contact_name -> info_center
+contact_phone -> contact_info 
+seasons_of_use -> season_of_use
+num_sites -> none
+fee -> fee_info
+
+from df that does not have a match yet:
+restrooms
+water
+amenities
+body_of_water
+overview

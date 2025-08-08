@@ -1,7 +1,11 @@
-,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities
-0,Atáxam Mámta’ash Campground,https://www.fs.usda.gov/r05/cleveland/recreation/ataxam-mamtaash-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Tentatively July 30th - March 31th,"$12/Night for single unit, $5/Night for extra vehicle
-$12/Night for single unit, $5/Night for extra vehicle",,,33.348483,-116.658668,,Restrooms are available at this site.,Potable water is not available at this site.,,
-1,Blue Jay Campground,https://www.fs.usda.gov/r05/cleveland/recreation/blue-jay-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$20/Night for single unit and $5/Night for extra vehicle
+,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities,body_of_water
+0,Atáxam Mámta’ash Campground,https://www.fs.usda.gov/r05/cleveland/recreation/ataxam-mamtaash-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Tentatively July 30th - March 31th,"Overnight Use:
+Single Site: $12 per night
+Additional Vehicle: $5 per vehicle per night
+$12/Night for single unit, $5/Night for extra vehicle",,,33.348483,-116.658668,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+1,Blue Jay Campground,https://www.fs.usda.gov/r05/cleveland/recreation/blue-jay-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight Use:
+Single Site: $20 per night
+Additional Vehicle: $5 per vehicle per night
 $20/Night for single unit and $5/Night for extra vehicle",,"Trabuco Ranger District
 Address:
 1147 East Sixth Street Corona, CA 92879
@@ -12,8 +16,10 @@ Monday through Friday- 8:00am to 4:30pm  (Closed on
 federal holidays
 )
 Office Email:
-SM.FS.TrabucoRD@usda.gov",33.6516,-117.4523,,Restrooms are available at this site.,Potable water is not available at this site.,,
-2,Bobcat Meadow Campground,https://www.fs.usda.gov/r05/cleveland/recreation/bobcat-meadow-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"Federal Recreational Lands Pass/Adventure Pass Required: To purchase a pass for this location visit a Cleveland National Forest office, find a local Adventure Pass vendor or purchase online at https://www.recreation.gov/. (NO CASH accepted)
+SM.FS.TrabucoRD@usda.gov",33.6516,-117.4523,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+2,Bobcat Meadow Campground,https://www.fs.usda.gov/r05/cleveland/recreation/bobcat-meadow-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"Day Use:
+$5 per vehicle per day
+$30 per annual
 Federal Recreational Lands Pass/
 Adventure Pass Required
 : To purchase a pass for this location visit a Cleveland National Forest office, find a local
@@ -21,28 +27,42 @@ Adventure Pass vendor
 or purchase online at
 https://www.recreation.gov/
 .
-$15 for Single Site and $30 for Double site. Sites are Reservable on Recreation.gov (NO CASH accepted)",,,32.7125,-116.5563,,Restrooms are available at this site.,Potable water is not available at this site.,,
-3,Boulder Oaks Campground,https://www.fs.usda.gov/r05/cleveland/recreation/boulder-oaks-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$14/Night for single unit, $28/Night for double unit, $5/Night for extra vehicle. Equestrian sites are $16/Night single unit and $32/Night double unit.
+$15 for Single Site and $30 for Double site. Sites are Reservable on Recreation.gov (NO CASH accepted)",,,32.7125,-116.5563,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+3,Boulder Oaks Campground,https://www.fs.usda.gov/r05/cleveland/recreation/boulder-oaks-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight Use:
+Single Site: $20 per night
+Double Site: $40 per night
+Equestrian sites:
+Single Site: $25 per night
+Double Site: $50 per night
+Additional Vehicle Fee: $5 per vehicle per night
+Walk-in Site: $5 per night
 $20/Night for Single Site
 $40/ Double Site
 $5/Night for extra vehicle.
 Equestrian sites are $25/ Night Single Equestrian Site, $50/ Night for Double Equestrian Site, $5/Night for extra vehicle.
-PCT Walk-in Site $5.00 per night.",,,32.7297,-116.4828,"From I-8, take exit 51, Buckman Springs Rd and head southwest, then turn right onto Morena Stokes Valley Road and drive 5.8 miles to Four Corners Staging Area. Then, turn left onto Los Pinos Road and drive 1 mile to the Bobcat Meadow Campground on the left.",Restrooms are available at this site.,Potable water is available at this site.,,
-4,Burnt Rancheria Campground,https://www.fs.usda.gov/r05/cleveland/recreation/burnt-rancheria-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April,"Campsites $28/Night for single unit
-Extra vehicle $10 (over 2 allowed with each campsite/night)
-Parking at Day Use Parking Area $5fee; leaving before 6PM
-Day Use parking at campsite $10
-***A reservation charge is added to the price of the site usin
+PCT Walk-in Site $5.00 per night.",,,32.7297,-116.4828,"From I-8, take exit 51, Buckman Springs Rd and head southwest, then turn right onto Morena Stokes Valley Road and drive 5.8 miles to Four Corners Staging Area. Then, turn left onto Los Pinos Road and drive 1 mile to the Bobcat Meadow Campground on the left.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+4,Burnt Rancheria Campground,https://www.fs.usda.gov/r05/cleveland/recreation/burnt-rancheria-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April,"Overnight Use:
+Single Site: $35 per night
+Additional Vehicle Fee: $10 per vehicle per night
+Day Use:
+Day Use Parking Area: $5 (leaving before 6PM)
+Day Use Parking at Campsite: $10
 Campsites $35/Night for single unit (one vehicle included)
 Extra vehicle $10 (over 2 allowed with each campsite/night)
 Parking at Day Use Parking Area $5 free; leaving before 6PM
 Day Use parking at campsite $10 fee
-***A reservation charge is added to the price of the site using Recreation.gov***",,,32.8605,-116.4172,,Restrooms are available at this site.,Potable water is available at this site.,,
-5,Cibbets Flat Campground,https://www.fs.usda.gov/r05/cleveland/recreation/cibbets-flat-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$14/Night for single unit, $28/Night for double unit
+***A reservation charge is added to the price of the site using Recreation.gov***",,,32.8605,-116.4172,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+5,Cibbets Flat Campground,https://www.fs.usda.gov/r05/cleveland/recreation/cibbets-flat-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight:
+Single Site: $20 per night
+Double Site: $40 per night
+Day Use:
+$5 per vehicle per day
 $20/Night for single unit
 $40/Night for double unit
-$5 Day Use Fee",,,32.7772,-116.4466,,Restrooms are available at this site.,Potable water is available at this site.,,
-6,Corral Canyon Campground,https://www.fs.usda.gov/r05/cleveland/recreation/corral-canyon-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"Federal Recreational Lands Pass/Adventure Pass Required: To purchase a pass for this location visit a Cleveland National Forest office, find a local Adventure Pass vendor or purchase online at https://www.recreation.gov/. (NO CASH accepted)
+$5 Day Use Fee",,,32.7772,-116.4466,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+6,Corral Canyon Campground,https://www.fs.usda.gov/r05/cleveland/recreation/corral-canyon-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"Day Use:
+$5 per vehicle per day
+$30 per annual
 Federal Recreational Lands Pass/
 Adventure Pass Required
 : To purchase a pass for this location visit a Cleveland National Forest office, find a local
@@ -50,49 +70,67 @@ Adventure Pass vendor
 or purchase online at
 https://www.recreation.gov/
 .
-$15 for Single Site and $30 for Double site. Sites are Reservable on Recreation.gov (NO CASH accepted)",,,32.7113,-116.5725,"From I-8, take exit 51, Buckman Springs Rd and head southwest, then turn right onto Morena Stokes Valley Road and drive 5.8 miles to Four Corners Staging Area. Continue straight on Morena Stokes Valley Road for another 1.4 miles to access Corral Canyon Campground on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,
-7,Crestline Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/crestline-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,May 15 – November 30,"A reservation charge is added to the price of the site.
-$75/Night
+$15 for Single Site and $30 for Double site. Sites are Reservable on Recreation.gov (NO CASH accepted)",,,32.7113,-116.5725,"From I-8, take exit 51, Buckman Springs Rd and head southwest, then turn right onto Morena Stokes Valley Road and drive 5.8 miles to Four Corners Staging Area. Continue straight on Morena Stokes Valley Road for another 1.4 miles to access Corral Canyon Campground on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+7,Crestline Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/crestline-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,May 15 – November 30,"Overnight:
+Group Site: $75 per night (up to 50 people)
 A reservation charge is added to the price of the site.
-$75/Night",,,33.312707,-116.863856,"From San Diego, California, follow U.S. Highway 15 north to State Highway 76. Proceed east to County Road S6. Take S6 north to the top of Palomar Mountain. Group campground is at the junction of County Roads S6 and S7.",Restrooms are available at this site.,Potable water is available at this site.,,
-8,Dripping Springs Campground,https://www.fs.usda.gov/r05/cleveland/recreation/dripping-springs-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$15/Night for single unit
-$15/Night for single unit",,,33.4608,-116.9702,,Restrooms are available at this site.,Potable water is not available at this site.,,
-9,El Cariso Campground,https://www.fs.usda.gov/r05/cleveland/recreation/el-cariso-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"$15/Night for single unit
-$15/Night for single unit",,,33.6526,-117.4111,,Restrooms are available at this site.,Potable water is not available at this site.,,
-10,El Prado Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/el-prado-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Columbus Day Weekend,"A reservation charge is added to the price of the site.
-Fee varies with site
+$75/Night",,,33.312707,-116.863856,"From San Diego, California, follow U.S. Highway 15 north to State Highway 76. Proceed east to County Road S6. Take S6 north to the top of Palomar Mountain. Group campground is at the junction of County Roads S6 and S7.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+8,Dripping Springs Campground,https://www.fs.usda.gov/r05/cleveland/recreation/dripping-springs-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight:
+Single Site: $25 per night
+Double Site: $50 per night
+$15/Night for single unit",,,33.4608,-116.9702,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+9,El Cariso Campground,https://www.fs.usda.gov/r05/cleveland/recreation/el-cariso-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Year Round,"Overnight:
+Single Site: $15 per night
+$15/Night for single unit",,,33.6526,-117.4111,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+10,El Prado Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/el-prado-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Columbus Day Weekend,"Overnight Use:
+Group Site: $60 per night (30-36 people)
+Group Site: $90 per night (up to 50 people)
 A reservation charge is added to the price of the site.
-Fee varies with site",,,32.8897,-116.4539,,Restrooms are available at this site.,Potable water is available at this site.,,
-11,El Prado Group Campground - Buckwheat,https://www.fs.usda.gov/r05/cleveland/recreation/el-prado-group-campground-buckwheat,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Columbus Day Weekend,"A reservation charge is added to the price of the site.
-Fee varies with site
+Fee varies with site",,,32.8897,-116.4539,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+11,El Prado Group Campground - Buckwheat,https://www.fs.usda.gov/r05/cleveland/recreation/el-prado-group-campground-buckwheat,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Columbus Day Weekend,"Overnight Use:
+Group Site: $60 per night (30-36 people)
+Group Site: $90 per night (up to 50 people)
 A reservation charge is added to the price of the site.
-$90/Night",,,32.8897,-116.4539,,Restrooms are available at this site.,Potable water is available at this site.,,
-12,Fry Creek Campground,https://www.fs.usda.gov/r05/cleveland/recreation/fry-creek-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April 1,"Fees: $15/Night for single unit, $5/Night for extra vehicle.
-Fees: $15/Night for single unit, $5/Night for extra vehicle.",,,33.3446,-116.8802,,Restrooms are available at this site.,Potable water is not available at this site.,,
-13,Horse Heaven Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/horse-heaven-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day - Labor Day Weekend,"A reservation charge is added to the price of the site
-Fees varies with site
+$90/Night",,,32.8897,-116.4539,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+12,Fry Creek Campground,https://www.fs.usda.gov/r05/cleveland/recreation/fry-creek-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April 1,"Overnight Use:
+Single Site: $15 per night
+Additional Vehicle Fee: $5 per vehicle per night
+Fees: $15/Night for single unit, $5/Night for extra vehicle.",,,33.3446,-116.8802,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+13,Horse Heaven Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/horse-heaven-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day - Labor Day Weekend,"Overnight Use:
+Group Site: $60 per night (40 people)
+Group Site: $105 per night (up to 70 people)
+Group Site: $150 per night (up to 100 people)
 A reservation charge is added to the price of the site
-Fees varies with site",,,32.8861,-116.4408,,Restrooms are available at this site.,Potable water is not available at this site.,,
-14,Laguna Campground,https://www.fs.usda.gov/r05/cleveland/recreation/laguna-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Campsites $28/Night for single unit
-Extra vehicle $10 (over 2 allowed with each campsite/night)
-Parking at Day Use Parking Area $5fee; leaving before 6PM
-Day Use parking at campsite $10
-***A reservation charge is added to the price of the site usin
+Fees varies with site",,,32.8861,-116.4408,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+14,Laguna Campground,https://www.fs.usda.gov/r05/cleveland/recreation/laguna-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight Use:
+Single Site: $35 per night
+Additional Vehicle Fee: $10 per vehicle per night
+Day Use:
+Day Use Parking Area: $8 (leaving before 6PM)
+Day Use Parking at Campsite: $10
 Campsites $35/Night for single unit (one vehicle included)
 Extra vehicle $10 (over 2 allowed with each campsite/night)
 Parking at Day Use Parking Area $8 fee; leaving before 6PM
 Day Use parking at campsite $13
-***A reservation charge is added to the price of the site using Recreation.gov***",,,32.8881,-116.4483,,Restrooms are available at this site.,Potable water is not available at this site.,,
-15,Oak Grove Campground,https://www.fs.usda.gov/r05/cleveland/recreation/oak-grove-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$15/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle
-$15/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle",,,33.3863,-116.7891,,Restrooms are available at this site.,Potable water is not available at this site.,,
-16,Observatory Campground,https://www.fs.usda.gov/r05/cleveland/recreation/observatory-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April 01,"Fees: $15/night for single unit, $30/night for double unit, $5/night for extra vehicle. A Forest Adventure Pass is required for day use, but is not required for camping.
-Fees: $15/night for single unit, $30/night for double unit, $5/night for extra vehicle. A Forest Adventure Pass is required for day use, but is not required for camping.",,,33.3427,-116.8763,,Restrooms are available at this site.,Potable water is available at this site.,,
-17,Upper San Juan Campground,https://www.fs.usda.gov/r05/cleveland/recreation/upper-san-juan-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"$18/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle
-$18/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle",,,33.6094,-117.4327,,Restrooms are available at this site.,Potable water is not available at this site.,,
-18,Wildomar Campground,https://www.fs.usda.gov/r05/cleveland/recreation/wildomar-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,$15/Night for single unit and $5/Night for extra vehicle,,,33.5816,-117.3419,,Restrooms are available at this site.,Potable water is not available at this site.,,
-19,Wooded Hill Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/wooded-hill-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Labor Day Weekend,"Make reservations at least 3 days in advance.
-A reservation charge is added to the price of the site.
-$110/Night
+***A reservation charge is added to the price of the site using Recreation.gov***",,,32.8881,-116.4483,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+15,Oak Grove Campground,https://www.fs.usda.gov/r05/cleveland/recreation/oak-grove-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight Use:
+Single Site: $15 per night
+Double Site: $30 per night
+Additional Vehicle Fee: $5 per vehicle per night
+$15/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle",,,33.3863,-116.7891,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+16,Observatory Campground,https://www.fs.usda.gov/r05/cleveland/recreation/observatory-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,April 01,"Overnight:
+Single Site: $20 per night
+Double Site: $40 per night
+Additional Vehicle Fee: $5 per vehicle per night
+Fees: $15/night for single unit, $30/night for double unit, $5/night for extra vehicle. A Forest Adventure Pass is required for day use, but is not required for camping.",,,33.3427,-116.8763,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+17,Upper San Juan Campground,https://www.fs.usda.gov/r05/cleveland/recreation/upper-san-juan-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,"Overnight:
+Single Site: $18 per night
+Double Site: $30 per night
+Additional Vehicle Fee: $5 per vehicle per night
+$18/Night for single unit, $30/Night for double unit, $5/Night for extra vehicle",,,33.6094,-117.4327,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+18,Wildomar Campground,https://www.fs.usda.gov/r05/cleveland/recreation/wildomar-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,,$15/Night for single unit and $5/Night for extra vehicle,,,33.5816,-117.3419,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+19,Wooded Hill Group Campground,https://www.fs.usda.gov/r05/cleveland/recreation/wooded-hill-group-campground,Cleveland National Forest,https://www.fs.usda.gov/r05/cleveland,Memorial Day Weekend - Labor Day Weekend,"Overnight:
+Group Site: $110 per night
 Make reservations at least 3 days in advance.
 A reservation charge is added to the price of the site.
-$110/Night",,,32.8525,-116.4305,,Restrooms are available at this site.,Potable water is not available at this site.,,
+$110/Night",,,32.8525,-116.4305,,Restrooms are available at this site.,Potable water is not available at this site.,,,False

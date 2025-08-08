@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import time
 import random
 import requests
@@ -229,10 +230,16 @@ r06_urls = [
 all_urls = r05_urls + r04_urls + r06_urls
 
 half = len(all_urls) // 2
-for i, url in enumerate(all_urls[:half]):
+for i, url in enumerate(all_urls):
+    print(url)
+    print("the current iteration is", i)
     name = all_urls[i].split("/")[-1]
+    print(name)
     df = scrape_forest_static_data(url)
+    # check if the file successfully created
     df.to_csv(f"data/{name}.csv")
+    if not os.path.exists(f"data/{name}.csv"):
+        print(f"Error creating {name}.csv")
 
 
 

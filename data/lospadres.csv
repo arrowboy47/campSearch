@@ -1,17 +1,641 @@
-,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities
-0,Aliso Park Campground,https://www.fs.usda.gov/r05/lospadres/recreation/aliso-park-campground,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,,Adventure Pass is required to camp overnight. $30/annual Adventure Pass or $5/daily Adventure Pass.,,,34.910878,-119.766182,,Restrooms are available at this site.,Potable water is not available at this site.,,
-1,Ballinger Canyon OHV Day Use Riding  Area,https://www.fs.usda.gov/r05/lospadres/recreation/ballinger-canyon-ohv-day-use-riding-area,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,Open year-round,"Day use parking is $10/day. Concession-managed area. Campground is $20/night by reservation:
-www.recreation.gov
-or first-come, first-served. Reservations on weekends year-round are strongly recommended.",,,34.88333333,-119.4444444,,Restrooms are available at this site.,Potable water is not available at this site.,,
-2,Campo Alto Campground,https://www.fs.usda.gov/r05/lospadres/recreation/campo-alto-campground,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,,"This site is managed by the Parks Management Concession Company for the Forest Service. $30/night for camping, $10 per extra vehicle per night.  Interagency Senior and Acess Passes provide pass holders with 50% off of camping fees - not valid for day use or extra vehicle parking fee.",,"Mt. Pinos Ranger District
+,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities,body_of_water
+0,Angel Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/angel-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Single Site: $17 per night
+Double Site: $34 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Wells Office
 Address:
-34580 Lockwood Valley Rd. Frazier Park, CA 93225
+140 Pacific Avenue, Wells, NV 89835
 Phone:
-(661) 245-3731 ext. 0
+775-752-3357
 Hours:
-Mon - Fri 8 am - 4:30 pm (Closed on
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
 federal holidays
-)",34.83333333,-119.2041667,"Located off Mil Potrero Highway, approximately three miles west Pine Mountain Club. Take Forest Road 9N27 south for 6 miles.",Restrooms are available at this site.,Potable water is not available at this site.,,
-3,Chuchupate Campground,https://www.fs.usda.gov/r05/lospadres/recreation/chuchupate-campground,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,,"$30/night for camping, $10 per extra vehicle per night.",,,34.78606111,-119.0019,,Restrooms are available at this site.,Potable water is not available at this site.,,
-4,Dutchman Campground,https://www.fs.usda.gov/r05/lospadres/recreation/dutchman-campground,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,,"Adventure Pass ($5/day or $30/year), or Annual Interagency Pass, Senior Interagency Pass, or Interagency Access Pass.",,,34.6761539,-118.9777745,,Restrooms are available at this site.,Potable water is not available at this site.,,
-5,McGill Group Campground,https://www.fs.usda.gov/r05/lospadres/recreation/mcgill-group-campground,Los Padres National Forest,https://www.fs.usda.gov/r05/lospadres,,Group site #1 is $150 per night. Group site #2 is $150 per night.,,,34.815541,-119.100846,"From I-5, take Frazier Park exit (Frazier Mountain Park Road), go west approximately 6 miles. The road name changes to Cuddy Valley Road. Continue on it up Mt. Pinos. The road name changes to Mt. Pinos Highway. McGill Campground is approximately 5 miles further on the north side of road.",Restrooms are available at this site.,Potable water is not available at this site.,,
+)",41.0257,-115.0551,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+1,Angel Lake Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/angel-lake-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow.","Overnight Use:
+Single Site: $18 per night
+Double Site: $36 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Wells Office
+Address:
+140 Pacific Avenue, Wells, NV 89835
+Phone:
+775-752-3357
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.0256,-115.0854,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+2,Belmont Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/belmont-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.",No fees are required for this site,,"Austin-Tonopah Ranger District's Tonopah Office
+Address:
+1400 S. Erie Main Street, Tonopah, NV 89049
+Phone:
+775-482-6286
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.59089,-116.89078,"From Belmont, NV, south on NV-82 for 1.3 miles, then right onto dirt road for 0.7 miles.",,Potable water is not available at this site.,,,False
+3,Berry Creek Dispersed Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/berry-creek-dispersed-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - mid-October, as weather and conditions allow",No fees are required for this site,,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.8218,-114.6074,"From Ely, Nevada, take US-93 north to the town of McGill. From McGill, keep going north on US-93, 5 miles to Duck Creek Basin turnoff. Proceed east on Duck Creek Basin road and turn left at Berry Creek road (NF-424/568).",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+4,Big Bend Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/big-bend-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Single Site: $8 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.765573,-115.7015,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+5,Big Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/big-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.",No fees are required for this site,,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.34639006,-117.1361099,"1. Take US 50 West. Approximately one mile from Austin, take the Big Creek Campground turnoff.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
+6,Bird Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/bird-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May to mid-October, as weather and conditions allow.","Overnight Use:
+Single Site: $10 per night
+Double Site: $15 per night
+Double Site: $20 per night
+Group Site: $45 per night",,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.4644,-114.6507,"From Ely, Nevada, take highway 93 north to the town of McGill.  From McGill, keep going north on Highway 93, 5 miles to Duck Creek Basin turnoff. Proceed east on Duck Creek Basin road and turn left at sign for Bird Creek Recreation area.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+7,Bob Scott Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/bob-scott-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May to late October, as weather and conditions allow.","Overnight Use:
+Single Site $10 per night",,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.4551,-117.0011,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+8,Bootleg Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/bootleg-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - mid-September, as weather and conditions allow.","Overnight Use:
+Single Site: $22 per night
+Additional Vehicle Fee: $6 per vehicle per night",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.416477,-119.450189,"From Bridgeport, drive approximately 22 miles north on U.S. Highway 395. Campground is on left hand side of highway in Walker Canyon.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+9,Buckeye Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/buckeye-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May to late September, as weather and conditions allow.","Overnight Use
+Single Site: $20 per night
+Extra Vehicle Fee: $6 per night",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.237593,-119.343262,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+10,Camp Draw Trailhead,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/camp-draw-trailhead,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,July - November,No fees are required for this site,,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.7544,-115.4496,"From Jarbidge, NV, travel 13.1 miles on NFSR-062.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+11,Centerville Flat Dispersed Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/centerville-flat-dispersed-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,Open year-around as weather and conditions allow.,"No fees are required for this site
+No fees.",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.63167006,-119.72000001,"From Markleeville, travel south/east of CA-89, then continue onto CA-4. Continue 2.5 miles and the site will be on your left.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+12,Chris Flat Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/chris-flat-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - early October, as weather and conditions allow","Overnight Use:
+Single Site: $22 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Per Day:
+$28 Single/$6 Extra Vehicle.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.39486,-119.452568,"1. From Highway 395 south in Bridgeport, drive approximately 20 miles.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+13,Columbine Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/columbine-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.","No fees are required for this site
+No fee required at this site.",,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.900237,-117.37649,"3. Take Route 21 to the Yomba Indian Reservation, and turn left on to Forest Service Road 119 for 10 miles.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+14,Crags Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/crags-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - September, as weather and conditions allow.","Overnight Use:
+Single Site: $23 per night
+Double Site: $40 per night
+Triple Site: $50 per night
+Extra Vehicle Fee: $6 per night
+Per Day:
+$30 Single/$50 Double/$65 Triple/$6 Extra Vehicle. Crags Group Site (up to 45 people) $150 per night.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.172075,-119.321616,"1. From Highway 395 south in Bridgeport, turn left and travel approximately 11 miles on Twin Lakes Road.",Restrooms are available at this site.,Potable water is available at this site.,,,True
+15,Crystal Springs Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/crystal-springs-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Last week of April - September, as weather and conditions allow.","Overnight Use:
+Single Site: $18 per night
+Per Day:
+$24 Single/$6 Extra Vehicle.",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.7642,-119.8453,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+16,Desert Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/desert-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,Late May - Early October,No fees are required for this site,,,38.62138993,-119.34,"1. From Highway 395 south in Bridgeport, drive 11 miles on highway 182 (Highway 182 will become Highway 338 in Nevada).",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+17,East Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/east-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - mid-October, as weather and conditions allow","Overnight Use:
+Single Site: $5 per night",,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.4967,-114.6548,"From Ely, Nevada, take highway 93 north to the town of McGill.  From McGill, keep going north on Highway 93, 5 miles to Duck Creek Basin turnoff. Proceed east on Duck Creek Basin road and turn left at sign for East Creek Recreation area road 564.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+18,Fletcher View Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/fletcher-view-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,January - December,"Overnight Use:
+Single Site (Electric): $33 per night
+Double Site (Electric): $58 per night",,"Spring Mountains National Recreation Area
+Address:
+4701 North Torrey Pines Drive, Las Vegas, NV 89130
+Phone:
+702-872-5486
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",36.2624,-115.6179,"From Las Vegas, Nevada: 1. Travel north on Highway 95 to junction with Highway 157. 2. Turn left and go approximately 18 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+19,Green Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/green-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - early October, as weather and conditions allow.","Overnight Use
+Single Site: $20 per night
+Extra Vehicle Fee: $6 per night
+Per Day:
+$22 Single//$6 Extra Vehicle. Green Creek Group Site (25 and 50 people) $75 and $100 per night.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.10925,-119.27873,"1. From Bridgeport, drive approximately four miles south on Highway 395 to Green Creek Road (Forest Service Road #142).",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+20,Hilltop  Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/hilltop-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Tent Site: $19 per night
+Single Site: $2 per night
+Double Site: $45 per night
+Triple Site: $67 per night",,"Spring Mountains National Recreation Area
+Address:
+4701 North Torrey Pines Drive, Las Vegas, NV 89130
+Phone:
+702-872-5486
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",36.3101,-115.6074,"From Las Vegas, Nevada: 1. Travel north on Highway 95 to the junction with Highway 157. 2. Turn left and travel approximately 17 miles to the junction with Highway 158. 3. Turn right and travel about 4 miles to campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+21,Honeymoon Flat Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/honeymoon-flat-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - late September, as weather and conditions allow.","Overnight Use
+Single Site: $20 per night
+Double Site: $40 per night
+Extra Vehicle Fee: $6 per night
+Per Day:
+$30 Single/$50 Double Site/ $6 Extra Vehicle.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.201253,-119.3206,"From Highway 395 south in Bridgeport, turn left and travel approximately 10 miles on Twin Lakes Road. The campground is on both sides of Twin Lakes Road.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+22,Hope Valley Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/hope-valley-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - September, as weather and conditions allow.","Overnight Use:
+Single Site: $22 per night
+Double Site: $40 per night
+Per Day:
+$32 single/$50 double/$6 extra vehicle",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.7297,-119.9287,"From Carson City or Minden, Nevada:",Restrooms are available at this site.,Potable water is available at this site.,,,False
+23,Jack Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/jack-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - October, as weather and conditions allow.",No fees are required for this site,,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.517443,-116.056851,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+24,Kalamazoo Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/kalamazoo-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - mid-October, as weather and conditions allow",No fees are required for this site,,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.5698,-114.5871,"From Ely, NV take US-93 north 16 miles to NV-486, turn right onto NV-486 and travel 3.4 miles. Then left to NFSR 427 for 3.3 miles, then right onto Kalamazoo Rd for 9.5 miles. Campground on your right.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+25,Kingston Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/kingston-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.","No fees are required for this site
+No fee",,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.2229,-117.1432,"1. From Austin, follow US 50 East to State Route 376 South for 16 miles to the turnoff-campground sign.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
+26,Kit Carson Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/kit-carson-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - September, as weather and conditions allow.","Overnight Use:
+Single Site: $18 per night
+Per Day:
+$26 Single/$6 Extra Vehicle.",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.7764,-119.8962,1. Take Highway 88 approximately 16 miles to the Kit Carson Campground.,Restrooms are available at this site.,Potable water is available at this site.,,,False
+27,Kyle Canyon Picnic Area,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/kyle-canyon-picnic-area,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,January - December,"Day Use:
+Single Site: $12 per site per day (Monday - Thursday), $18 per site per day (Friday - Sunday)
+Double Site: $24 per site per day (Monday - Thursday), $36 per site per day (Friday - Sunday)",,"Spring Mountains National Recreation Area
+Address:
+4701 North Torrey Pines Drive, Las Vegas, NV 89130
+Phone:
+702-872-5486
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",36.263149,-115.609562,"From Las Vegas, Nevada: 1. Travel north on Highway 95 to the junction of Highway 157. 2. Turn left, travel approximately 18 miles; picnic area is on the left side of the highway.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+28,Leavitt Meadows Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/leavitt-meadows-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May to late September, as weather and conditions allow.","Overnight Use
+Single Site: $20 per night
+Extra Vehicle Fee: $6 per night
+Per Day:
+$28 Single/$6 Extra Vehicle.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.3334,-119.55268,"1. From Highway 395 south in Bridgeport, drive approximately 17 miles to Highway 108 at Sonora Junction.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+29,Lookout Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/lookout-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - October, as weather and conditions allow.","Overnight Use:
+Single Site: $6 per night",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.58861006,-120.07278,"1. From the ""Entering the Toiyabe Forest"" sign, follow the 002 Road approximately nine miles. You will see Lookout Campground on your left.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+30,Lower Bluster Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/lower-bluster-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow.","No fees are required for this site
+No fee",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.8398,-115.4251,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+31,Lower Twin Lake Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/lower-twin-lake-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - early October, as weather and conditions allow.","Overnight Use:
+Single Site: $25 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Per Day:
+$34 Single / $6 Extra Vehicle",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.170191,-119.323509,"1. From Highway 395 south in Bridgeport, turn left and travel approximately 11 miles on Twin Lakes Road.",Restrooms are available at this site.,Potable water is available at this site.,,,True
+32,Lower Virginia Creek Primitive Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/lower-virginia-creek-primitive-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - mid-October, as weather and conditions allow.",No fees are required for this site,,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.071723,-119.214078,"From Bridgeport, south on US-395 for 13 miles. Turn right onto Virginia Lakes Rd and go 2.4 miles. Then left onto NFSR 139 to campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+33,Lye Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/lye-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow","Overnight Use:
+Single Site: $8 per night
+Double Site: $10 per night
+Group Site: $25 per night",,"Santa Rosa Ranger District
+Address:
+3275 Fountain Way, Winnemucca, NV 89445
+Phone:
+775-623-5025 ext. 4
+Hours:
+Open Mon.-Fri. 7:30 a.m. to 4 p.m. PST (Closed on
+federal holidays
+)",41.6854083,-117.5585528,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+34,Mahogany Grove Group Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/mahogany-grove-group-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"April - November, as weather and conditions allow","Overnight Use:
+Group Site (Non-Electric): $130 per night
+McNutt Group Site (Non-Electric): $67 per night",,"Spring Mountains National Recreation Area
+Address:
+4701 North Torrey Pines Drive, Las Vegas, NV 89130
+Phone:
+702-872-5486
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",36.3136,-115.6182,"From Las Vegas, Nevada: 1. Take Highway 95 north to the junction with Highway 157. 2. Turn left and travel 18 miles to Highway 158. 3. Turn right and travel approximately 6 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+35,Markleeville Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/markleeville-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"April - September, as weather and conditions allow","Overnight Use:
+Single Site: $18 per night
+Per Day:
+$26 Single/$6 Extra Vehicle.",,,38.6977,-119.7764,"1. Take Highway 88 approximately 14 miles to the junction with Highway 4/89 at Woodfords, California.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+36,McWilliams Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/mcwilliams-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Entire Campground: May - October, as weather and conditions allow. Year Round: Sites 1-14. For more information on winter operations, visit:
+https://www.leecanyonlv.com/","Overnight Use:
+Single Site: $25 per night
+Double Site: $50 per night",,"Spring Mountains National Recreation Area
+Address:
+4701 North Torrey Pines Drive, Las Vegas, NV 89130
+Phone:
+702-872-5486
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",36.310561,-115.677699,"From Las Vegas, Nevada take US Highway 95 north out of the city.  Turn left onto State Route 156 (Lee Canyon Road).  Travel about 17 miles to McWilliams Campground entrance.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+37,Mt. Rose  Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/mt-rose-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - September, as weather and conditions allow.","Overnight Use:
+Single Site: $22 per night
+Double Site: $40 per night
+Triple Site: $50 per night
+Per night: $32 single/$50 double/$55 triple",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.3122,-119.8973,"From Highway 28 just outside Incline Village, Nevada:",Restrooms are available at this site.,Potable water is available at this site.,,,False
+38,Obsidian Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/obsidian-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - mid-October, as weather and conditions allow.","Overnight Use:
+Single Site: $12 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Per Day:
+$18 Single/$6 Extra Vehicles",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.297513,-119.448401,"1. From Highway 395 south in Bridgeport, drive approximately 16 miles to Little Walker Road.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+39,Paha Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/paha-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid-May - mid-September, as weather and conditions allow.","Overnight Use:
+Single Site: $32 per night
+Double Site: $50 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Yurts: $60 per night; $120 per night; $280 per night
+Per Day:
+$32 Single/$50 Double/$6 Extra Vehicle. There is one Yurt available to rent, price is available at
+Recreation.gov
+.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.179707,-119.323229,"From Highway 395 south in Bridgeport, turn left and travel approximately 11 miles on Twin Lakes Road. The campground is on left hand side of road.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+40,Pavlak Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/pavlak-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Generally, open June to October as weather and conditions allow.","No fees are required for this site
+No fee",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.8468,-115.4285,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+41,Peavine Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/peavine-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.","No fees are required for this site
+No fee",,"Austin-Tonopah Ranger District's Tonopah Office
+Address:
+1400 S. Erie Main Street, Tonopah, NV 89049
+Phone:
+775-482-6286
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.6205,-117.3124,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+42,Pine Creek Campground (Austin-Tonopah),https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/pine-creek-campground-austin-tonopah,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow.",No fees are required for this site,,"Austin-Tonopah Ranger District's Tonopah Office
+Address:
+1400 S. Erie Main Street, Tonopah, NV 89049
+Phone:
+775-482-6286
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.7869,-116.8482,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+43,Pine Creek Campground (Jarbidge),https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/pine-creek-campground-jarbidge,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,June to October,No fees are required for this site,,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.8382,-115.4291,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+44,Robinson Creek South/North Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/robinson-creek-southnorth-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - early October, as weather and conditions allow.","Overnight Use:
+Single Site: $23 per night
+Double Site: $40 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Per Day:
+$32 Single/$50 Double/$6 Extra Vehicle.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.184252,-119.322237,"From Highway 395 south in Bridgeport, turn left and travel approximately 11 miles on Twin Lakes Road. The campground is on left hand side of road.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+45,San Juan Dispersed Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/san-juan-dispersed-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.","No fees are required for this site
+No fee",,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.1206,-117.2724,,,Potable water is not available at this site.,,,False
+46,Sawmill Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/sawmill-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow.",No fees are required for this site,,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.8752,-115.4297,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+47,Silver Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/silver-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - September, as weather and conditions allow.","Overnight Use:
+Single Site: $18 per night
+Double Site: $34 per night
+Per Day:
+$24 Single/$6 Extra Vehicle.",,"Carson Ranger District
+Address:
+1536 South Carson Street, Carson City, NV 89801
+Phone:
+775-882-2766
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.588903,-119.7869,"1. Take Highway 88 approximately 14 miles to Woodfords, California.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+48,Sonora Bridge Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/sonora-bridge-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late April - early October, as weather and conditions allow","Overnight Use
+Single Site: $20 per night
+Extra Vehicle Fee: $6 per night
+Per Day:
+$24 Single/$6 Extra Vehicle.",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Wells Office
+Address:
+140 Pacific Avenue, Wells, NV 89835
+Phone:
+775-752-3357
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.362486,-119.474628,"1. From Highway 395 south in Bridgeport, drive approximately 17 miles to Highway 108, Sonora Junction.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+49,South Ruby Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/south-ruby-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Single Site: $17 per night
+Double Site: $34 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Wells Office
+Address:
+140 Pacific Avenue, Wells, NV 89835
+Phone:
+775-752-3357
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",40.1779,-115.4957,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+50,Thomas Canyon Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/thomas-canyon-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Single Site: $19 per night
+Double Site: $38 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Wells Office
+Address:
+140 Pacific Avenue, Wells, NV 89835
+Phone:
+775-752-3357
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",40.6472,-115.4068,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+51,Timber Creek Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/timber-creek-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - September, as weather and conditions allow.","Overnight Use:
+Single Site: $10 per night
+Group A: $60 per night (up to 100 people)
+Group D: $45 per night (up to 50 people)
+Group B, C, & E: $35 per night (up to 25 people)",,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.4049,-114.6292,"From Ely, Nevada, take US 93 north and drive 5 miles north past the town of McGill. Turn on State Route 486 and continue 8 miles on this paved road. Turn left on Forest road 425 at the Timber Creek sign. Drive up this dirt road another 3 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+52,Toquima Cave Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/toquima-cave-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Mid May - late October, as weather and conditions allow.",No fees are required for this site,,"Austin-Tonopah Ranger District's Austin Office
+Address:
+100 Midas Canyon Road, Austin, NV 89310
+Phone:
+775-964-2671
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.1877,-116.7905,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+53,Trumbull Lake Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/trumbull-lake-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Early June - early October, as weather and conditions allow","Overnight Use:
+Single Site: $23 per night
+Double Site: $40 per night
+Triple Site: $50 per night
+Additional Vehicle Fee: $6 per vehicle per night
+Per Day:
+$34 Single/ $50 Double/$65 Triple/$6 Extra Vehicle.",,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.049622,-119.258638,"1. From Bridgeport travel approximately 12 miles on Highway 395, turn right at Conway Summit on Virginia Lakes Road.",Restrooms are available at this site.,Potable water is available at this site.,,,True
+54,Upper Bluster Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/upper-bluster-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"June - October, as weather and conditions allow.",No fees are required for this site,,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.8435,-115.4259,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+55,Upper Virginia Creek Primitive Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/upper-virginia-creek-primitive-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"Late May - mid-October, as weather and conditions allow.",No fees are required for this site,,"Bridgeport Ranger District
+Address:
+75694 US-395 HC 62, Bridgeport, CA 93517
+Phone:
+760-932-7070
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.059171,-119.24176,"From Bridgeport, south on US-395 for 13 miles. Turn right onto Virginia Lakes Rd and go 4.7 miles. Then left into campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+56,Ward Mountain Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/ward-mountain-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - mid-October, as weather and conditions allow","Overnight Use:
+Single Site: $12 per night
+$12 Single Site; Group A: $75 per day (up to 150 people); Group Sites B & C: $50 per day (up to 100 people)",,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",39.2092,-114.9712,"From Ely, Nevada, take Highway 6 south towards Tonopah, 10 miles to Murray summit. Turn left just before the summit at the Forest Service sign for Ward Mountain Recreation Area and Campground.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+57,White River Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/white-river-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"End of May - mid-October, as weather and conditions allow",No fees are required for this site,,"Ely Ranger District
+Address:
+825 Avenue E, Ely, NV 89301
+Phone:
+775-289-3031
+Hours:
+Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",38.9417,-115.3406,"From Ely, NV take US-6 West for 30 miles, then right onto NFSR-405. Campground is 9.5 miles down this road.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+58,Wildhorse Crossing Campground,https://www.fs.usda.gov/r04/humboldt-toiyabe/recreation/wildhorse-crossing-campground,Humboldt-Toiyabe National Forest,https://www.fs.usda.gov/r04/humboldt-toiyabe,"May - November, as weather and conditions allow.","Overnight Use:
+Single Site: $5 per night",,"Mountain City-Ruby Mountains-Jarbidge Ranger District's Elko Office
+Address:
+660 South 12th Street, Ste. 108, Elko, NV 89801
+Phone:
+775-738-5171
+Hours:
+Open Mon.-Fri. 8 a.m. to 4:30 p.m. PST (Closed on
+federal holidays
+)",41.7226,-115.9001,,Restrooms are available at this site.,Potable water is not available at this site.,,,True

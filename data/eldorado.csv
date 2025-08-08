@@ -1,18 +1,18 @@
-,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities
-0,Airport Flat Campground,https://www.fs.usda.gov/r05/eldorado/recreation/airport-flat-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No Fees are required for this site.,,"Placerville Ranger District
+,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities,body_of_water
+0,Airport Flat Campground,https://www.fs.usda.gov/r05/eldorado/recreation/airport-flat-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No fees are required for this site,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.985255,-120.380386,,Restrooms are available at this site.,Potable water is not available at this site.,,
-1,Azalea Cove Campground,https://www.fs.usda.gov/r05/eldorado/recreation/azalea-cove-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,No Fees are required for this site.,,"Placerville Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.985255,-120.380386,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+1,Azalea Cove Campground,https://www.fs.usda.gov/r05/eldorado/recreation/azalea-cove-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,No fees are required for this site,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.881372,-120.369814,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.881372,-120.369814,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 2,Bear Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/bear-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$115/25 person (Junco, Chipmunk, Smokey)
 $145/50 person (Kokanee)
 Interagency Senior and Access passes are not accepted for group units.",,"Amador Ranger District
@@ -23,7 +23,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.533185,-120.230826,,Restrooms are available at this site.,Potable water is available at this site.,,
+)",38.533185,-120.230826,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 3,Big Meadows Campground,https://www.fs.usda.gov/r05/eldorado/recreation/big-meadows-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$10/ single site
 $20/ double site.
 Site Information
@@ -39,14 +39,14 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",39.074505,-120.427383,,Restrooms are available at this site.,Potable water is available at this site.,,
+)",39.074505,-120.427383,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 4,Big Silver Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/big-silver-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,$50 - 50 people,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.880112,-120.360849,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.880112,-120.360849,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
 5,Black Oak Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/black-oak-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"There are four group sites at this facility:
 Unit #1 = $135/night, 50 people maximum, No trailers.
 Unit #2 = $145/night, 75 people maximum, Self-contained vehicles only.
@@ -59,14 +59,14 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",38.90339,-120.586048,,Restrooms are available at this site.,Potable water is available at this site.,,
-6,Camino Cove Campground,https://www.fs.usda.gov/r05/eldorado/recreation/camino-cove-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No Fees are required for this site.,,"Placerville Ranger District
+)",38.90339,-120.586048,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+6,Camino Cove Campground,https://www.fs.usda.gov/r05/eldorado/recreation/camino-cove-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No fees are required for this site,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.878704,-120.428467,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.878704,-120.428467,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 7,Caples Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/caples-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - September,"$36/single
 $72/double
 Site Information
@@ -83,7 +83,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.704164,-120.052795,,Restrooms are available at this site.,Potable water is available at this site.,,
+)",38.704164,-120.052795,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 8,Capps Crossing Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/capps-crossing-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,,"$165 group
 $28 single
 $56 double
@@ -93,7 +93,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.651361,-120.407831,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.651361,-120.407831,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
 9,China Flat Campground,https://www.fs.usda.gov/r05/eldorado/recreation/china-flat-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Memorial Weekend to Labor Day,"$36/single
 $72/double
 Site Information
@@ -107,7 +107,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.755033,-120.267988,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.755033,-120.267988,,Restrooms are available at this site.,Potable water is available at this site.,,,False
 10,Dru Barner Campground,https://www.fs.usda.gov/r05/eldorado/recreation/dru-barner-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,January - December,"$8 overnight
 $3 day use.
 Site Information
@@ -123,7 +123,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",38.94293,-120.764091,,Restrooms are available at this site.,Potable water is available at this site.,,
+)",38.94293,-120.764091,,Restrooms are available at this site.,Potable water is available at this site.,,,False
 11,Fashoda Campground,https://www.fs.usda.gov/r05/eldorado/recreation/fashoda-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/single site
 $10/day use area
 Site Information
@@ -135,7 +135,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.867979,-120.397563,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.867979,-120.397563,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 12,Gerle Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/gerle-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/ single site
 $72/ double site.
 There are also fees for day use and extra vehicles.
@@ -151,7 +151,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.975616,-120.392395,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.975616,-120.392395,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 13,Harvey West Cabin,https://www.fs.usda.gov/r05/eldorado/recreation/harvey-west-cabin,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,,,"Contact Name:
 Placerville Ranger District Information Center
 Contact Phone:
@@ -161,7 +161,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.750812,-120.265451,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.750812,-120.265451,,Restrooms are available at this site.,Potable water is available at this site.,,,False
 14,Hell Hole Campground,https://www.fs.usda.gov/r05/eldorado/recreation/hell-hole-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$10/ single site. There is no water available at the campground.  Please bring your own drinking water or a water filter. Camping fees have been reduced by 50% to compensate for the inconvenience.
 Site Information
 :
@@ -174,7 +174,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",39.070476,-120.416609,,Restrooms are available at this site.,Potable water is not available at this site.,,
+)",39.070476,-120.416609,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 15,Ice House Campground,https://www.fs.usda.gov/r05/eldorado/recreation/ice-house-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"Fee Information
 :
 Single site = $36
@@ -197,7 +197,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.829734,-120.365699,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.829734,-120.365699,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 16,Jones Fork Campground,https://www.fs.usda.gov/r05/eldorado/recreation/jones-fork-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$10/single family site
 $5/extra vehicle fee.
 Site Information
@@ -210,7 +210,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.858877,-120.384733,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.858877,-120.384733,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 17,Kirkwood Campground,https://www.fs.usda.gov/r05/eldorado/recreation/kirkwood-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Late June - September,"$36/single
 $72/double
 $10/day use
@@ -225,15 +225,15 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.707073,-120.087194,,Restrooms are available at this site.,Potable water is available at this site.,,
-18,Lone Rock Campground,https://www.fs.usda.gov/r05/eldorado/recreation/lone-rock-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"No Fees are required for this site.
+)",38.707073,-120.087194,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+18,Lone Rock Campground,https://www.fs.usda.gov/r05/eldorado/recreation/lone-rock-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"No fees are required for this site
 No fee.",,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.863334,-120.385998,,Restrooms are available at this site.,Potable water is not available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.863334,-120.385998,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 19,Loon Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/loon-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - October,"$36/single
 $72/double
 $36 overnight camping on the boatramp
@@ -255,7 +255,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.980438,-120.316632,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.980438,-120.316632,,Restrooms are available at this site.,Potable water is available at this site.,,,True
 20,Loon Lake Chalet,https://www.fs.usda.gov/r05/eldorado/recreation/loon-lake-chalet,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,,"Fee: $100.00 per night for up to 20 people.
 Expect to pay a reservation and cancellation fee when appropriate.
 No refunds for bad weather unless Ice House Road is not passable.",,"Placerville Ranger District
@@ -264,7 +264,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.985035,-120.329469,,Restroomsequipped with vault toilets are attached to the building and are accessed from the outside of the building. One is for the public and one is for only the renters.,"Cooking:The kitchen area has a double sink, hot and cold water, a range top stove, a microwave oven, an under-the-counter refrigerator, and a small dryer. The Chalet does not have pots, utensils, or a garbage disposal. Electrical plugs may be used for crock-pots, coffee makers, and other electrical appliances that you bring. You are welcome to bring your outdoor BBQ.",,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.985035,-120.329469,,Restroomsequipped with vault toilets are attached to the building and are accessed from the outside of the building. One is for the public and one is for only the renters.,"Cooking:The kitchen area has a double sink, hot and cold water, a range top stove, a microwave oven, an under-the-counter refrigerator, and a small dryer. The Chalet does not have pots, utensils, or a garbage disposal. Electrical plugs may be used for crock-pots, coffee makers, and other electrical appliances that you bring. You are welcome to bring your outdoor BBQ.",,,False
 21,Lovers Leap Campground,https://www.fs.usda.gov/r05/eldorado/recreation/lovers-leap-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$36 camping
 $10 day use
 Site Information
@@ -276,7 +276,7 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.799416,-120.141112,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.799416,-120.141112,,Restrooms are available at this site.,Potable water is available at this site.,,,False
 22,Middle Fork Cosumnes Campground,https://www.fs.usda.gov/r05/eldorado/recreation/middle-fork-cosumnes-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$30/ single
 $60/double
 Site Information
@@ -291,7 +291,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.584286,-120.300105,,Restrooms are available at this site.,Potable water is not available at this site.,,
+)",38.584286,-120.300105,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
 23,Middle Meadows Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/middle-meadows-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May 15 to October 15,"Two group sites:
 Unit #1 = $50/night, 50 people maximum. Walk-in to site from central parking area.
 Unit #2 = $25/night, 25 person maximum. Walk-in to site from central parking area.
@@ -303,7 +303,7 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",39.052689,-120.467159,,Restrooms are available at this site.,There is no water available at the campground.  Please bring your own drinking water or a water filter. Camping fees have been reduced by 50% to compensate for the inconvenience.,,
+)",39.052689,-120.467159,,Restrooms are available at this site.,There is no water available at the campground.  Please bring your own drinking water or a water filter. Camping fees have been reduced by 50% to compensate for the inconvenience.,,,False
 24,Mokelumne Campground,https://www.fs.usda.gov/r05/eldorado/recreation/mokelumne-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$30/single site.
 $60/double site.
 Site Information
@@ -318,8 +318,19 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.478592,-120.271143,,Restrooms are available at this site.,There is no piped water at the campground. Water from the river is available but should be boiled before using. Water quality testing is not performed on open water sources.,,
-25,Northshore Campground,https://www.fs.usda.gov/r05/eldorado/recreation/northshore-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - September,"$36/ single family site
+)",38.478592,-120.271143,,Restrooms are available at this site.,There is no piped water at the campground. Water from the river is available but should be boiled before using. Water quality testing is not performed on open water sources.,,,True
+25,Moore Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/moore-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"This campground is managed by the
+Stanislaus National Forest
+.",,"Amador Ranger District
+Address:
+26820 Silver Drive Pioneer, CA 95667
+Phone:
+(209) 259-3774
+Hours:
+8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
+federal holidays
+)",38.479945,-120.266169,,Restrooms are not available at this site.,There is no piped water at the campground. Water from the river is available but should be boiled before using. Water quality tes ng is not performed on open water sources.,,,False
+26,Northshore Campground,https://www.fs.usda.gov/r05/eldorado/recreation/northshore-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - September,"$36/ single family site
 $72/ double family site
 $5 for extra vehicle.
 Site Information
@@ -335,8 +346,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.999568,-120.318717,,Restrooms are available at this site.,Potable water is available at this site.,,
-26,Northwind Campground,https://www.fs.usda.gov/r05/eldorado/recreation/northwind-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$10/ single family site
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.999568,-120.318717,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+27,Northwind Campground,https://www.fs.usda.gov/r05/eldorado/recreation/northwind-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$10/ single family site
 $5 for extra vehicle.
 Site Information
 :
@@ -348,8 +359,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.831454,-120.34855,,Restrooms are available at this site.,There is no piped water available at the campground. Bring water. Lake water is available close by but should be boiled or filtered before using. Water quality testing is not performed on open water sources.,,
-27,Pardoes Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pardoes-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.831454,-120.34855,,Restrooms are available at this site.,There is no piped water available at the campground. Bring water. Lake water is available close by but should be boiled or filtered before using. Water quality testing is not performed on open water sources.,,,True
+28,Pardoes Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pardoes-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$36/single
 $72/double
 $5/extra vehicle fee
 Site Information
@@ -361,8 +372,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.535995,-120.238214,,Restrooms are available at this site.,Potable water is available at this site.,,
-28,Pipi Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pipi-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.535995,-120.238214,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+29,Pipi Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pipi-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$36/single
 $72/double
 $108/triple
 $10/Day Use
@@ -381,16 +392,15 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.567305,-120.439261,,Restrooms are available at this site.,Potable water is available at this site.,,
-29,Pleasant Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pleasant-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"No Fees are required for this site.
-No fee, No Services",,"Placerville Ranger District
+)",38.567305,-120.439261,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+30,Pleasant Campground,https://www.fs.usda.gov/r05/eldorado/recreation/pleasant-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No fees are required for this site,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.011811,-120.290268,,Restrooms are available at this site.,No piped water available at the campground. Bring water.,,
-30,Ponderosa Cove Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/ponderosa-cove-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$175/ group of 75 people.
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.011811,-120.290268,,Restrooms are available at this site.,No piped water available at the campground. Bring water.,,,True
+31,Ponderosa Cove Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/ponderosa-cove-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$175/ group of 75 people.
 There are also fees for extra vehicle, pets, and wood is available for purchase from host.
 5 vehicle spurs and a parking area for 10 vehicles.",,"Georgetown Ranger District
 Address:
@@ -400,30 +410,30 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",38.90652,-120.602618,,Restrooms are available at this site.,Potable water is available at this site.,,
-31,Red Fir Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/red-fir-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,125 /25 person,,"Placerville Ranger District
+)",38.90652,-120.602618,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+32,Red Fir Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/red-fir-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,125 /25 person,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.001994,-120.314784,,Restrooms are available at this site.,Potable water is available at this site.,,
-32,Robbs Hut,https://www.fs.usda.gov/r05/eldorado/recreation/robbs-hut,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Year round,$65 (6 person max.),,"Placerville Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.001994,-120.314784,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+33,Robbs Hut,https://www.fs.usda.gov/r05/eldorado/recreation/robbs-hut,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Year round,$65 (6 person max.),,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.924884,-120.403535,,Restrooms are available at this site.,Potable water is not available at this site.,,
-33,Sand Flat Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sand-flat-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Memorial Weekend to October,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.924884,-120.403535,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+34,Sand Flat Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sand-flat-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Memorial Weekend to October,"$36/single
 $72/double",,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.763837,-120.32453,,Restrooms are available at this site.,Potable water is available at this site.,,
-34,Silver Fork Campground,https://www.fs.usda.gov/r05/eldorado/recreation/silver-fork-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Memorial Weekend to Labor Day,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.763837,-120.32453,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+35,Silver Fork Campground,https://www.fs.usda.gov/r05/eldorado/recreation/silver-fork-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Memorial Weekend to Labor Day,"$36/single
 $72/double
 Site Information
 :
@@ -436,8 +446,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.69861,-120.20767,,Restrooms are available at this site.,Potable water is available at this site.,,
-35,Silver Lake Campground East,https://www.fs.usda.gov/r05/eldorado/recreation/silver-lake-campground-east,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - October,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.69861,-120.20767,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+36,Silver Lake Campground East,https://www.fs.usda.gov/r05/eldorado/recreation/silver-lake-campground-east,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,late June - October,"$36/single
 $72/double
 $10/day use
 Site Information
@@ -454,22 +464,22 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.672243,-120.119797,,Restrooms are available at this site.,Potable water is available at this site.,,
-36,Sly Guard Cabin,https://www.fs.usda.gov/r05/eldorado/recreation/sly-guard-cabin,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Year-round,,,"Placerville Ranger District
+)",38.672243,-120.119797,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+37,Sly Guard Cabin,https://www.fs.usda.gov/r05/eldorado/recreation/sly-guard-cabin,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Year-round,,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.71019,-120.593074,,Restrooms are available at this site.,Potable water is not available at this site.,,
-37,South Fork Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/south-fork-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Father's Day weekend - October,Group site (125 people) = $100,,"Placerville Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.71019,-120.593074,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+38,South Fork Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/south-fork-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Father's Day weekend - October,Group site (125 people) = $100,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.948055,-120.403008,,Restrooms are available at this site.,Potable water is not available at this site.,,
-38,South Shore Campground,https://www.fs.usda.gov/r05/eldorado/recreation/south-shore-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/single
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.948055,-120.403008,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+39,South Shore Campground,https://www.fs.usda.gov/r05/eldorado/recreation/south-shore-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/single
 $72/double
 $108/triple
 $5/extra vehicle fee
@@ -488,8 +498,8 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.53542,-120.244792,,Restrooms are available at this site.,Potable water is available at this site.,,
-39,Strawberry Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/strawberry-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$10
+)",38.53542,-120.244792,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+40,Strawberry Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/strawberry-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,May - October,"$10
 Site Information
 :
 Number of Sites = 10
@@ -499,8 +509,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.829041,-120.339137,,Restrooms are available at this site.,There is no piped water available at the campground. Bring water. Lake water is available close by but should be boiled or filtered before using. Water quality testing is not performed on open water sources.,,
-40,Stumpy Meadows Campground,https://www.fs.usda.gov/r05/eldorado/recreation/stumpy-meadows-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,April 15 to  October 15,"$36/ single site
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.829041,-120.339137,,Restrooms are available at this site.,There is no piped water available at the campground. Bring water. Lake water is available close by but should be boiled or filtered before using. Water quality testing is not performed on open water sources.,,,True
+41,Stumpy Meadows Campground,https://www.fs.usda.gov/r05/eldorado/recreation/stumpy-meadows-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,April 15 to  October 15,"$36/ single site
 $72/ double site
 $36/overnight camp on the boatramp
 $10/day use
@@ -519,8 +529,8 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",38.904586,-120.591024,,Restrooms are available at this site.,Potable water is available at this site.,,
-41,Sugar Pine Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sugar-pine-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$30/single
+)",38.904586,-120.591024,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+42,Sugar Pine Point Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sugar-pine-point-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$30/single
 $60/double
 $5/extra vehicle fee
 Site Information
@@ -535,8 +545,8 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.547154,-120.240428,,Restrooms are available at this site.,Potable water is not available at this site.,,
-42,Sunset Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sunset-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$28/single
+)",38.547154,-120.240428,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+43,Sunset Campground,https://www.fs.usda.gov/r05/eldorado/recreation/sunset-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$28/single
 $56/double
 $84/triple
 $28/camping on boatramp (overflow only)
@@ -556,9 +566,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.86889,-120.399284,,Restrooms are available at this site.,Potable water is available at this site.,,
-43,Upper Hell Hole Campground,https://www.fs.usda.gov/r05/eldorado/recreation/upper-hell-hole-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"No Fees are required for this site.
-No fee",,"Georgetown Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.86889,-120.399284,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+44,Upper Hell Hole Campground,https://www.fs.usda.gov/r05/eldorado/recreation/upper-hell-hole-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,No fees are required for this site,,"Georgetown Ranger District
 Address:
 7600 Wentworth Springs Rd Georgetown, CA 95634
 Phone:
@@ -566,30 +575,29 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Fridays (Closed on
 federal holidays
-)",39.081898,-120.357878,,Restrooms are available at this site.,Potable water is not available at this site.,,
-44,Van Vleck Bunkhouse,https://www.fs.usda.gov/r05/eldorado/recreation/van-vleck-bunkhouse,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,,$75 (6 person max.),,"Placerville Ranger District
+)",39.081898,-120.357878,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+45,Van Vleck Bunkhouse,https://www.fs.usda.gov/r05/eldorado/recreation/van-vleck-bunkhouse,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,year round,$75 (6 person max.),,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.93661,-120.321771,,Restrooms are available at this site.,Potable water is not available at this site.,,
-45,Wench Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wench-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,$36,,"Placerville Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.93661,-120.321771,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+46,Wench Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wench-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,$36,,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.889243,-120.370567,,Restrooms are available at this site.,Potable water is not available at this site.,,
-46,Wench Creek Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wench-creek-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,$160/ 50 person (2 sites),,"Placerville Ranger District
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.889243,-120.370567,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+47,Wench Creek Group Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wench-creek-group-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,$160/ 50 person (2 sites),,"Placerville Ranger District
 Address:
 4260 Eight Mile Road Camino, CA 95709
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.888064,-120.367287,,Restrooms are available at this site.,Potable water is available at this site.,,
-47,Wentworth Springs Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wentworth-springs-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"No Fees are required for this site.
-No fee, No services.
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.888064,-120.367287,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+48,Wentworth Springs Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wentworth-springs-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"No fees are required for this site
 Site Information
 :
 Number of Sites = 8
@@ -600,8 +608,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.011516,-120.325376,,Restrooms are available at this site.,Potable water is not available at this site.,,
-48,White Azalea Campground,https://www.fs.usda.gov/r05/eldorado/recreation/white-azalea-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$30/single site
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",39.011516,-120.325376,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+49,White Azalea Campground,https://www.fs.usda.gov/r05/eldorado/recreation/white-azalea-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$30/single site
 Site Information
 :
 Number of Sites = 6
@@ -613,8 +621,8 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.485128,-120.262261,,Restrooms are available at this site.,Potable water is not available at this site.,,
-49,Wolf Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wolf-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/single
+)",38.485128,-120.262261,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+50,Wolf Creek Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wolf-creek-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/single
 $72/double
 Group #1 (25 people) = $140
 Group #2 (50 people) = $170
@@ -633,8 +641,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.885285,-120.39951,,Restrooms are available at this site.,Potable water is available at this site.,,
-50,Woods Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/woods-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$36/ single site
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.885285,-120.39951,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+51,Woods Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/woods-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - October,"$36/ single site
 $72/ double site
 $10 for day use and trailhead parking",,"Amador Ranger District
 Address:
@@ -644,8 +652,8 @@ Phone:
 Hours:
 8 AM until 4:30 PM, Tuesdays through Saturdays until September (Closed on
 federal holidays
-)",38.686748,-120.009249,,Restrooms are available at this site.,,,
-51,Wrights Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wrights-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Late June - October,"$36/single
+)",38.686748,-120.009249,,Restrooms are available at this site.,,,,True
+52,Wrights Lake Campground,https://www.fs.usda.gov/r05/eldorado/recreation/wrights-lake-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,Late June - October,"$36/single
 $72/double
 $10/picnic area, day use, trailheads
 Other fees: extra vehicle
@@ -661,8 +669,8 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.844582,-120.236676,,Restrooms are available at this site.,Potable water is available at this site.,,
-52,Yellowjacket Campground,https://www.fs.usda.gov/r05/eldorado/recreation/yellowjacket-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/ single site
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.844582,-120.236676,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+53,Yellowjacket Campground,https://www.fs.usda.gov/r05/eldorado/recreation/yellowjacket-campground,Eldorado National Forest,https://www.fs.usda.gov/r05/eldorado,June - September,"$36/ single site
 $72/ double site
 $10/boatramp day use
 Other fees: $10 dumping waste tank, extra vehicle
@@ -676,4 +684,4 @@ Address:
 Phone:
 (530) 644-2324
 Hours:
-7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.891074,-120.38784,,Restrooms are available at this site.,Potable water is available at this site.,,
+7 days a week from 8 AM until 4:30 PM including holidays (Summer Hours)",38.891074,-120.38784,,Restrooms are available at this site.,Potable water is available at this site.,,,True

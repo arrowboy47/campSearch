@@ -1,113 +1,64 @@
-,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities
-0,Big Flat Trailhead,https://www.fs.usda.gov/r05/klamath/recreation/big-flat-trailhead,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.06756918,-122.9341033,,Restrooms are available at this site.,Potable water is available at this site.,,
+,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities,body_of_water
+0,Big Flat Trailhead,https://www.fs.usda.gov/r05/klamath/recreation/big-flat-trailhead,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.06756918,-122.9341033,,Restrooms are available at this site.,Potable water is available at this site.,,,False
 1,Carter Meadows Campground,https://www.fs.usda.gov/r05/klamath/recreation/carter-meadows-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Equestrian Group Site 1: $50/night.
-Site only available by reservation. To reserve, visit: https://www.recreation.gov/camping/campgrounds/234344?tab=campsites
-$50 per night",,,41.22138847,-122.908594,"From Callahan, take the Callahan-Cecilville Rd for approx. 11 miles. At about a 1/2 mile below the summit, the turn-off to the campground will be on your left.",Restrooms are available at this site.,Potable water is available at this site.,,
-2,East Fork Campground,https://www.fs.usda.gov/r05/klamath/recreation/east-fork-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.15438602,-123.1074442,"From Callahan, take the Callahan-Cecilville road heading south for approx. 27 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
-3,Fort Goff Campground,https://www.fs.usda.gov/r05/klamath/recreation/fort-goff-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.86513614,-123.2561534,"From I-5, west on Hwy 96 approx. 50 miles to the campground on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Equestrian Group Site: $50 per night
+$50 per night",,,41.22138847,-122.908594,"From Callahan, take the Callahan-Cecilville Rd for approx. 11 miles. At about a 1/2 mile below the summit, the turn-off to the campground will be on your left.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+2,East Fork Campground,https://www.fs.usda.gov/r05/klamath/recreation/east-fork-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.15438602,-123.1074442,"From Callahan, take the Callahan-Cecilville road heading south for approx. 27 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
+3,Fort Goff Campground,https://www.fs.usda.gov/r05/klamath/recreation/fort-goff-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.86513614,-123.2561534,"From I-5, west on Hwy 96 approx. 50 miles to the campground on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 4,Hidden Horse Campground,https://www.fs.usda.gov/r05/klamath/recreation/hidden-horse-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Equestrian Group Site 1: $10/night.
-Reservations can be made by visiting: https://www.recreation.gov/camping/campgrounds/123390
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$10 per night",,,41.21912471,-122.9108403,"From Callahan, take the Callahan-Cecilville Rd for approx. 11 miles. At about a 1/2 mile below the summit, the turn-off to the campground will be on your left.",Restrooms are available at this site.,Potable water is available at this site.,,
-5,Hotelling Campground,https://www.fs.usda.gov/r05/klamath/recreation/hotelling-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.23984443,-123.2739922,"From Callahan, take the Callahan-Cecilville road heading south for approx. 43 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Equestrian Group Site: $10 per night
+$10 per night",,,41.21912471,-122.9108403,"From Callahan, take the Callahan-Cecilville Rd for approx. 11 miles. At about a 1/2 mile below the summit, the turn-off to the campground will be on your left.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+5,Hotelling Campground,https://www.fs.usda.gov/r05/klamath/recreation/hotelling-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.23984443,-123.2739922,"From Callahan, take the Callahan-Cecilville road heading south for approx. 43 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 6,Idlewild Campground,https://www.fs.usda.gov/r05/klamath/recreation/idlewild-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-Family campsites $10.",,,41.33133366,-123.0587878,"From Etna, take the Sawyers Bar Rd for approx. 20 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,
+Single Site: $10 per night
+Family campsites $10.",,,41.33133366,-123.0587878,"From Etna, take the Sawyers Bar Rd for approx. 20 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,,True
 7,Indian Scotty Campground,https://www.fs.usda.gov/r05/klamath/recreation/indian-scotty-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-family sites $10 per night, group site $50 per night",,,41.63382007,-123.0785713,"From Ft. Jones, take the Scott River Rd for approx. 14 miles. There will be a sign for the campground and a bridge on your left.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Single Site: $10 per night
+Group Site: $50 per night (up to 50 people)
+family sites $10 per night, group site $50 per night",,,41.63382007,-123.0785713,"From Ft. Jones, take the Scott River Rd for approx. 14 miles. There will be a sign for the campground and a bridge on your left.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 8,Juanita Lake Campground,https://www.fs.usda.gov/r05/klamath/recreation/juanita-lake-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $15/night.
-Double Site: $20/night.
-Group Site: $50/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$15 per night, $20 for double site(#14), $50 per night for Group Camp",,,41.81669302,-122.1237526,"From I-5 at Weed, CA travel northeast on State Hwy 97 approx 35 miles Ball Mtn Road. Turn west (left) on Ball Mtn Road approx 4 miles to Forest Service Road 46N04. Turn right on 46N04 and continue to Juanita Lake and Campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road approx 4 miles to Forest Service Road 46N04. Turn right on 46N04 and continue to Juanita Lake and Campground.",,Potable water is not available at this site.,,
+Single Site: $15 per night
+Double Site: $20 per night
+Group Site: $50 per night
+$15 per night, $20 for double site(#14), $50 per night for Group Camp",,,41.81669302,-122.1237526,"From I-5 at Weed, CA travel northeast on State Hwy 97 approx 35 miles Ball Mtn Road. Turn west (left) on Ball Mtn Road approx 4 miles to Forest Service Road 46N04. Turn right on 46N04 and continue to Juanita Lake and Campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road approx 4 miles to Forest Service Road 46N04. Turn right on 46N04 and continue to Juanita Lake and Campground.",,Potable water is not available at this site.,,,True
 9,Kangaroo Lake Campground,https://www.fs.usda.gov/r05/klamath/recreation/kangaroo-lake-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $15/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$15 per night, free day use",,,41.33436893,-122.6351233,"From Callahan, take the Callahan-Gazelle Rd for approx. 10 miles to the Rail Creek Rd. There is a sign for Kangaroo Lake, and this road will take you the 8 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,
+Single Site: $15 per night
+$15 per night, free day use",,,41.33436893,-122.6351233,"From Callahan, take the Callahan-Gazelle Rd for approx. 10 miles to the Rail Creek Rd. There is a sign for Kangaroo Lake, and this road will take you the 8 miles to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,,True
 10,Martins Dairy Campground,https://www.fs.usda.gov/r05/klamath/recreation/martins-dairy-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$10 per night",,,41.7964029,-122.2052199,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Forest Service Road 70 ( 1 mile south of Mount Hebron summit), turn west approx 11 miles to Forest Service Road 46N12. Turn left on 46N12 for 2 miles to the campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road, continue on the Ball Mtn road for 6.4 miles to the intersection of Forest Route 70, turn north (right) on Forest Route 70 for 4.1 miles to Forest Service Road 46N12. Turn left on 46N12 for 2 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Single Site: $10 per night
+$10 per night",,,41.7964029,-122.2052199,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Forest Service Road 70 ( 1 mile south of Mount Hebron summit), turn west approx 11 miles to Forest Service Road 46N12. Turn left on 46N12 for 2 miles to the campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road, continue on the Ball Mtn road for 6.4 miles to the intersection of Forest Route 70, turn north (right) on Forest Route 70 for 4.1 miles to Forest Service Road 46N12. Turn left on 46N12 for 2 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 11,Martins Dairy Horse Camp,https://www.fs.usda.gov/r05/klamath/recreation/martins-dairy-horse-camp,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Equestrian Group Site 1: $10/night.
-Site only available on first come first serve basis.
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$10 per night",,,41.79324761,-122.2015648,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Forest Service Road 70 ( 1 mile south of Mount Hebron summit), turn west approx 11 miles to Forest Service Road 46N12. Turn left on 46N12 for 1.7 miles to the Horse campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road, continue on the Ball Mtn road for 6.4 miles to the intersection of Forest Route 70, turn north (right) on Forest Route 70 for 4.1 miles to Forest Service Road 46N12. Turn left on 46N12 for 1.7 miles to the Horse campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Equestrian Group Site 1: $10 per night
+Site only available on first come first serve basis
+$10 per night",,,41.79324761,-122.2015648,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Forest Service Road 70 ( 1 mile south of Mount Hebron summit), turn west approx 11 miles to Forest Service Road 46N12. Turn left on 46N12 for 1.7 miles to the Horse campground. From the North, traveling south on Hwy. 97, turn west (right) approximately 3.8 miles south of the town of Macdoel on the Ball Mtn. Road, continue on the Ball Mtn road for 6.4 miles to the intersection of Forest Route 70, turn north (right) on Forest Route 70 for 4.1 miles to Forest Service Road 46N12. Turn left on 46N12 for 1.7 miles to the Horse campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 12,Matthews Creek Campground,https://www.fs.usda.gov/r05/klamath/recreation/matthews-creek-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$10 per night",,,41.18754263,-123.2127393,"From Callahan, take the Callahan-Cecilville Rd for approx. 37 miles to the campground.",Restrooms are available at this site.,Only provides non-potable water until further notice.,,
-13,Mt. Ashland Campground,https://www.fs.usda.gov/r05/klamath/recreation/mt-ashland-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee.",,,42.07599517,-122.7134336,From I-5 west on Forest Road 20 approx. 10.5 miles to the campground on the left. One mile past the Mt Ashland Ski Resort.,Restrooms are available at this site.,Potable water is not available at this site.,,
-14,O'Neil Creek Campground,https://www.fs.usda.gov/r05/klamath/recreation/oneil-creek-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,Campground closed until further notice.,,,41.80946116,-123.1158093,,Restrooms are available at this site.,Potable water is not available at this site.,,
-15,Orr Lake Campground,https://www.fs.usda.gov/r05/klamath/recreation/orr-lake-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.6630727,-121.9873001,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Tennant Road. Turn east on Tennant Road approx 5 miles to Old State Hwy. Turn onto Old State Hwy to the town of Bray. At Bray turn north (left) on Forest Service Road 44N30X cross the Railroad tracks and continue for 2 miles to the campground. Or, from Hwy 97 at Macdoel go south on Old State Hwy approx 15 miles to the town of Bray. At Bray turn north (right) on Forest Service Road 44N30X cross the Railroad tracks and continue for 2 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
-16,Red Bank Campground,https://www.fs.usda.gov/r05/klamath/recreation/red-bank-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee",,,41.29862061,-123.2289224,"From Etna, take the Sawyers Bar Rd for approx. 33 miles to the Red Bank campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
+Single Site: $10 per night
+$10 per night",,,41.18754263,-123.2127393,"From Callahan, take the Callahan-Cecilville Rd for approx. 37 miles to the campground.",Restrooms are available at this site.,Only provides non-potable water until further notice.,,,True
+13,Mt. Ashland Campground,https://www.fs.usda.gov/r05/klamath/recreation/mt-ashland-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee.",,,42.07599517,-122.7134336,From I-5 west on Forest Road 20 approx. 10.5 miles to the campground on the left. One mile past the Mt Ashland Ski Resort.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+14,O'Neil Creek Campground,https://www.fs.usda.gov/r05/klamath/recreation/oneil-creek-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,Campground closed until further notice.,,,41.80946116,-123.1158093,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+15,Orr Lake Campground,https://www.fs.usda.gov/r05/klamath/recreation/orr-lake-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.6630727,-121.9873001,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Tennant Road. Turn east on Tennant Road approx 5 miles to Old State Hwy. Turn onto Old State Hwy to the town of Bray. At Bray turn north (left) on Forest Service Road 44N30X cross the Railroad tracks and continue for 2 miles to the campground. Or, from Hwy 97 at Macdoel go south on Old State Hwy approx 15 miles to the town of Bray. At Bray turn north (right) on Forest Service Road 44N30X cross the Railroad tracks and continue for 2 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
+16,Red Bank Campground,https://www.fs.usda.gov/r05/klamath/recreation/red-bank-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee",,,41.29862061,-123.2289224,"From Etna, take the Sawyers Bar Rd for approx. 33 miles to the Red Bank campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
 17,Sarah Totten Campground,https://www.fs.usda.gov/r05/klamath/recreation/sarah-totten-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
+Single Site: $10 per night
+Group Site: $50 per night (up to 30 people)
 Family Camp $10 per night, Group Camps $50 per night by reservation only at
 www.recreation.gov
-or 1-877-444-6777",,,41.78761157,-123.0518106,From I-5 west on Hwy 96 approx 32 miles to the campground on the right. One mile before the town of Hamburg.,Restrooms are available at this site.,Potable water is available at this site.,,
+or 1-877-444-6777",,,41.78761157,-123.0518106,From I-5 west on Hwy 96 approx 32 miles to the campground on the right. One mile before the town of Hamburg.,Restrooms are available at this site.,Potable water is available at this site.,,,True
 18,Shafter Campground,https://www.fs.usda.gov/r05/klamath/recreation/shafter-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $10/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
-$10 per night",,,41.7108328,-121.9806588,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Tennant Road. Turn east on Tennant Road approx 5 miles to Old State Hwy. Turn onto Old State Hwy and continue past the town of Bray for a total of 8 miles to the campground. Or, from Hwy 97 at Macdoel go south on Old State Hwy approx 9 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,
-19,Sulphur Springs Campground,https://www.fs.usda.gov/r05/klamath/recreation/sulphur-springs-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No Fees are required for this site.
-No fee.",,,41.66035615,-123.3199332,From Happy Camp south on Forest Road 16N05 (locally known as Elk Creek Rd) approx 12 miles to the campground. Portions of the road are improved gravel. Brown Forest Service signs direct the way.,Restrooms are available at this site.,Potable water is not available at this site.,,
+Single Site: $10 per night
+$10 per night",,,41.7108328,-121.9806588,"From I-5 in Weed, CA travel northwest on US Hwy 97 approx 28 miles to Tennant Road. Turn east on Tennant Road approx 5 miles to Old State Hwy. Turn onto Old State Hwy and continue past the town of Bray for a total of 8 miles to the campground. Or, from Hwy 97 at Macdoel go south on Old State Hwy approx 9 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
+19,Sulphur Springs Campground,https://www.fs.usda.gov/r05/klamath/recreation/sulphur-springs-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"No fees are required for this site
+No fee.",,,41.66035615,-123.3199332,From Happy Camp south on Forest Road 16N05 (locally known as Elk Creek Rd) approx 12 miles to the campground. Portions of the road are improved gravel. Brown Forest Service signs direct the way.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
 20,Tree of Heaven Campground,https://www.fs.usda.gov/r05/klamath/recreation/tree-heaven-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,"Overnight Use:
-Single Site: $15/night.
-Interagency Senior/Access Recreation Passes provide a 50% discount to Single Campsites ONLY.
-*The discount applies only to the fee for the campsite physically occupied by the pass holder, not to any additional fee or campsite(s) occupied by members of the pass holder's party.*
-https://store.usgs.gov/recreational-passes
-Please be prepared to pay with CASH or CHECK.
-*Sites may be reservable and reservation fees apply.*
+Single Site: $15 per night
 Family Campsites are $15 per night. No fee for the day use area -- first come, first served. Some campsites may be reserved at
 www.recreation.gov
-or 1-877-444-6777.",,,41.83135083,-122.658972,From I-5 west on Hwy 96 approx 7 miles to the campground on the left and down the hill.,Restrooms are available at this site.,Potable water is not available at this site.,,
-21,West Branch Campground,https://www.fs.usda.gov/r05/klamath/recreation/west-branch-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,No fee,,,41.93216949,-123.4754983,From Happy Camp go north on Indian Creek Rd/Forest Service Road 48 approx. 12 miles to the campground on the right.,Restrooms are available at this site.,Potable water is not available at this site.,,
+or 1-877-444-6777.",,,41.83135083,-122.658972,From I-5 west on Hwy 96 approx 7 miles to the campground on the left and down the hill.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+21,West Branch Campground,https://www.fs.usda.gov/r05/klamath/recreation/west-branch-campground,Klamath National Forest & Butte Valley National Grassland,https://www.fs.usda.gov/r05/klamath,,No fee,,,41.93216949,-123.4754983,From Happy Camp go north on Indian Creek Rd/Forest Service Road 48 approx. 12 miles to the campground on the right.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
