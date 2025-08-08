@@ -1,387 +1,264 @@
 ,site_name,site_url,park_name,park_url,season_of_use,fee_info,contact_info,info_center,latitude,longitude,directions,restrooms,water,overview,amenities,body_of_water
-0,Ahart Campground,https://www.fs.usda.gov/r05/tahoe/recreation/ahart-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June - November,"Overnight Use:
-Single Site: $20 per night
+0,Alder Creek Campground,https://www.fs.usda.gov/r05/lassen/recreation/alder-creek-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,"Generally, this campground is open to first come first serve camping through Labor Day weekend.","Overnight Use:
+Single Site: $10 per night
+Fee must be paid upon arrival and before each night of camping. Single campsites are limited to 1 vehicle and 8 people per site.",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.209419,-121.496322,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+1,Almanor Campground,https://www.fs.usda.gov/r05/lassen/recreation/almanor-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,Almanor Campground is generally open from Memorial Day to Labor Day. Conditions may change depending on weather and other factors.,"Overnight Use:
+Single Site: $18 per night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.217737,-121.176071,"GPS Info. (Latitude, Longitude):40.21694, -121.1677840°13'1""N, 121°10'4""WFrom Chester, take Highway 36 west to Highway 89 South. Turn left on Highway 89 and continue about 6 miles, to Almanor Drive West (not to be confused with Almanor West development and Almanor West Drive). Turn left on Almanor Drive West (directly across from the Almanor Group Camp and rest area) and continue approximately 1 mile to Almanor South Campground.For the Almanor Group camp. From Chester, take Highway 89 South. Turn left on Highway 89 and continue about 6 miles to Almanor Drive west (not to be confused with Almanor West development and Almanor West Drive). Turn right into Almanor Group Camp and rest area ( across from Almanor West Drive).",Restrooms are available at this site.,Potable water is available at this site.,,,True
+2,Battle Creek Campground,https://www.fs.usda.gov/r05/lassen/recreation/battle-creek-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open from mid-May through September. Open season subject to change based on weather and other factors.,"Overnight Use:
+Single Site: $18 per night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.350076,-121.62849,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+3,Big Pine Campground,https://www.fs.usda.gov/r05/lassen/recreation/big-pine-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Single Site: $12 per night
 Additional Vehicle Fee: $5 per vehicle per night
-$20 per site",,,39.145971,-120.408302,"From Foresthill: Drive 36 miles east on Mosquito Ridge Road (Forest Road 96). Campground is on Middle American River, 1 mile north of French Meadows Reservoir.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-1,Bear Valley Campground,https://www.fs.usda.gov/r05/tahoe/recreation/bear-valley-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-Free",,,39.5572,-120.23688,From Truckee: Drive 17 miles north on Hwy 89 to Little Truckee Summit. Drive 6 miles east of Little Truckee Summit on Cottonwood Creek Road.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-2,Berger Campground,https://www.fs.usda.gov/r05/tahoe/recreation/berger-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June 13 - October 13,"Overnight Use:
-Single Site: $20 per night
+$12 per night for camping, maximum 2 vehicles per site. Each additional vehicle $5 per night.",,,40.633619,-121.466592,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+4,Black Rock Campground,https://www.fs.usda.gov/r05/lassen/recreation/black-rock-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,,,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.183723,-121.712129,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+5,Bogard Campground,https://www.fs.usda.gov/r05/lassen/recreation/bogard-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,"No fees are required for this site
+No fee.",,,40.3574928,-121.098122,,Restrooms are available at this site.,Hand pumped water available.,,,False
+6,Bridge Campground,https://www.fs.usda.gov/r05/lassen/recreation/bridge-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Single Site: $10 per night
 Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.628284,-120.644409,From 89 N to 49 N: Drive 13 miles west to Bassett's Station. Turn right on Gold Lake Hwy and drive 1/2 mile to Packer Lake Road. Turn left and drive 2 miles to Berger Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-3,Big Bend Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/big-bend-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Group Site: $99 per night
-$99 per site",,,39.306572,-120.517971,From I-80 west: Take Rainbow Road exit and continue west 1 1/2 miles to campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-4,Big Reservoir Campground,https://www.fs.usda.gov/r05/tahoe/recreation/big-reservoir-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - September 3,"Overnight Use:
-Single Site: $24 per night",,,39.143597,-120.756325,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-5,Boca Campground,https://www.fs.usda.gov/r05/tahoe/recreation/boca-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site",,,39.392835,-120.105751,"From Interstate 80, take Hirschdale Road exit (exit 194) and proceed north on Hirschdale Road for one mile. Turn left onto Boca Dam Reservoir Road and proceed west for 0.6 miles. After the dam bear right on to Boca Road for 0.6 miles. Boca Campground is on the right.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-6,Boca Rest Campground,https://www.fs.usda.gov/r05/tahoe/recreation/boca-rest-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site",,,39.419302,-120.086302,"From Interstate 80, take the Hirschdale exit. Drive north on Hirschdale road about 3 miles to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-7,Boca Springs Campground,https://www.fs.usda.gov/r05/tahoe/recreation/boca-springs-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-Group Site: $66 per night (25 people)
-$20 per site
-$5 for extra vehicle
-$66.00 per night for group site",,,39.427781,-120.075324,"Directions from Truckee: Travel east on I-80 for approximately 6 miles. Take Hirschdale exit. Turn left onto County Route #894. Travel approximately 2.5 miles north and when you reach Boca Rest campground, turn right onto the dirt road (Forest Route #72). Travel approximately 0.75 mile staying to the left and you will arrive at Boca Springs campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-8,Boyington Mill Campground,https://www.fs.usda.gov/r05/tahoe/recreation/boyington-mill-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.438329,-120.088813,"From Truckee: Go east approximately six miles and take Hirschdale exit. Take a left going north and drive 5 miles on Boca/Stampede Road. Campground is located on the left on the Little Truckee River, 4 miles north of Boca Dam.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-9,Cal Ida Campground,https://www.fs.usda.gov/r05/tahoe/recreation/cal-ida-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 17 - October 13,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.52025302,-120.9970795,From Camptonville: Drive 9 miles on Hwy 49. Take Cal-Ida Road where it joins 49.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-10,Canyon Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/canyon-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-Free",,,39.43744979,-120.5799479,"From Hwy 89 North: Take the turn onto Forest Road 7 (Little Truckee Summit). Continue 16 miles west to Jackson Meadow Reservoir.  Turn onto County road 956 and follow for approximately  3 miles. Turn right onto County road 843 (Meadow Lake Road) and follow for approximately 2 miles. At this point the road becomes very rough and rocky, low clearance vehicles and trailers are not recommended. Turn left onto County road 843-037 (Just past Jackson Creek Campground) and follow for approximately 2 miles until you reach Canyon Creek Campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-11,Carlton Flat Campground,https://www.fs.usda.gov/r05/tahoe/recreation/carlton-flat-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 17 - October 13,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.51940619,-120.9998069,From Camptonville: Drive 9 miles northeast on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-12,Carr Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/carr-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 15,"Overnight Use:
-Single Site: $15 per night
-$15.00 per site",,,39.402191,-120.643034,"From I-80: Take Hwy 20 exit and follow Hwy 20 headed west for approximately 5 miles. Turn right on Bowman Lake Road (Forest Road 18). Stay on that road (windy, with tight corners and narrow spots, but paved) for approximately 6 miles and turn right on Forest Road 17, an unimproved dirt road (not recommended for low vehicles). Stay to the right for 3 miles, until reaching the parking area.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-13,Chapman Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/chapman-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June 14 - October 31,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.629588,-120.544682,From Sierra City: Drive 8 miles northeast on Hwy 49.  Campground is across the road from North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-14,Cold Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/cold-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
+Fee for overnight camping is $10, maximum 2 vehicles per site. Each additional vehicle is $5 per night. No fee for day use parking.",,,40.73112,-121.439126,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+7,Butte Meadows Campground,https://www.fs.usda.gov/r05/lassen/recreation/butte-meadows-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,Late April/Early May - October,"Overnight Use:
+Single Site: $12 per night",,,40.079274,-121.558146,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+8,Cave Campground,https://www.fs.usda.gov/r05/lassen/recreation/cave-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
 Single Site: $16 per night
 Additional Vehicle Fee: $5 per vehicle per night
-$16 per site
-$5 for extra vehicle",,,39.54363543,-120.3155159,From Truckee: Take Interstate 80 north to Highway 89 approximately 20 miles. The Campground is on the left side of the highway.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-15,Cottonwood Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/cottonwood-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 14,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20.00 per site
-$5 for extra vehicle",,,39.54867747,-120.3196865,From Truckee: Travel north on Interstate 80 to Highway 89 approximately 20 miles.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-16,Coyote Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/coyote-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June - September,"Overnight Use:
-Group Site:
-25 people: $82 per night
-50 people: $143 per night
-$82 for 25 person site, $143 for 50 person site",,,39.136388,-120.40932,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-17,Dark Day Campground,https://www.fs.usda.gov/r05/tahoe/recreation/dark-day-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 15 - October 15,"Overnight Use:
-Single Site: $24 per night
-Double Site: $48 per night
-Triple Site: $72 per night
-$24-$72/Night",,,39.42936969,-121.1079403,From Camptonville: Drive south on Hwy 49 and turn right on Marysville Road. Continue for 5 miles. Campground is on Bullard's Bar Reservoir.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-18,Diablo Campground,https://www.fs.usda.gov/r05/tahoe/recreation/diablo-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June 14 - October 15,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.630011,-120.639366,From 89 N to 49 N: Drive 13 miles west to Bassett's Station. Turn right on Gold Lake Hwy and drive 1/2 mile to Packer Lake Road. Turn left and continue 1 1/2 miles to Diablo Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-19,East Meadow Campground,https://www.fs.usda.gov/r05/tahoe/recreation/east-meadow-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,August 1 - October 13,"Overnight Use:
-Single Site: $24 per night
-Double Site: $48 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 for single site
-$48 for double site
-$5 extra vehicle charge per vehicle per night, after first vehicle for single sites and after second vehicle for double sites",,,39.50102032,-120.5325588,"Take Interstate 80 to the Truckee/Highway 89 North exit. Follow Highway 89 north for 17 miles, to the turnoff for Jackson Meadows. Travel west on Forest Road 07 for 18 miles to Jackson Meadows Reservoir. Turn into the campground at the Pass Creek Campground sign.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-20,Emigrant Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/emigrant-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 11,"Overnight Use:
-Group Site:
-25 people: $97 per night
-50 people: $201 per night
-There are two 25 person group sites for $97.00/site/night and two 50 person group sites for $201.00/site/night.",,,39.46866835,-120.1159745,"Alternate access: From Truckee, go north on Hwy 89 for five miles and take a right on Hobart Mills Road. Follow Hobard Mills Road to Dog Valley Road and take a left. In approximately three miles, pass the boat ramp road and Logger Campground Entrance, and in a quarter mile Emigrant Group will be on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-21,Fiddle Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/fiddle-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 17 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.518793,-120.993655,From Camptonville: Drive 9 miles northeast on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-22,Forbes Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/forbes-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 14 - October 11,"Overnight Use:
-Group Site: $132 per site per night
-$132 per site",,,39.129436,-120.78055,From I-80: Take Foresthill Road exit for 17 miles to the town of Foresthill. Continue on the road for 9 miles to Sugar Pine Road. Turn left and continue on Sugar Pine Road for 9 miles. Take the left fork and drive 4 1/2 miles to boat ramp. Turn right and head up the hill about 7 miles.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-23,French Meadows Campground,https://www.fs.usda.gov/r05/tahoe/recreation/french-meadows-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June - October,"Overnight Use:
+$16.00 per night.  Maximum two vehicles per site, extra vehicles $5 per night.",,,40.684943,-121.423284,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+9,Cherry Hill Campground,https://www.fs.usda.gov/r05/lassen/recreation/cherry-hill-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open from mid-May through September. Open season subject to change based on weather and other factors.,"Overnight Use:
+Single Site: $14 per night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.10259,-121.499759,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+10,Christie Campground,https://www.fs.usda.gov/r05/lassen/recreation/christie-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May - September,"Overnight Use:
+Standard Non-electric Site: $25 per night
+RV Non-electric Site: $25 per night
+Group Non-electric Site: $40 per night",,,40.567948,-120.836271,"From Susanville, California, take Highway 36 west for 2 miles to County Road A-1. Turn north and continue 14 miles to the Eagle Lake Recreation Area. Continue past Gallatin Road, the first highway you will come to in the lake basin, and follow the signs to Christie Campground. Located on County Road A-1, 2 miles north of Merrill Campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+11,Cold Springs,https://www.fs.usda.gov/r05/lassen/recreation/cold-springs,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,None.,,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.095045,-121.400339,,Restrooms are not available at this site.,Potable water is not available at this site.,,,False
+12,Crater Lake,https://www.fs.usda.gov/r05/lassen/recreation/crater-lake,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,June - October,"Overnight Use:
+Single Site: $10 per night
+$10.00 a night. $5.00 with Interagency pass.",,,40.626958,-121.062117,,Restrooms are available at this site.,Hand pumped water available.,,,False
+13,Domingo Springs Campground,https://www.fs.usda.gov/r05/lassen/recreation/domingo-springs-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open May - September. Open season subject to change based on conditions.,"Overnight Use:
+Single Site: $14 per night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.360548,-121.347484,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+14,Eagle Campground,https://www.fs.usda.gov/r05/lassen/recreation/eagle-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,"Overnight Use:
 Peak Season:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-Non-Peak (Oct 12 - May): No Fee
-$24 per site $5 for extra vehicle",,,39.113972,-120.421403,"From Foresthill, continue to drive northeast on Foresthill Road through town to Robinson Flat campground. Approximately 29.9 miles (58 min drive).",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-24,Frenchy Point Campground,https://www.fs.usda.gov/r05/tahoe/recreation/frenchy-point-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,,,,39.45799828,-121.1512337,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-25,Garden Point Campground,https://www.fs.usda.gov/r05/tahoe/recreation/garden-point-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 15 - October 15,"Overnight Use:
-Single Site: $24 per night
-Double Site: $48 per night
-$24-$48/Night",,,39.43332563,-121.1242072,"From Camptonville: Drive south on Hwy 49 to Marysville Road and turn right, continue for 5 miles. Campground is 1 mile north west of Dark Day Boat Ramp on north side of Bullard's Bar Reservoir. Campground is by boat access only.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-26,Gates Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/gates-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June - September,"Overnight Use:
-Group Site:
-25 people: $82 per night
-75 people:  $165 per night
-$82 for 25 person site,$165 for 75 person site",,,39.13327,-120.406674,From Foresthill:   Drive 36 miles east on Mosquito Ridge Road (Forest Road 96).  Campground is on east shore of French Meadows Reservoir.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-27,Giant Gap Campground,https://www.fs.usda.gov/r05/tahoe/recreation/giant-gap-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 30 - October 31,"Overnight Use:
-Single Site: $24 per night (6 people)
-Double Site: $48 per night (12 people)
-Triple Site: $72 per night (18 people)
-Additional Vehicle Fee: $5 per vehicle per night
-Dump Station: $6 per use
-$24/single site (6 people), $48/double site (12 people), $72/triple site (18 people) Dump Station open on Sundays from 11am-1pm, $6. Dump station may be available on demand. Please contact campground hosts. $5 for extra vehicles",,,39.140497,-120.790415,From I-80: Take the Foresthill Road exit for 17 miles to the town of Foresthill.  Continue on the road for 9 miles to Sugar Pine Road.  Turn left and continue on Sugar Pine Road for 9 miles and take a right on the first road after the Sugar Pine Recreation Area sign.  Travel 1 1/2 miles to the campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-28,Goose Meadow Campground,https://www.fs.usda.gov/r05/tahoe/recreation/goose-meadow-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 11,"Overnight Use:
-Single Site: $22 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$22 per site
-$5 for extra vehicle",,,39.258445,-120.211615,From Truckee: Drive 4 miles south on Hwy 89.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-29,Granite Flat Campground,https://www.fs.usda.gov/r05/tahoe/recreation/granite-flat-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 11,"Overnight Use:
-Single Site: $22 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$22 per site
-$5 for extra vehicle",,,39.302526,-120.205421,From Truckee: Drive 1 1/2 miles south on Hwy 89.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-30,Grouse Ridge Campground,https://www.fs.usda.gov/r05/tahoe/recreation/grouse-ridge-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,Memorial Day - Mid-October,"No fees are required for this site
-Free",,,39.387531,-120.609939,From I-80:  Take Hwy 20 cutoff on I-80 headed west for approximately 5 miles.  Turn right on Bowman Lake Road (Forest Road 18).  Continue on that road for 5 miles and turn right on Grouse Ridge Road (Forest Road 14).  Road is unimproved dirt for 6 miles until reaching campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-31,Hampshire Rocks Campground,https://www.fs.usda.gov/r05/tahoe/recreation/hampshire-rocks-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 23 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.310788,-120.500026,"From I-80 heading east: Take the Big Bend exit to Hampshire Rocks Road. Turn left on Hampshire Rocks Road and continue to the campground, on the right.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-32,Hornswoggle Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/hornswoggle-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 15 - October 15,"Overnight Use:
-Group (nonelectric) Site:  $88 per night
-Group (nonelectric) Site:  $155 per night
-$88-$155/Night",,,39.41514043,-121.1209439,From Camptonville:   Drive south on Hwy 49 to Marysville Road and turn right. Continue for 4 miles. Campground is across the road from Schoolhouse Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-33,Indian Springs Campground,https://www.fs.usda.gov/r05/tahoe/recreation/indian-springs-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 21 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.329577,-120.56928,From I-80: Take Eagle Lake exit and turn north for 1/2 mile to reach campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-34,Indian Valley Campground,https://www.fs.usda.gov/r05/tahoe/recreation/indian-valley-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 17 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.51371186,-120.9835056,From Camptonville: Drive 10 miles northeast on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-35,Jackson Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/jackson-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-None",,,39.45757966,-120.6005971,"From I-80:  Take Hwy 20 cutoff on I-80.  Take Hwy 20 heading west toward Nevada City for approximately 5 miles.  Turn right on Bowman Lake Road (Forest Road 18).  First 8 miles are paved, next 3 miles are gravel (2 lanes), last 5 miles are very rough and road is one lane.  Continue past Bowman Lake Campground to Jackson Creek Campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-36,Lakeside Campground,https://www.fs.usda.gov/r05/tahoe/recreation/lakeside-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 10,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20.00 per site
-$5 for extra vehicle",,,39.382968,-120.172057,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-37,Lewis Campground,https://www.fs.usda.gov/r05/tahoe/recreation/lewis-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June - September,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle: $5 per vehicle per night
-$20 per site",,,39.132029,-120.416669,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-38,Lindsey Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/lindsey-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $15 per night
-$15 per site",,,39.412906,-120.643882,"From Nevada City: Take Hwy 20 east toward Truckee for approximately 20 miles.  Turn left on Bowman Lake Road (Forest Road 18).  Continue on that road for 6 miles and turn right on Forest Road 17.  Continue on for 2 miles.  Take left fork for 2 miles.  This road is a very rough, narrow road until reaching the campground.From I-80:  Take Hwy 20 cutoff west toward Nevada City for approximately 5 miles.  Turn right on Bowman Lake Road (Forest Road 18).  Continue on that road for 6 miles and turn right on Forest Road 17.  Continue on for 2 miles.  Take left fork for 2 miles.  This road is a very rough, narrow road until reaching the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-39,Little Lasier Meadow Horse Camp,https://www.fs.usda.gov/r05/tahoe/recreation/little-lasier-meadow-horse-camp,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,August 1 - October 13,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.488424,-120.51577,"From either east bound or west bound Interstate 80, take exit 188 to Highway 89 North to Sierraville. In 14.5 miles turn left onto Forest Road 07, at the Little Truckee Summit. Drive approximately 15 miles to Forest Road 70 and turn left. Cross the steel bridge and turn left, then go one mile to campground entrance on the left.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-40,Loganville Campground,https://www.fs.usda.gov/r05/tahoe/recreation/loganville-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 23 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.565884,-120.662064,From Sierra City: Drive 2 miles west of Sierra City on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-41,Logger Campground,https://www.fs.usda.gov/r05/tahoe/recreation/logger-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 10,"Overnight Use:
-Single Site: $23 per night
-Double Site: $49 per night
-Triple Site: $75 per night
-$23/Night for single site,  $49/Night for Double site $75.00/Night for Triple site",,,39.464866,-120.121599,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-42,Lower Little Truckee Campground,https://www.fs.usda.gov/r05/tahoe/recreation/lower-little-truckee-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20.00 per site
-$5 for extra vehicle",,,39.485675,-120.237039,From Truckee: Drive 12 miles north on Hwy 89. Campground is located on the left and is along the Little Truckee River.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-43,Madrone Cove Campground,https://www.fs.usda.gov/r05/tahoe/recreation/madrone-cove-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $24 per night
-$24/Night",,,39.46920104,-121.1642598,From Camptonville: Drive south on Hwy 49 to Marysville Road and turn right. Continue 5 miles. Campground is 5 miles north west of Dark Day Boat Ramp on west shore of Bullard's Bar Reservoir. Campground is by boat access only.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-44,Meadow Knolls Group Camp,https://www.fs.usda.gov/r05/tahoe/recreation/meadow-knolls-group-camp,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,July 1 - September 19,"Overnight Use:
-Group Site: $25 per night
-$25 per site
-$3 for extra vehicle
-$1 for pets",,,39.41995499,-120.4826392,"From Sierraville: Travel south on Hwy 89 for 11 miles to Forest Road 7.  Turn right and travel west to the Meadow Lake turnoff.  Turn left on Forest Road 86 which becomes Nevada County Road 843 traveling south for approximately 10 miles. Most of the route is paved, but the last few miles are unpaved and becomes very rough.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-45,Meadow Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/meadow-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,July 1,"Overnight Use:
-Single Site: $15 per night
-Additional Vehicle Fee: $3 per vehicle per night
-$15 per site
-$3 for extra vehicle
-$1 for pets",,,39.41717916,-120.4954739,"From Sierraville: Travel south on Hwy 89 for 11 miles to Forest Road 7. Turn right and travel west to the Meadow Lake turnoff. Turn left on Forest Road 86 which becomes Nevada County Road 843 traveling south for approximately 10 miles. Most of the route is paved, but the last few miles are unpaved and becomes very rough.",Restrooms are available at this site.,Potable water is not available at this site.,,,True
-46,North Fork Campground,https://www.fs.usda.gov/r05/tahoe/recreation/north-fork-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Peak Season (Summer):
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-Non-Peak Season (October - May): No Fee
-Winter (Oct-May): Free Summer: $24 per site $5 per extra vehicle",,,39.271456,-120.65805,From I-80: Take Emigrant Gap exit and travel 6 miles south east on Texas Hill Road.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-47,Onion Valley Campground,https://www.fs.usda.gov/r05/tahoe/recreation/onion-valley-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $18 per night
-$18 per site",,,39.263477,-120.656139,From I-80: Take Emigrant Gap exit and travel 7 miles south east on Texas Hill Road 19.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-48,Packsaddle Campground,https://www.fs.usda.gov/r05/tahoe/recreation/packsaddle-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,June 13 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.624329,-120.649604,From 89 N to 49 N: Drive 13 miles headed west to Bassett's Station. Turn right on Gold Lake Hwy. Continue for 1/2 mile to Packer Lake Road and turn left. Drive 2 1/2 miles to reach campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-49,Pass Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/pass-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,August 1 - October 13,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Charge: $5 per night
-$24 per site
-$5 for extra vehicle","Contact Name:
-Nevada Irrigation District
-Contact Phone:
-(530) 265-5302","Sierraville Ranger District
+Single Site (Electric): $50-55 per night
+Single Site (Non-electric): $28 per night
+Group Site (Non-electric): $50 per night
+Non-Peak Season:
+Single Site (Electric): $45 per night
+Single Site (Non-electric): $25 per night
+Group Site (Non-electric): $40 per night",,,40.54785,-120.78306,"From Susanville, California, take Highway 36 west for 2 miles to County Road A-1. Turn north and continue 14 miles to the Eagle Lake Recreation Area. Turn right on Gallatin Road, the first highway you will come to in the lake basin, and follow the signs to Eagle Campground. Located on Gallatin Road, Eagle Campground is located approximately 1 mile from the intersection.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+15,Echo Lake Campground,https://www.fs.usda.gov/r05/lassen/recreation/echo-lake-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,,,"Almanor Ranger District
 Address:
-317 So. Lincoln St. Sierraville, CA 96126
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-994-3401
+(530) 258-2141
 Hours:
-8:30 a.m. - 12:30 p.m., Monday-Friday (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.505214,-120.533864,Take Interstate 80 to the Truckee/Highway 89 exit. Follow Hwy 89 north for 17 miles to the Jackson Meadows turnoff. Travel west on Forest Road 07 for 18 miles to Jackson Meadows Reservoir. Turn at the Pass Creek Campground sign.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-50,Poppy Campground,https://www.fs.usda.gov/r05/tahoe/recreation/poppy-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $18 per night
-$18 per site",,,39.12133651,-120.4376155,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-51,Prosser Family Campground,https://www.fs.usda.gov/r05/tahoe/recreation/prosser-family-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 10,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.37767,-120.1626,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-52,Prosser Ranch Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/prosser-ranch-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October,"Overnight Use:
-Group Site: $143 per site per night
-$143 per site",,,39.377771,-120.156847,,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-53,Ramshorn Campground,https://www.fs.usda.gov/r05/tahoe/recreation/ramshorn-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,TBD - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.540717,-120.910545,From Camptonville: Drive 15 miles northeast on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-54,Robinson Flat Campground,https://www.fs.usda.gov/r05/tahoe/recreation/robinson-flat-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-No fee",,,39.156371,-120.502854,From I-80:   Take Foresthill Exit  and drive on Foresthill Road for 15 miles to the Forest Service Ranger Station just before the town of Foresthill. Continue on Foresthill Road for 27 miles to the pavement's end at Robinson Flat.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-55,Rocky Rest Campground,https://www.fs.usda.gov/r05/tahoe/recreation/rocky-rest-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 17 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.51331884,-120.9772185,From Camptonville: Drive 10 miles northeast on Hwy 49. Campground is located on the North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-56,Rucker Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/rucker-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $15 per night
-$15 per site, 7 sites","Contact Name:
-pge.com/recreation","Yuba River Ranger District
+)",40.432455,-121.164471,,,Potable water is not available at this site.,,,True
+16,Elam Campground,https://www.fs.usda.gov/r05/lassen/recreation/elam-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This site is generally open April - September,"Overnight Use:
+Single Site: $14 per night",,"Almanor Ranger District
 Address:
-15924 Highway 49 Camptonville, CA 95922
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-265-4531
+(530) 258-2141
 Hours:
-Open by appointment only.  (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.358382,-120.65105,"From I-80: Take the Hwy 20 cutoff on I-80 and head west toward Nevada City for approximately 5 miles.  Turn right on Bowman Lake Road (Forest Road 18).  Go approximately 4 miles. Turn right onto road 18-006 (You will see a sign for ""Liahona""). Stay to the right until you reach the parking area.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-57,Sagehen Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/sagehen-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-Free",,,39.43459464,-120.2573867,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-58,Salmon Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/salmon-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 21 - October 29,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.62344137,-120.6119192,From 89 N to 49 N: Drive 13 miles headed west to Bassett's Station. Turn right on Gold Lake Hwy. Continue for 2 miles on Gold Lake Hwy to campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-59,Sardine Campground,https://www.fs.usda.gov/r05/tahoe/recreation/sardine-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 21 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,"Yuba River Ranger District
+)",40.24604,-121.448896,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+17,Goumaz,https://www.fs.usda.gov/r05/lassen/recreation/goumaz,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May - October,"No fees are required for this site
+No fee.",,,40.413231,-120.86161,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+18,Gurnsey Creek Campground,https://www.fs.usda.gov/r05/lassen/recreation/gurnsey-creek-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,Generally open early summer into fall.,"Overnight Use:
+Single Site: $14 per night
+Group Site: $56 per night (up to 56 people); $112 per night (up to 112)
+Fees must be paid upon arrival and before each night of camping.",,"Almanor Ranger District
 Address:
-15924 Highway 49 Camptonville, CA 95922
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-265-4531
+(530) 258-2141
 Hours:
-Open by appointment only.  (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.619358,-120.617377,From 89 N to 49 N: Drive 13 miles headed west to Bassett's Station. Turn right on Gold Lake Hwy. Drive 1 1/2 miles north on Gold Lake Hwy and take a left on Sardine Lake Road. Continue for 1/2 mile until reaching campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-60,Schoolhouse Campground,https://www.fs.usda.gov/r05/tahoe/recreation/schoolhouse-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 15 - October 15,"Overnight Use:
-Single Site: $24 per night
-Double Site: $48 per night
-$24-$48/Night",,"Yuba River Ranger District
+)",40.309061,-121.428197,"GPS Info. (Latitude, Longitude):40.30889, -121.4266740°18'32""N, 121°25'36""WFrom the town of Chester, follow Highway 36 west for about 14 miles. Gurnsey Creek Campground is located on the right side of the highway, about 2 miles past the Highway 32 turnoff.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+19,Hat Creek Campground,https://www.fs.usda.gov/r05/lassen/recreation/hat-creek-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Single Site: $16 per night
+Additional Vehicle Fee: $5 per vehicle per night
+$16 per site.  Maximum of 2 vehicles per site.  Extra vehicles $5 per night. Check in after 3:00 PM, check out before 2:00 PM.",,,40.66921,-121.443474,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+20,Hat Creek Group Camp,https://www.fs.usda.gov/r05/lassen/recreation/hat-creek-group-camp,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Group (nonelectric) Site:  $80 per night
+$80.00 per group site per night.",,,40.665848,-121.45115,"GPS Info. (Latitude, Longitude):40.66778, -121.4455640°40'4""N, 121°26'44""WFrom Highways 44 and 89, go through Old Station and continue 1 mile west to the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
+21,High Bridge Campground,https://www.fs.usda.gov/r05/lassen/recreation/high-bridge-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May - September,"Overnight Use:
+Single Site: $14 per night",,"Almanor Ranger District
 Address:
-15924 Highway 49 Camptonville, CA 95922
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-265-4531
+(530) 258-2141
 Hours:
-Open by appointment only.  (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.41807174,-121.1207041,From Camptonville: Drive south on Hwy 49 to Marysville Road and turn right. Continue for 4 miles. Campground is on south east side of Bullard's Bar Reservoir.,Restrooms are available at this site.,,,,True
-61,Shirttail Campground,https://www.fs.usda.gov/r05/tahoe/recreation/shirttail-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,April 30 - October 31,"Overnight Use:
-Single Site: $24 per night (6 people)
-Double Site: $48 per night (12 people)
-Triple Site: $72 per night (18 people)
-Dump Station: $6 per use
-$24/single site (6 people), $48/double site (12 people), $72/triple site (18 people)
-Trailer dump station open on Sundays from 11am to 1pm, $6. Dump station may be available on demand, please contact camp hosts.",,"American River Ranger District
+)",40.340056,-121.306956,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+22,Hole-in-the-Ground Campground,https://www.fs.usda.gov/r05/lassen/recreation/hole-ground-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open from May to September. Open season subject to change based on weather and other factors.,"Overnight Use:
+Single Site: $12 per night",,"Almanor Ranger District
 Address:
-22830 Foresthill Rd Foresthill, CA 95631
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-492-5631
+(530) 258-2141
 Hours:
-8:30 a.m.-4 p.m., Monday-Friday (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.142188,-120.786301,From I-80:   Take the Foresthill Road exit for 17 miles to the town of Foresthill.  Continue on the road for 9 miles to Sugar Pine Road.  Turn left and continue on Sugar Pine Road for 9 miles and take a right on the first road after the Sugar Pine Recreation Area sign.  Travel 1 1/2 miles to the campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-62,Sierra Campground,https://www.fs.usda.gov/r05/tahoe/recreation/sierra-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $20 per night
+)",40.311004,-121.565759,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+23,Honn Campground,https://www.fs.usda.gov/r05/lassen/recreation/honn-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Single Site: $10 per night
 Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.630589,-120.558769,From Sierra City: Drive 7 miles northeast on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-63,Silver Creek Campground,https://www.fs.usda.gov/r05/tahoe/recreation/silver-creek-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 27 - October 10,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$20 per site
-$5 for extra vehicle",,,39.223258,-120.20272,From Truckee: Drive 6 miles south on Hwy 89.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-64,Skillman Campground,https://www.fs.usda.gov/r05/tahoe/recreation/skillman-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 22 - October 15,"Overnight Use:
-Group Site: $110 per night",,,39.318141,-120.793194,"From Nevada City:   Drive 14 miles east on Hwy 20 toward Truckee. Turn right into Skillman and make a left at the first road to reach the campground.From I-80:   Take Hwy 20 exit and drive 12 miles west toward Nevada City. Turn left into Skillman, make a left at the first road to reach the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-65,Snag Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/snag-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 21 - October 15,No fees are required for this site,,,39.67093684,-120.626475,From Hwy 49 at Sierra City: Drive 4 1/2 miles to Bassett's Station. Turn left on Gold Lake Hwy. Continue for roughly 6 miles to Snag Lake Campground.From 89 N to 49 N: Drive 13 miles west to Bassett's Station. Turn right on Gold Lake Hwy. Continue for 5 miles to Snag Lake Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-66,Sterling Lake Campground,https://www.fs.usda.gov/r05/tahoe/recreation/sterling-lake-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $15 per night
-$15 per site",,,39.3536,-120.49335,From I-80: Take Cisco Grove exit and turn north. Take a left on the frontage road after crossing over the freeway. Turn right before Cisco Grove campground onto Rattlesnake Road. Continue 5 miles to Sterling Lake Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-67,Talbot Campground,https://www.fs.usda.gov/r05/tahoe/recreation/talbot-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"No fees are required for this site
-No Fee",,,39.18789873,-120.3734326,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-68,Tunnel Mills Group Campground,https://www.fs.usda.gov/r05/tahoe/recreation/tunnel-mills-group-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Group Site: $99 per night
-$99 per site",,,39.252298,-120.651669,From I-80: Take Emigrant Gap exit and drive 7 1/2 miles south east on Texas Hill Road.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-69,Union Flat Campground,https://www.fs.usda.gov/r05/tahoe/recreation/union-flat-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 20 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.5681071,-120.7450367,From Downieville: Drive 6 miles east on Hwy 49. Campground is on North Yuba River.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-70,Upper Little Truckee Campground,https://www.fs.usda.gov/r05/tahoe/recreation/upper-little-truckee-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 24 - October 13,"Overnight Use:
-Single Site: $20 per night
-Additional Vehicle Fee: $5 per vehicle per night
-Group Site: $66 per night (25 people)
-$20.00 per family site
-$66.00 for the group area
-$5 for extra vehicle",,"Sierraville Ranger District
+$10 per night. Maximum two vehicles per site.  Extra vehicles $5 per night.",,,40.779274,-121.503103,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+24,Legacy Campground,https://www.fs.usda.gov/r05/lassen/recreation/legacy-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open from late May through early October. Open season subject to change based on weather and other factors.,"Overnight Use:
+Single Site: $30 per night
+Double Site: $60 per night
+Fees must be paid upon arrival and before each night of camping. This campground is non-reservable, holding sites in advance of camping is prohibited.",,"Almanor Ranger District
 Address:
-317 So. Lincoln St. Sierraville, CA 96126
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-994-3401
+(530) 258-2141
 Hours:
-8:30 a.m. - 12:30 p.m., Monday-Friday (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.491304,-120.244783,"From either east or west bound Interstate 80, take exit 188 Truckee/Highway 89. Head north toward Sierraville. In approximately 12 miles, turn left into the campground.",Restrooms are available at this site.,Potable water is not available at this site.,,,False
-71,White Cloud Campground,https://www.fs.usda.gov/r05/tahoe/recreation/white-cloud-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 23 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site $5 for extra vehicle",,"Yuba River Ranger District
+)",40.217401,-121.185402,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+25,McCarthy Point Lookout,https://www.fs.usda.gov/r05/lassen/recreation/mccarthy-point-lookout,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,,,,"Almanor Ranger District
 Address:
-15924 Highway 49 Camptonville, CA 95922
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-265-4531
+(530) 258-2141
 Hours:
-Open by appointment only.  (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.319943,-120.846113,From I-80:  Take Hwy 20 exit and drive 14 miles west toward Nevada City.  Turn left into White Cloud and take the right fork to the campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,False
-72,Wild Plum Campground,https://www.fs.usda.gov/r05/tahoe/recreation/wild-plum-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,May 20 - October 15,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle Fee: $5 per vehicle per night
-$24 per site
-$5 for extra vehicle",,,39.56675003,-120.6025745,From Sierra City: Drive 1 mile east of Sierra City on Hwy 49. Campground is 1 1/2 on Wild Plum Road along Haypress Creek.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-73,Woodchuck Campground,https://www.fs.usda.gov/r05/tahoe/recreation/woodchuck-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,Memorial Day - Mid-October,No fees are required for this site,,,39.33333997,-120.5184619,From I-80: Take Cisco Grove exit and turn north. Make a left on frontage road after crossing over freeway. Turn right before Cisco Grove Campground onto Rattlesnake Road. Continue 3 miles to Woodchuck Campground.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
-74,Yuba Pass Campground,https://www.fs.usda.gov/r05/tahoe/recreation/yuba-pass-campground,Tahoe National Forest,https://www.fs.usda.gov/r05/tahoe,,"Overnight Use:
-Single Site: $24 per night
-Additional Vehicle: $5 per vehicle per night
-$24 per site",,"Yuba River Ranger District
+)",40.184729,-121.675755,,,,,,False
+26,Merrill Campground,https://www.fs.usda.gov/r05/lassen/recreation/merrill-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May - October,"Overnight Use:
+Single Site: $35 per night
+Single Site with electric hook-up: $50 per night
+Single Site with full hook-ups: $60 per night
+Double Site with full hook-ups: $80 per night
+Standard campsites are $20/night.  Group sites are $60/night.",,,40.54979,-120.810345,"GPS Info. (Latitude, Longitude):40.54812, -120.8120140°32'53""N, 120°48'43""WFrom Susanville, California, take Highway 36 west for 2 miles to County Road A-1. Turn north and continue 14 miles to the Eagle Lake Recreation Area. Continue past Gallatin Road, the first highway you will come to in the lake basin, and follow the signs to Merrill Campground. Located on County Road A-1.",Restrooms are available at this site.,Potable water is available at this site.,,,True
+27,Potato Patch Campground,https://www.fs.usda.gov/r05/lassen/recreation/potato-patch-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,mid-April - October,"Overnight Use:
+Single Site: $14 per night
+A fee of $14/night is required at this site, fee must be paid upon arrival and before each night of camping.",,"Almanor Ranger District
 Address:
-15924 Highway 49 Camptonville, CA 95922
+900 E. Hwy 36 Chester, CA 96020
 Phone:
-530-265-4531
+(530) 258-2141
 Hours:
-Open by appointment only.  (Closed on
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
 federal holidays
-)",39.615927,-120.490693,From Sierraville: Drive 11 miles west on Hwy 49.  Campground will be on the left.,Restrooms are available at this site.,Potable water is not available at this site.,,,True
+)",40.188709,-121.533284,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+28,Rocky Campground,https://www.fs.usda.gov/r05/lassen/recreation/rocky-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,April - October,"Overnight Use:
+Single Site: $12 per night
+$10 per night per site. Maximum two vehicles per site. Each additional vehicle, $5 per night.",,,40.498577,-121.55697,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+29,Rocky Knoll Campground,https://www.fs.usda.gov/r05/lassen/recreation/rocky-knoll-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open June - September. Open season is subject to change based on weather and other factors.,"Overnight Use:
+Single Site: $12 per night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.498577,-121.55697,,Restrooms are available at this site.,Potable water is available at this site.,,,True
+30,Roxie Peconom Campground,https://www.fs.usda.gov/r05/lassen/recreation/roxie-peconom-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May - October,"No fees are required for this site
+No Fee",,,40.355496,-120.810255,,Restrooms are available at this site.,Potable water is available at this site.,,,False
+31,Silver Bowl Campground,https://www.fs.usda.gov/r05/lassen/recreation/silver-bowl-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open June - September,"Overnight Use:
+Single Site: $12 per night
+*DRINKING WATER NOT CURRENTLY AVAILABLE, Price reduced to $6/night",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.499861,-121.164247,,Restrooms are available at this site.,The hand pump is currently out of service. Water is available from at hand pump at Rocky Knoll Campground.,,,True
+32,Soldier Meadows Campground,https://www.fs.usda.gov/r05/lassen/recreation/soldier-meadows-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open May - October,"Overnight Use:
+Single Site: $10 per night
+Fee must be paid upon arrival and before each night of camping. Fee regulations are strickly enforced.",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.213191,-121.273402,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+33,Warner Creek Campground,https://www.fs.usda.gov/r05/lassen/recreation/warner-creek-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This campground is generally open May - October,"Overnight Use:
+Single Site: $10 per night
+$10 per site per night. Fee must be paid upon arrival and before each night of camping, fee regulations are strictly enforced.",,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.362496,-121.309078,,Restrooms are available at this site.,Potable water is not available at this site.,,,False
+34,West Eagle Campground,https://www.fs.usda.gov/r05/lassen/recreation/west-eagle-campground,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,May 15 - October 10,"Overnight Use:
+Group (nonelectric) Site: $140 per night
+Large group-West Eagle $125.00.",,,40.547498,-120.787418,"GPS Info. (Latitude, Longitude):40.54861, -120.7813940°32'55""N, 120°46'53""WFrom Susanville, California, take Highway 36 for 2 miles west to County Road A-1. Turn north and continue 14 miles to the Eagle Lake Recreation Area, following the signs to the campground.",Restrooms are available at this site.,Potable water is available at this site.,,,False
+35,Willow Lake Dispersed Camping Area,https://www.fs.usda.gov/r05/lassen/recreation/willow-lake-dispersed-camping-area,Lassen National Forest,https://www.fs.usda.gov/r05/lassen,This dispersed camping area is generally open June - October,,,"Almanor Ranger District
+Address:
+900 E. Hwy 36 Chester, CA 96020
+Phone:
+(530) 258-2141
+Hours:
+Monday-Friday: 8:00 a.m. to 4:30 p.m. (Closed on
+federal holidays
+)",40.402603,-121.353502,,Restrooms are available at this site.,Potable water is not available at this site.,,,True

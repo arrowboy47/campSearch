@@ -240,7 +240,3 @@ for i, url in enumerate(all_urls):
     df.to_csv(f"data/{name}.csv")
     if not os.path.exists(f"data/{name}.csv"):
         print(f"Error creating {name}.csv")
-
-
-
-

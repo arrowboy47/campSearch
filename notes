@@ -12,10 +12,10 @@ contact_phone -> contact_info
 seasons_of_use -> season_of_use
 num_sites -> none
 fee -> fee_info
+overview -> overview
 
-from df that does not have a match yet:
-restrooms
-water
-amenities
-body_of_water
-overview
+amenities table and df: 
+restrooms ->   restrooms 
+water  -> water
+amenities -> amenities
+body_of_water -> body_of_water
