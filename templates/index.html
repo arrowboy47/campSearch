@@ -1,11 +1,34 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Camp Search</title>
+  <title>Camp Search</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #layout { display: flex; gap: 20px; }
+    #left { flex: 1; }
+    #right { flex: 2; }
+  </style>
 </head>
 <body>
-    <h1>Welcome to Camp Search!</h1>
-    <p>This is the start of the shit.</p>
+  <h1>Welcome to Camp Search</h1>
+
+  <!-- Search Bar -->
+  <input type="text" id="searchInput" placeholder="Search for a campsite..." style="width: 100%; padding: 10px; font-size: 16px;" />
+  <button id="searchBtn">Search</button>
+
+  <!-- Main Layout -->
+  <div id="layout">
+    <div id="left">
+      <!-- Calendar Placeholder -->
+      <h2>Select Dates</h2>
+      <div id="calendar">[ calendar goes here ]</div>
+    </div>
+
+    <div id="right">
+      <!-- Map Placeholder -->
+      <h2>Map of Campsites</h2>
+      <div id="map" style="width: 100%; height: 400px; background: #eee;">[ map goes here ]</div>
+    </div>
+  </div>
 </body>
 </html>
