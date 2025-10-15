@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 
-# get forecast for ONE day:w
+# get forecast for ONE day
 def get_forecast(lat, lon, date):
     """
     Calls OpenWeather One Call API and returns daily forecast data.

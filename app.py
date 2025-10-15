@@ -5,7 +5,7 @@ out of this thing and try to treat comments as like learning tools so i can come
 
 from flask import Flask, request, jsonify, render_template
 from db import get_campsite_by_id
-# from weather import get_forecast
+from weather import get_forecast
 from datetime import datetime, timedelta
 
 # Create Flask app
@@ -25,6 +25,7 @@ def get_campsite(campsite_id):
     return jsonify(data)
 
 # weather route
+# one note the onecall openweather api only does forecasts a year and a half in the future
 @app.route("/api/weather")
 def weather():
     """
@@ -32,62 +33,55 @@ def weather():
     '?' and whatever string was passed to the get function is the text you pass the value to by saying equals
     e.g. https://url/api/weather?site_id=4 
     """
-    site_id = request.args.get("site_id") 
+    
+    # start and end should be strings in the format YYYY-MM-DD
+    site_id = request.args.get("site_id")
     start_str = request.args.get("start")
     end_str = request.args.get("end")
 
-    # error for if site id not provided
+    # Validate site_id
     if not site_id:
         return jsonify({"error": "site_id is required"}), 400
-
-    # error for if site_id doesnt exist
+        
     campsite = get_campsite_by_id(site_id)
+
     if not campsite:
         return jsonify({"error": "Campsite not found"}), 404
 
     lat = campsite["latitude"]
     lon = campsite["longitude"]
-  
-    pass
 
-    # try:
-    #     forecast_data = get_forecast(lat, lon)
-    # except Exception as e:
-    #     return jsonify({"error": "Failed to fetch weather", "details": str(e)}), 500
+    # Handle and parse start/end dates
+    # if no start date is provided, set it to today and end date doesnt matter
+    try:
+        start_date = datetime.strptime(start_str, "%Y-%m-%d").date() if start_str else datetime.now().date()
+        end_date = datetime.strptime(end_str, "%Y-%m-%d").date() if end_str else None
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
-    # # Handle date range
-    # today = datetime.utcnow().date()
-    # default_start = today + timedelta(days=1)
-    # default_end = default_start
+    forecast_data = []
 
-    # try:
-    #     start = datetime.strptime(start_str, "%Y-%m-%d").date() if start_str else default_start
-    #     end = datetime.strptime(end_str, "%Y-%m-%d").date() if end_str else default_end
-    # except ValueError:
-    #     return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+    try:
+        if not end_date:
+            # Only one day requested
+            forecast = get_forecast(lat, lon, start_date)
+            forecast_data.append(forecast)
+        else:
+            # loop through the dates and get the weather for each day
+            days = (end_date - start_date).days + 1
+            for i in range(days):
+                current_day = start_date + timedelta(days=i)
+                forecast = get_forecast(lat, lon, current_day)
+                forecast_data.append(forecast)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch weather", "details": str(e)}), 500
 
-    # # Filter forecast data by date range
-    # results = []
-    # for day in forecast_data:
-    #     dt = datetime.utcfromtimestamp(day["dt"]).date()
-    #     if start <= dt <= end:
-    #         results.append({
-    #             "date": dt.isoformat(),
-    #             "summary": day["weather"][0]["description"].title(),
-    #             "temp_min": day["temp"]["min"],
-    #             "temp_max": day["temp"]["max"],
-    #             "precip_chance": day.get("pop", 0)  # probability of precipitation
-    #         })
-
-    # return jsonify({
-    #     "site_id": site_id,
-    #     "lat": lat,
-    #     "lon": lon,
-    #     "forecast": results
-    # })
-
-
-
+    return jsonify({
+        "site_id": site_id,
+        "lat": lat,
+        "lon": lon,
+        "forecast": forecast_data
+    })
 
 # runs the app and runs the index route by default, I think?
 # bash: p app.py
