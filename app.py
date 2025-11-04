@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify, render_template
 from db import get_campsite_by_id
 from weather import get_forecast
 from datetime import datetime, timedelta
+from search import get_campsite_by_name
 
 # Create Flask app
 app = Flask(__name__)
@@ -82,6 +83,15 @@ def weather():
         "lon": lon,
         "forecast": forecast_data
     })
+
+@app.route("/api/search")
+def search():
+    '''
+    Return a list of N campsites that match the campsite_name
+    '''
+    campsite_name = request.args.get("campsite_name")
+    campsites = get_campsite_by_name(campsite_name)
+    return jsonify(campsites)
 
 # runs the app and runs the index route by default, I think?
 # bash: p app.py
