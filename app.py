@@ -89,9 +89,20 @@ def search():
     '''
     Return a list of N campsites that match the campsite_name
     '''
-    campsite_name = request.args.get("campsite_name")
-    campsites = get_campsite_by_name(campsite_name)
-    return jsonify(campsites)
+    query = request.args.get("query")
+
+    if not query:
+        return jsonify({"error": "Missing search query"}), 400
+
+    try:
+        matches = get_campsite_by_name(query)
+    except Exception as e:
+        return jsonify({"error": "Search failed", "details": str(e)}), 500
+
+    if not matches:
+        return jsonify({"message": "No matches found"}), 404
+
+    return jsonify(matches)
 
 # runs the app and runs the index route by default, I think?
 # bash: p app.py
