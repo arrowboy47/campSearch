@@ -19,6 +19,7 @@ def get_campsite_by_name(query, fuzzthresh=50, limit=10):
     Ways to improve this:
     1. Have preliminary filtering of other features like activities, amenities, etc. Then, fuzzy match the name on those results
     2. make a counter of the number a times a campsite has been selected from a search result and use that to weight the score
+    3. some sort of ML model to return best results
     '''
     conn = get_connection()
     cur = conn.cursor()

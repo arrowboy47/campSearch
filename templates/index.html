@@ -13,13 +13,15 @@
   <h1>Welcome to Camp Search</h1>
 
   <!-- Search Bar -->
-  <input type="text" id="searchInput" placeholder="Search for a campsite" style="width: 100%; padding: 10px; font-size: 16px;" />
-  <button id="searchBtn">Search</button>
+  <form id="searchForm">
+  <input type="text" id="searchInput" placeholder="Search for a campsite" style="width: 98%; padding: 10px; font-size: 16px;" required/>
+  <button type="submit">Search</button>
+  </form>
 
   <!-- Main Layout -->
   <div id="layout">
     <div id="left">
-      <!-- Calendar Placeholder -->
+      <!-- Calendar Placeolder -->
       <h2>Select Dates</h2>
       <div id="calendar">[ calendar goes here ]</div>
     </div>
@@ -30,5 +32,6 @@
       <div id="map" style="width: 100%; height: 400px; background: #eee;">[ map goes here ]</div>
     </div>
   </div>
+  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 </body>
 </html>
