@@ -12,13 +12,13 @@ def get_campsite_by_name(query, fuzzthresh=50, limit=10):
     '''
     Return a list of campsites that match the campsite_name(query). Checks the database, uses rapidfuzz to findthe closest match
     Search algo has complexity of O(2n) (this prob is not correct but good enough) where n is the number of campsites in the database
+    the search also fuzzy match the forest name as well as the campsite name: if the forest name is the best match, it will return all campsites from that forest and sort them by their name match score
     '''
     
     '''
     Ways to improve this:
     1. Have preliminary filtering of other features like activities, amenities, etc. Then, fuzzy match the name on those results
-    2. make the search also fuzzy match the forest name as well as the campsite name
-    3. make a counter of the number a times a campsite has been selected from a search result and use that to weight the score
+    2. make a counter of the number a times a campsite has been selected from a search result and use that to weight the score
     '''
     conn = get_connection()
     cur = conn.cursor()
