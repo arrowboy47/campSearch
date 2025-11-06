@@ -47,14 +47,12 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
         # Simply returning the max of the three
         site_score = max(token_score, partial_adjusted_score)
         best_site_score = max(best_site_score, site_score)
-        print("site_score: ", best_site_score)
         
         # forest name scores
         partial_forest_score = fuzz.partial_ratio(query, forest_flat) * .6
         exact_forest_substring = int(query in forest_flat) * 100
         forest_score = max(partial_forest_score, exact_forest_substring)
         best_forest_score = max(best_forest_score, forest_score)
-        print("forest_score: ", best_forest_score)
 
         # Store top site matches
         if site_score == 100 and forest_score != 100:
