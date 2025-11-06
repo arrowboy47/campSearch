@@ -3,31 +3,32 @@
 <head>
   <title>Search Results</title>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
+    body { font-family: sans-serif; padding: 20px; }
     .card {
       border: 1px solid #ccc;
       padding: 15px;
       margin-bottom: 10px;
       border-radius: 6px;
     }
+    .card h2 {
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
-  <h1>Search Results</h1>
-  <div id="results">
-    <!-- Placeholder cards -->
-    <div class="card">
-      <h2>Campsite Name</h2>
-      <p>Forest Name</p>
-      <p>Weather: Sunny</p>
-      <a href="/campsite/1">View Details</a>
-    </div>
-    <div class="card">
-      <h2>Another Site</h2>
-      <p>Forest Name</p>
-      <p>Weather: Rainy</p>
-      <a href="/campsite/2">View Details</a>
-    </div>
-  </div>
+  <h1>Search Results for "{{ query }}"</h1>
+
+  {% if campsites %}
+    {% for camp in campsites %}
+      <div class="card">
+        <h2><a href="/campsite/{{ camp.id }}" style="text-decoration: none; color: #9d30cc;">{{ camp.name }}</a></h2>
+        {% if camp.forest_name %}
+        <p><strong>Forest:</strong> {{ camp.forest_name }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No results found.</p>
+  {% endif %}
 </body>
 </html>

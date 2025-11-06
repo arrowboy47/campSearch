@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Campsite Details</title>
+  <title>{{ campsite.name }}</title>
   <style>
     body { font-family: sans-serif; margin: 20px; }
   </style>
 </head>
 <body>
-  <h1>[ Campsite Name ]</h1>
-  <p><strong>Location:</strong> Latitude: [LAT], Longitude: [LON]</p>
-  <p><strong>Status:</strong> Open</p>
-  <p><strong>Weather Forecast:</strong> [ weather info here ]</p>
+  <h1>{{ campsite.name }}</h1>
 
-  <h2>Amenities</h2>
-  <ul>
-    <li>Water: Available</li>
-    <li>Restrooms: Yes</li>
-    <li>Fire Ring: Yes</li>
-  </ul>
+  {% if campsite.managing_unit %}
+  <p><strong>Forest:</strong> {{ campsite.managing_unit }}</p>
+  {% endif %}
 
-  <h2>Description</h2>
-  <p>[ overview goes here ]</p>
+  {% if campsite.site_url %}
+  <p><a href="{{ campsite.site_url }}" target="_blank">FSUDA Site</a></p>
+  {% endif %}
 
-  <h2>Directions</h2>
-  <p>[ driving directions ]</p>
+  {% if campsite.latitude and campsite.longitude %}
+  <p><strong>Location:</strong> {{ campsite.latitude }}, {{ campsite.longitude }}</p>
+  {% endif %}
 
-  <h2>Calendar</h2>
-  <div id="calendar">[ calendar for date selection ]</div>
+  {% if campsite.overview %}
+  <h2>Overview</h2>
+  <p>{{ campsite.overview }}</p>
+  {% endif %}
+
+  {% if campsite.fee %}
+  <h3>Fees</h3>
+  <p>{{ campsite.fee }}</p>
+  {% endif %}
+
+  {% if campsite.seasons_of_use %}
+  <h3>Seasons of Use</h3>
+  <p>{{ campsite.seasons_of_use }}</p>
+  {% endif %}
+
+  <a href="/">← Back to Search</a>
 </body>
 </html>

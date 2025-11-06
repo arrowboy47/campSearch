@@ -104,7 +104,26 @@ def search():
 
     return jsonify(matches)
 
+# first non-api route
+@app.route("/results")
+def results():
+    query = request.args.get("query")
+    # check if query is in the url
+    if not query:
+        return "No query provided", 400
+    
+    matches = get_campsite_by_name(query)
+    return render_template("results.html", query=query, campsites=matches)
+
+@app.route("/campsite/<int:campsite_id>")
+def campsite(campsite_id):
+    campsite_data = get_campsite_by_id(campsite_id)
+    if not campsite_data:
+        return "Campsite not found", 404
+
+    return render_template("campsite.html", campsite=campsite_data)
+
 # runs the app and runs the index route by default, I think?
-# bash: p app.py
+# zsh: p app.py
 if __name__ == "__main__":
     app.run(debug=True)
