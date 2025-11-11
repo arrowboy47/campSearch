@@ -25,6 +25,13 @@
         {% if camp.forest_name %}
         <p><strong>Forest:</strong> {{ camp.forest_name }}</p>
         {% endif %}
+        <p><strong>Status:</strong> 
+          {% if camp.is_open %} 🟩 Open {% else %}  🟥 Closed {% endif %}
+        </p>
+        {% if camp.forecast_json %}
+        <p><strong>Weather:</strong></p>
+        <pre>{{camp.forecast_json}}</pre>
+        {% endif %}
       </div>
     {% endfor %}
   {% else %}

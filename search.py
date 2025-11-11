@@ -26,7 +26,18 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
     
     # get all campsites from the database
     # we will see how inefficient this is
-    cur.execute("SELECT id, name, forest_name FROM campsites;")
+    cur.execute("""SELECT 
+    campsites.id,
+    campsites.name,
+    campsites.forest_name,
+    status_updates.is_open,
+    weather_forecasts.forecast_json
+FROM campsites
+LEFT JOIN status_updates ON campsites.id = status_updates.campsite_id
+LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
+""")
+
+    #     LEFT JOIN weather_forecast ON campsites.id = forecast_json
     all_sites = cur.fetchall()
     
     query = normalize(query)
@@ -36,7 +47,7 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
     best_forest_score = 0
     best_forest_match = None
     # loop through site names and find the closest match
-    for site_id, name, forest_name in all_sites: # the comma helps unpack the tuple 
+    for site_id, name, forest_name, is_open, forecast_json in all_sites: # the comma helps unpack the tuple 
         name_flat = normalize(name)
         forest_flat = normalize(forest_name)
         
@@ -56,19 +67,21 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
 
         # Store top site matches
         if site_score == 100 and forest_score != 100:
-            return [{"id": site_id, "name": name, "score": site_score}]
+            return [{"id": site_id, "name": name, "score": site_score, "is_open": is_open, "forecast": forecast_json}]
      # Store site matches
         if site_score >= fuzzthresh:
             name_results.append({
                 "id": site_id,
                 "name": name,
                 "forest_name": forest_name,
-                "score": site_score
+                "score": site_score,
+                "is_open": is_open,
+                "forecast": forecast_json
             })
 
         # Collect potential forest matches
         if forest_score >= fuzzthresh:
-            forest_scores.setdefault(forest_name, []).append((site_id, name, site_score))
+            forest_scores.setdefault(forest_name, []).append((site_id, name, site_score, is_open, forecast_json))
 
     # --- Decide if this is a forest search ---
     if best_forest_score >= fuzzthresh and best_forest_score > best_site_score:
@@ -83,14 +96,10 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
             forest_name, site_list = best_forest_match
             sorted_sites = sorted(site_list, key=lambda x: x[2], reverse=True)
             return [
-                {"id": sid, "name": sname, "forest_name": forest_name, "score": score}
-                for sid, sname, score in sorted_sites
+                {"id": sid, "name": sname, "forest_name": forest_name, "score": score, "is_open": is_open, "forecast": forecast_json}
+                for sid, sname, score, is_open, forecast_json in sorted_sites
             ]
 
     # Otherwise, return top site matches
-    name_results.sort(key=lambda x: x["score"], reverse=True)
-    return name_results[:limit]
-
-    # if forest is not the best match, return top name matches
     name_results.sort(key=lambda x: x["score"], reverse=True)
     return name_results[:limit]
