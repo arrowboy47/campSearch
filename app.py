@@ -123,6 +123,7 @@ def campsite(campsite_id):
 
     return render_template("campsite.html", campsite=campsite_data)
 
+# lets see what next
 # runs the app and runs the index route by default, I think?
 # zsh: p app.py
 if __name__ == "__main__":
