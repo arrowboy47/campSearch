@@ -22,7 +22,7 @@ def update_all_weather_and_status():
     cur.execute("SELECT id, latitude, longitude FROM campsites;")
     campsites = cur.fetchall()
 
-    for site_id, lat, lon in campsites:
+    for i, (site_id, lat, lon) in enumerate(campsites):
         time.sleep(random.uniform(1, 2))
         try:
             # Update weather 
@@ -56,6 +56,10 @@ def update_all_weather_and_status():
         except Exception:
             print(f"Error updating site {site_id}")
             traceback.print_exc()
+            
+        # break loop after 4 updates to test and not overload the database
+        if i == 4:
+            break
 
     conn.commit()
     cur.close()
