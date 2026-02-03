@@ -14,32 +14,40 @@ def get_campsite_by_name(query, fuzzthresh=40, limit=10):
     Search algo has complexity of O(2n) (this prob is not correct but good enough) where n is the number of campsites in the database
     the search also fuzzy match the forest name as well as the campsite name: if the forest name is the best match, it will return all campsites from that forest and sort them by their name match score
     '''
-    
+
     '''
     Ways to improve this:
     1. Have preliminary filtering of other features like activities, amenities, etc. Then, fuzzy match the name on those results
     2. make a counter of the number a times a campsite has been selected from a search result and use that to weight the score
     3. some sort of ML model to return best results
     '''
-    conn = get_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return []
     
     # get all campsites from the database
     # we will see how inefficient this is
-    cur.execute("""SELECT 
+    cur.execute("""SELECT
     campsites.id,
     campsites.name,
     campsites.forest_name,
+    campsites.latitude,
+    campsites.longitude,
     status_updates.is_open,
-    weather_forecasts.forecast_json
+    weather_forecasts.forecast_json,
+    amenities.water_activities,
+    amenities.boating
 FROM campsites
 LEFT JOIN status_updates ON campsites.id = status_updates.campsite_id
-LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
+LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id
+LEFT JOIN amenities ON campsites.id = amenities.campsite_id;
 """)
 
-    #     LEFT JOIN weather_forecast ON campsites.id = forecast_json
     all_sites = cur.fetchall()
-    
+
     query = normalize(query)
     name_results = []
     forest_scores = {}
@@ -47,7 +55,7 @@ LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
     best_forest_score = 0
     best_forest_match = None
     # loop through site names and find the closest match
-    for site_id, name, forest_name, is_open, forecast_json in all_sites: # the comma helps unpack the tuple 
+    for site_id, name, forest_name, lat, lon, is_open, forecast_json, water_activities, boating in all_sites: # the comma helps unpack the tuple 
         name_flat = normalize(name)
         forest_flat = normalize(forest_name)
         
@@ -67,7 +75,7 @@ LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
 
         # Store top site matches
         if site_score == 100 and forest_score != 100:
-            return [{"id": site_id, "name": name, "score": site_score, "is_open": is_open, "forecast": forecast_json}]
+            return [{"id": site_id, "name": name, "score": site_score, "is_open": is_open, "forecast": forecast_json, "water_activities": water_activities, "boating": boating, "latitude": lat, "longitude": lon, "forest_name": forest_name}]
      # Store site matches
         if site_score >= fuzzthresh:
             name_results.append({
@@ -76,12 +84,16 @@ LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
                 "forest_name": forest_name,
                 "score": site_score,
                 "is_open": is_open,
-                "forecast": forecast_json
+                "forecast": forecast_json,
+                "water_activities": water_activities,
+                "boating": boating,
+                "latitude": lat,
+                "longitude": lon
             })
 
         # Collect potential forest matches
         if forest_score >= fuzzthresh:
-            forest_scores.setdefault(forest_name, []).append((site_id, name, site_score, is_open, forecast_json))
+            forest_scores.setdefault(forest_name, []).append((site_id, name, site_score, is_open, forecast_json, water_activities, boating, lat, lon))
 
     # --- Decide if this is a forest search ---
     if best_forest_score >= fuzzthresh and best_forest_score > best_site_score:
@@ -96,10 +108,14 @@ LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id;
             forest_name, site_list = best_forest_match
             sorted_sites = sorted(site_list, key=lambda x: x[2], reverse=True)
             return [
-                {"id": sid, "name": sname, "forest_name": forest_name, "score": score, "is_open": is_open, "forecast": forecast_json}
-                for sid, sname, score, is_open, forecast_json in sorted_sites
+                {"id": sid, "name": sname, "forest_name": forest_name, "score": score, "is_open": is_open, "forecast": forecast_json, "water_activities": water, "boating": boat, "latitude": lat, "longitude": lon}
+                for sid, sname, score, is_open, forecast_json, water, boat, lat, lon in sorted_sites
             ]
 
     # Otherwise, return top site matches
     name_results.sort(key=lambda x: x["score"], reverse=True)
+
+    cur.close()
+    conn.close()
+
     return name_results[:limit]

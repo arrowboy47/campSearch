@@ -5,12 +5,15 @@ out of this thing and try to treat comments as like learning tools so i can come
 
 from flask import Flask, request, jsonify, render_template
 from db import get_campsite_by_id
-from weather import get_forecast
+from weather import get_forecast, format_weather_for_display
 from datetime import datetime, timedelta
 from search import get_campsite_by_name
 
 # Create Flask app
 app = Flask(__name__)
+
+# Add custom template filter for weather formatting
+app.jinja_env.filters['format_weather'] = format_weather_for_display
 
 # routes tell the app what to do when a user goes to a certain url
 # the index/home is the "root" of the site
@@ -111,17 +114,79 @@ def results():
     # check if query is in the url
     if not query:
         return "No query provided", 400
-    
-    matches = get_campsite_by_name(query)
-    return render_template("results.html", query=query, campsites=matches)
+
+    try:
+        # Get filters from request
+        open_only = request.args.get("open_only") == "on"
+        water_only = request.args.get("water_only") == "on"
+        boating_only = request.args.get("boating_only") == "on"
+        selected_forest = request.args.get("forest")
+
+        # Get search results
+        matches = get_campsite_by_name(query)
+
+        # Handle empty results
+        if not matches:
+            return render_template("results.html",
+                                 query=query,
+                                 campsites=[],
+                                 all_forests=[],
+                                 filters={
+                                     "open_only": open_only,
+                                     "water_only": water_only,
+                                     "boating_only": boating_only,
+                                     "selected_forest": selected_forest
+                                 })
+
+        # Apply filters
+        filtered_matches = []
+        for camp in matches:
+            # Filter by open status
+            if open_only and not camp.get("is_open"):
+                continue
+
+            # Filter by water activities
+            if water_only and not camp.get("water_activities"):
+                continue
+
+            # Filter by boating
+            if boating_only and not camp.get("boating"):
+                continue
+
+            # Filter by forest
+            if selected_forest and camp.get("forest_name") != selected_forest:
+                continue
+
+            filtered_matches.append(camp)
+
+        # Get unique forest names for filter dropdown
+        all_forests = sorted(set(camp.get("forest_name", "Unknown") for camp in matches if camp.get("forest_name")))
+
+        return render_template("results.html",
+                             query=query,
+                             campsites=filtered_matches,
+                             all_forests=all_forests,
+                             filters={
+                                 "open_only": open_only,
+                                 "water_only": water_only,
+                                 "boating_only": boating_only,
+                                 "selected_forest": selected_forest
+                             })
+    except Exception as e:
+        print(f"Error in results route: {e}")
+        return f"An error occurred while searching. Please try again.", 500
 
 @app.route("/campsite/<int:campsite_id>")
 def campsite(campsite_id):
-    campsite_data = get_campsite_by_id(campsite_id)
-    if not campsite_data:
-        return "Campsite not found", 404
+    try:
+        campsite_data = get_campsite_by_id(campsite_id)
+        if not campsite_data:
+            return "Campsite not found", 404
 
-    return render_template("campsite.html", campsite=campsite_data)
+        return render_template("campsite.html", campsite=campsite_data)
+    except Exception as e:
+        print(f"Error loading campsite {campsite_id}: {e}")
+        return "An error occurred while loading this campsite.", 500
 
 # lets see what next
 # runs the app and runs the index route by default, I think?

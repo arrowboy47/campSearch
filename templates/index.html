@@ -3,34 +3,152 @@
 <head>
   <title>Camp Search</title>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    #layout { display: flex; gap: 20px; }
-    #left { flex: 1; }
-    #right { flex: 2; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f9fafb;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 40px;
+      font-size: 2.5em;
+    }
+    .search-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    #searchForm {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    #searchInput:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    #filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    #filters.visible {
+      display: flex;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    .filter-item label {
+      font-size: 14px;
+      color: #4b5563;
+    }
+    button[type="submit"] {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button[type="submit"]:hover {
+      background: #2563eb;
+    }
+    .map-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #map {
+      width: 100%;
+      height: 500px;
+      background: #e5e7eb;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h1>Welcome to Camp Search</h1>
+  <div class="container">
+    <h1>Camp Search</h1>
 
-  <!-- Search Bar -->
-  <form id="searchForm">
-  <input type="text" id="searchInput" placeholder="Search for a campsite" style="width: 98%; padding: 10px; font-size: 16px;" required/>
-  </form>
+    <div class="search-section">
+      <form id="searchForm" method="GET" action="/results">
+        <input
+          type="text"
+          id="searchInput"
+          name="query"
+          placeholder="Search for a campsite or forest..."
+          required
+        />
 
-  <!-- Main Layout -->
-  <div id="layout">
-    <div id="left">
-      <!-- Calendar Placeolder -->
-      <h2>Select Dates</h2>
-      <div id="calendar">[ calendar goes here ]</div>
+        <div id="filters">
+          <div class="filter-item">
+            <input type="checkbox" name="open_only" id="open_only">
+            <label for="open_only">Open Only</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" name="water_only" id="water_only">
+            <label for="water_only">Water Activities</label>
+          </div>
+          <div class="filter-item">
+            <input type="checkbox" name="boating_only" id="boating_only">
+            <label for="boating_only">Boating</label>
+          </div>
+        </div>
+
+        <button type="submit">Search</button>
+      </form>
     </div>
 
-    <div id="right">
-      <!-- Map Placeholder -->
-      <h2>Map of Campsites</h2>
-      <div id="map" style="width: 100%; height: 400px; background: #eee;">[ map goes here ]</div>
+    <div class="map-section">
+      <h2 style="margin-top: 0;">Explore Campsites</h2>
+      <div id="map">Map coming soon</div>
     </div>
   </div>
-  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const filters = document.getElementById('filters');
+
+    searchInput.addEventListener('focus', function() {
+      filters.classList.add('visible');
+    });
+  </script>
 </body>
 </html>

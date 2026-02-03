@@ -3,39 +3,137 @@
 <head>
   <title>Search Results</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .card {
-      border: 1px solid #ccc;
+    body { font-family: sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .filters {
+      background: #f5f5f5;
       padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .filter-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .card h2 {
       margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: #666;
+      font-size: 14px;
+    }
+    .status-open { color: #22c55e; font-weight: bold; }
+    .status-closed { color: #ef4444; font-weight: bold; }
+    .results-count {
+      color: #666;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2563eb;
     }
   </style>
 </head>
 <body>
-  <h1>Search Results for "{{ query }}"</h1>
+  <div class="header">
+    <h1>Search Results for "{{ query }}"</h1>
+    <a href="/">New Search</a>
+  </div>
+
+  <form method="GET" action="/results" class="filters">
+    <input type="hidden" name="query" value="{{ query }}">
+    <div class="filter-row">
+      <div class="filter-item">
+        <input type="checkbox" name="open_only" id="open_only" {% if filters.open_only %}checked{% endif %}>
+        <label for="open_only">Open Only</label>
+      </div>
+      <div class="filter-item">
+        <input type="checkbox" name="water_only" id="water_only" {% if filters.water_only %}checked{% endif %}>
+        <label for="water_only">Water Activities</label>
+      </div>
+      <div class="filter-item">
+        <input type="checkbox" name="boating_only" id="boating_only" {% if filters.boating_only %}checked{% endif %}>
+        <label for="boating_only">Boating</label>
+      </div>
+      {% if all_forests %}
+      <div class="filter-item">
+        <label for="forest">Forest:</label>
+        <select name="forest" id="forest">
+          <option value="">All Forests</option>
+          {% for forest in all_forests %}
+          <option value="{{ forest }}" {% if filters.selected_forest == forest %}selected{% endif %}>{{ forest }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <button type="submit">Apply Filters</button>
+    </div>
+  </form>
+
+  <div class="results-count">
+    Found {{ campsites|length }} campsite{% if campsites|length != 1 %}s{% endif %}
+  </div>
 
   {% if campsites %}
     {% for camp in campsites %}
       <div class="card">
         <h2><a href="/campsite/{{ camp.id }}" style="text-decoration: none; color: #161416;">{{ camp.name }}</a></h2>
-        {% if camp.forest_name %}
-        <p><strong>Forest:</strong> {{ camp.forest_name }}</p>
-        {% endif %}
-        <p><strong>Status:</strong> 
-          {% if camp.is_open %} 🟩 Open {% else %}  🟥 Closed {% endif %}
-        </p>
-        {% if camp.forecast_json %}
-        <p><strong>Weather:</strong></p>
-        <pre>{{camp.forecast_json}}</pre>
-        {% endif %}
+
+        <div class="card-meta">
+          {% if camp.forest_name %}
+          <span><strong>Forest:</strong> {{ camp.forest_name }}</span>
+          {% endif %}
+
+          <span><strong>Status:</strong>
+            {% if camp.is_open %}
+            <span class="status-open">Open</span>
+            {% else %}
+            <span class="status-closed">Closed</span>
+            {% endif %}
+          </span>
+
+          {% if camp.forecast %}
+          <span><strong>Weather:</strong> {{ camp.forecast|format_weather }}</span>
+          {% endif %}
+
+          {% if camp.water_activities %}
+          <span>Water Activities</span>
+          {% endif %}
+
+          {% if camp.boating %}
+          <span>Boating</span>
+          {% endif %}
+        </div>
       </div>
     {% endfor %}
   {% else %}
-    <p>No results found.</p>
+    <p>No results found. Try adjusting your filters.</p>
   {% endif %}
 </body>
 </html>
