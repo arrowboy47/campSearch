@@ -13,7 +13,8 @@ CREATE TABLE campsites (
     contact_phone TEXT,
     seasons_of_use TEXT,
     num_sites INTEGER,
-    fee TEXT
+    fee TEXT,
+    primary_image_url TEXT
 );
 
 -- AMENITIES (you can expand this if you want more fields later)
@@ -57,4 +58,3 @@ CREATE TABLE availability (
     availability_raw TEXT,  -- you can store calendar data or notes here
     last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-

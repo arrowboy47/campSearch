@@ -1,41 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Search Results</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .card {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-    }
-    .card h2 {
-      margin-top: 0;
-    }
-  </style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Search Results · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
-<body>
-  <h1>Search Results for "{{ query }}"</h1>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
+			</div>
+		</div>
+	</header>
 
-  {% if campsites %}
-    {% for camp in campsites %}
-      <div class="card">
-        <h2><a href="/campsite/{{ camp.id }}" style="text-decoration: none; color: #161416;">{{ camp.name }}</a></h2>
-        {% if camp.forest_name %}
-        <p><strong>Forest:</strong> {{ camp.forest_name }}</p>
-        {% endif %}
-        <p><strong>Status:</strong> 
-          {% if camp.is_open %} 🟩 Open {% else %}  🟥 Closed {% endif %}
-        </p>
-        {% if camp.forecast_json %}
-        <p><strong>Weather:</strong></p>
-        <pre>{{camp.forecast_json}}</pre>
-        {% endif %}
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No results found.</p>
-  {% endif %}
+	<main class="page-main">
+		<section class="results-header">
+			<div class="results-header-inner">
+				<h1 class="results-title">Search results</h1>
+				{% if query %}
+					<p class="results-subtitle">
+						Showing matches for <span class="pill pill-soft">"{{ query }}"</span>
+					</p>
+				{% else %}
+					<p class="results-subtitle">
+						Showing results based on filters only.
+					</p>
+				{% endif %}
+				<a href="/" class="link-quiet">← New search</a>
+			</div>
+		</section>
+
+		<section class="results-list">
+			{% if campsites %}
+				<div class="results-grid">
+					{% for camp in campsites %}
+						<article class="result-card">
+							<header class="result-card-header">
+								<h2 class="result-card-title">
+									<a
+									  href="/campsite/{{ camp.id }}{% if start_date or end_date %}?{% endif %}{% if start_date %}start={{ start_date }}{% endif %}{% if start_date and end_date %}&{% endif %}{% if end_date %}end={{ end_date }}{% endif %}"
+									  class="result-card-link"
+									>{{ camp.name }}</a>
+								</h2>
+
+								<span class="status-chip {% if camp.is_open %}status-open{% else %}status-closed{% endif %}">
+									{% if camp.is_open %}Open{% else %}Closed{% endif %}
+								</span>
+							</header>
+
+							<div class="result-card-body">
+								{% if camp.forest_name %}
+									<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>
+								{% endif %}
+
+								<div class="badge-row">
+									{% if camp.has_water %}
+										<span class="badge">💧 Water</span>
+									{% endif %}
+									{% if camp.has_restrooms %}
+										<span class="badge">🚻 Restrooms</span>
+									{% endif %}
+									{% if not camp.has_water and not camp.has_restrooms %}
+										<span class="badge badge-muted">No amenities listed</span>
+									{% endif %}
+								</div>
+
+								{% if camp.weather_summary %}
+									<p class="meta-row">
+										<span class="meta-label">Weather</span>
+										<span class="meta-value">
+											{% if camp.weather_summary.sky %}
+												{{ camp.weather_summary.sky }}
+											{% endif %}
+											{% if camp.weather_summary.high is not none and camp.weather_summary.low is not none %}
+												· High {{ camp.weather_summary.high|round(0) }}° / Low {{ camp.weather_summary.low|round(0) }}°
+											{% endif %}
+											{% if camp.weather_summary.precip_in is not none %}
+												· {{ camp.weather_summary.precip_in|round(2) }} in precip
+											{% endif %}
+										</span>
+									</p>
+								{% endif %}
+							</div>
+						</article>
+					{% endfor %}
+				</div>
+			{% else %}
+				<div class="empty-state">
+					<h2 class="empty-title">No campsites found</h2>
+					<p class="empty-body">Try a broader search term, a different forest, or remove some filters.</p>
+					<a href="/" class="btn btn-secondary">Start a new search</a>
+				</div>
+			{% endif %}
+		</section>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Results are approximate and may change with seasonal closures.</p>
+	</footer>
 </body>
 </html>

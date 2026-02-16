@@ -1,41 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>{{ campsite.name }}</title>
-  <style>
-    body { font-family: sans-serif; margin: 20px; }
-  </style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ campsite.name }} · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
-<body>
-  <h1>{{ campsite.name }}</h1>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
+			</div>
+		</div>
+	</header>
 
-  {% if campsite.managing_unit %}
-  <p><strong>Forest:</strong> {{ campsite.managing_unit }}</p>
-  {% endif %}
+	<main class="page-main detail-layout">
+		<section class="detail-main">
+			<header class="detail-header">
+				<h1 class="detail-title">{{ campsite.name }}</h1>
 
-  {% if campsite.site_url %}
-  <p><a href="{{ campsite.site_url }}" target="_blank">FSUDA Site</a></p>
-  {% endif %}
+				<div class="detail-meta-top">
+					{% if campsite.managing_unit %}
+						<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ campsite.managing_unit }}</span></p>
+					{% endif %}
 
-  {% if campsite.latitude and campsite.longitude %}
-  <p><strong>Location:</strong> {{ campsite.latitude }}, {{ campsite.longitude }}</p>
-  {% endif %}
+					{% if campsite.latitude and campsite.longitude %}
+						<p class="meta-row">
+							<span class="meta-label">Location</span>
+							<span class="meta-value">{{ campsite.latitude }}, {{ campsite.longitude }}</span>
+						</p>
+					{% endif %}
+				</div>
+			</header>
 
-  {% if campsite.overview %}
-  <h2>Overview</h2>
-  <p>{{ campsite.overview }}</p>
-  {% endif %}
+			{% if daily_forecast %}
+				<section class="detail-section">
+					<h2 class="section-title">Weather forecast{% if start_date and end_date %} ({{ start_date }} → {{ end_date }}){% endif %}</h2>
+					<div class="forecast-grid">
+						{% for day in daily_forecast %}
+							<article class="forecast-card">
+								<p class="forecast-date">{{ day.date }}</p>
+								<p class="forecast-sky">{{ day.sky or "" }}</p>
+								<p class="forecast-temp">
+									{% if day.high is not none and day.low is not none %}
+										High {{ day.high|round(0) }}° / Low {{ day.low|round(0) }}°
+									{% endif %}
+								</p>
+								{% if day.precip_in is not none %}
+									<p class="forecast-precip">{{ day.precip_in|round(2) }} in precip</p>
+								{% endif %}
+							</article>
+						{% endfor %}
+					</div>
+				</section>
+			{% endif %}
 
-  {% if campsite.fee %}
-  <h3>Fees</h3>
-  <p>{{ campsite.fee }}</p>
-  {% endif %}
+			{% if campsite.overview %}
+				<section class="detail-section">
+					<h2 class="section-title">Overview</h2>
+					<p class="section-body">{{ campsite.overview }}</p>
+				</section>
+			{% endif %}
 
-  {% if campsite.seasons_of_use %}
-  <h3>Seasons of Use</h3>
-  <p>{{ campsite.seasons_of_use }}</p>
-  {% endif %}
+			{% if campsite.fee %}
+				<section class="detail-section">
+					<h2 class="section-title">Fees</h2>
+					<p class="section-body">{{ campsite.fee }}</p>
+				</section>
+			{% endif %}
 
-  <a href="/">← Back to Search</a>
+			{% if campsite.seasons_of_use %}
+				<section class="detail-section">
+					<h2 class="section-title">Seasons of use</h2>
+					<p class="section-body">{{ campsite.seasons_of_use }}</p>
+				</section>
+			{% endif %}
+
+			<div class="detail-actions">
+				{% if campsite.site_url %}
+					<a href="{{ campsite.site_url }}" target="_blank" class="btn btn-primary">Open official site</a>
+				{% endif %}
+				<a href="/" class="btn btn-secondary">Back to search</a>
+			</div>
+
+			{% if alltrails_url %}
+				<section class="detail-section">
+					<a href="{{ alltrails_url }}" target="_blank" rel="noopener">
+						Check out Hikes in the Area
+					</a>
+				</section>
+			{% endif %}
+		</section>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Always confirm details with the official forest service listing before traveling.</p>
+	</footer>
 </body>
 </html>
