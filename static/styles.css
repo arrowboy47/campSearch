@@ -216,7 +216,7 @@ a:hover {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
 }
 
@@ -1454,15 +1454,20 @@ fieldset.filter-group legend {
 
 /* Avatars ---------------------------------------------------------- */
 
+/* Base avatar is the large (profile) size; -xs / -sm shrink it. The size
+   modifiers must stay *after* this block so they win the equal-specificity
+   cascade (a bare `.avatar { width }` here would otherwise clobber them). */
 .avatar {
+  width: 72px;
+  height: 72px;
   border-radius: 999px;
   object-fit: cover;
   background: var(--surface-soft);
+  flex-shrink: 0;
 }
 
 .avatar-xs { width: 22px; height: 22px; }
 .avatar-sm { width: 34px; height: 34px; }
-.avatar { width: 72px; height: 72px; }
 
 .avatar-fallback {
   display: inline-flex;

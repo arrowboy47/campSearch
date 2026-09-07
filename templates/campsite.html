@@ -107,7 +107,6 @@
 					{% elif campsite.water_feature %}<span class="badge">🌊 Water nearby</span>{% endif %}
 					{% if campsite.terrain %}<span class="badge">⛰️ {{ campsite.terrain|capitalize }}</span>{% endif %}
 					{% if campsite.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(campsite.elevation_ft) }} ft</span>{% endif %}
-					{% if campsite.reservation_type %}<span class="badge">📋 {{ campsite.reservation_type }}</span>{% endif %}
 				</div>
 
 				{% if campsite.activities %}
@@ -153,7 +152,9 @@
 				</section>
 			{% endif %}
 
-			{% if campsite.fee %}
+			{# Only a prose fee policy earns its own section; a short "$25" is already
+			   in the badge row above. #}
+			{% if campsite.fee and campsite.fee | length > 25 %}
 				<section class="detail-section">
 					<h2 class="section-title">Fees</h2>
 					<p class="section-body">{{ campsite.fee }}</p>
