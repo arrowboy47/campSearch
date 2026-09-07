@@ -3,10 +3,20 @@ Heads up to future me: This is my first time making a flask app, so I'm going to
 out of this thing and try to treat comments as like learning tools so i can come back and know what tf going on
 """
 
-from flask import Flask, request, jsonify, render_template, Response
-from db import get_campsite_by_id, get_trails_for_campsite
+from flask import (
+    Flask, request, jsonify, render_template, Response,
+    session, redirect, url_for, flash, abort, g,
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from db import (
+    get_campsite_by_id, get_trails_for_campsite,
+    create_user, get_user, get_user_for_login, update_user_profile,
+    export_user_data, save_campsite, unsave_campsite, is_campsite_saved,
+    get_saved_campsites,
+)
 from weather import get_forecast
 from datetime import datetime, timedelta
+from functools import wraps
 from search import (
     get_campsite_by_name,
     search_campsites,
@@ -14,6 +24,7 @@ from search import (
     get_campsites_for_map,
     get_facet_options,
 )
+import geo
 import json
 import re
 
@@ -61,6 +72,61 @@ def parse_search_filters(args):
 
 # Create Flask app
 app = Flask(__name__)
+
+import config as _config  # noqa: E402
+app.secret_key = _config.secret_key()
+
+
+# --- auth plumbing --------------------------------------------------------
+
+def current_user():
+    """The logged-in user dict, or None. Cached on `g` for the request."""
+    if "user" not in g:
+        uid = session.get("user_id")
+        g.user = get_user(uid) if uid else None
+    return g.user
+
+
+@app.context_processor
+def inject_user():
+    # Makes `current_user` available in every template.
+    return {"current_user": current_user()}
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user():
+            flash("Sign in to do that.")
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def _effective_origin(device_lat, device_lon):
+    """Pick the origin point + label for distance math.
+
+    Default: the user's saved home. If the browser handed us a device location
+    and it's more than 10 mi from home (or there's no home), use the device
+    location instead. Returns ((lat, lon), label) or (None, None).
+    """
+    user = current_user()
+    home = None
+    if user and user.get("home_lat") is not None and user.get("home_lon") is not None:
+        home = (user["home_lat"], user["home_lon"])
+
+    device = None
+    if device_lat is not None and device_lon is not None:
+        device = (device_lat, device_lon)
+
+    if device and (not home or geo.haversine_miles(home, device) > 10):
+        return device, "your location"
+    if home:
+        return home, "home"
+    if device:
+        return device, "your location"
+    return None, None
+
 
 def build_weather_summary(forecast):
     """Small helper to turn raw forecast_json into a compact summary for templates.
@@ -329,11 +395,27 @@ def campsite(campsite_id):
     # constructed alltrails_url is the fallback "explore" link in that case).
     trails = get_trails_for_campsite(campsite_id)
 
+    # Driving distance from the user's home (or device location if given and
+    # far from home). Computed server-side only when we already have a home on
+    # file; otherwise the page's JS offers to use the browser location.
+    drive = None
+    if lat is not None and lon is not None and campsite_data.get("latitude") is not None:
+        origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
+        if origin:
+            dist = geo.driving_distance(origin, (campsite_data["latitude"], campsite_data["longitude"]))
+            if dist:
+                dist["label"] = label
+                drive = dist
+
+    saved = bool(current_user()) and is_campsite_saved(session["user_id"], campsite_id)
+
     return render_template(
         "campsite.html",
         campsite=campsite_data,
         daily_forecast=daily_forecast,
         trails=trails,
+        drive=drive,
+        saved=saved,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         alltrails_url=alltrails_url,
@@ -455,6 +537,203 @@ def campsite_trip_sheet(campsite_id):
         mimetype="text/markdown",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# --- accounts ----------------------------------------------------------------
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if current_user():
+        return redirect(url_for("account"))
+
+    if request.method == "POST":
+        form = request.form
+        username = (form.get("username") or "").strip()
+        password = form.get("password") or ""
+        errors = []
+        if len(username) < 3:
+            errors.append("Username must be at least 3 characters.")
+        if len(password) < 8:
+            errors.append("Password must be at least 8 characters.")
+
+        home_address = (form.get("home_address") or "").strip() or None
+        home_lat = home_lon = None
+        if home_address:
+            hit = geo.geocode(home_address)
+            if hit:
+                home_lat, home_lon = hit
+            else:
+                flash("Couldn't locate that home address — saved as text only.")
+
+        if errors:
+            for e in errors:
+                flash(e)
+            return render_template("signup.html", form=form)
+
+        user = create_user(
+            username,
+            generate_password_hash(password),
+            first_name=(form.get("first_name") or "").strip() or None,
+            last_name=(form.get("last_name") or "").strip() or None,
+            email=(form.get("email") or "").strip() or None,
+            home_address=home_address,
+            home_lat=home_lat,
+            home_lon=home_lon,
+        )
+        if not user:
+            flash("That username is taken.")
+            return render_template("signup.html", form=form)
+
+        session.clear()
+        session["user_id"] = user["id"]
+        flash("Account created.")
+        return redirect(url_for("account"))
+
+    return render_template("signup.html", form={})
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user():
+        return redirect(url_for("account"))
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        row = get_user_for_login(username)
+        if not row or not check_password_hash(row["password_hash"], password):
+            flash("Wrong username or password.")
+            return render_template("login.html", username=username)
+        session.clear()
+        session["user_id"] = row["id"]
+        nxt = request.args.get("next") or request.form.get("next")
+        return redirect(nxt if nxt and nxt.startswith("/") else url_for("account"))
+
+    return render_template("login.html", username="")
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    flash("Signed out.")
+    return redirect(url_for("home"))
+
+
+@app.route("/account", methods=["GET", "POST"])
+@login_required
+def account():
+    user = current_user()
+
+    if request.method == "POST":
+        form = request.form
+        fields = {
+            "first_name": (form.get("first_name") or "").strip() or None,
+            "last_name": (form.get("last_name") or "").strip() or None,
+            "email": (form.get("email") or "").strip() or None,
+        }
+        new_address = (form.get("home_address") or "").strip() or None
+        if new_address != user.get("home_address"):
+            fields["home_address"] = new_address
+            if new_address:
+                hit = geo.geocode(new_address)
+                fields["home_lat"] = hit[0] if hit else None
+                fields["home_lon"] = hit[1] if hit else None
+                if not hit:
+                    flash("Couldn't locate that address — saved as text only.")
+            else:
+                fields["home_lat"] = fields["home_lon"] = None
+        update_user_profile(user["id"], **fields)
+        g.pop("user", None)
+        flash("Profile updated.")
+        return redirect(url_for("account"))
+
+    return render_template(
+        "account.html",
+        user=user,
+        saved=get_saved_campsites(user["id"]),
+    )
+
+
+@app.route("/account/export")
+@login_required
+def account_export():
+    data = export_user_data(current_user()["id"])
+    payload = json.dumps(data, indent=2, default=str)
+    return Response(
+        payload,
+        mimetype="application/json",
+        headers={"Content-Disposition": 'attachment; filename="campsearch-account.json"'},
+    )
+
+
+@app.route("/campsite/<int:campsite_id>/save", methods=["POST"])
+@login_required
+def toggle_saved(campsite_id):
+    if not get_campsite_by_id(campsite_id):
+        abort(404)
+    uid = current_user()["id"]
+    if request.form.get("action") == "unsave":
+        unsave_campsite(uid, campsite_id)
+    else:
+        save_campsite(uid, campsite_id)
+    nxt = request.form.get("next")
+    return redirect(nxt if nxt and nxt.startswith("/") else url_for("campsite", campsite_id=campsite_id))
+
+
+# --- campsites near me ------------------------------------------------------
+
+@app.route("/nearby")
+def nearby():
+    """Campsites closest to the user, by straight-line distance.
+
+    Origin priority: an explicit ?lat=&lon= from the browser's geolocation,
+    then the signed-in user's saved home. With neither, the page just explains
+    how to get results.
+    """
+    origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
+
+    ranked = []
+    if origin:
+        points = get_campsites_for_map()
+        for p in points:
+            if p["latitude"] is None or p["longitude"] is None:
+                continue
+            miles = geo.haversine_miles(origin, (p["latitude"], p["longitude"]))
+            p["distance_miles"] = round(miles, 1)
+            ranked.append(p)
+        ranked.sort(key=lambda x: x["distance_miles"])
+        ranked = ranked[:60]
+
+    return render_template(
+        "nearby.html",
+        campsites=ranked,
+        origin_label=label,
+        has_origin=bool(origin),
+    )
+
+
+@app.route("/api/distance")
+def api_distance():
+    """Driving distance for one campsite from the effective origin.
+
+    Used by the campsite page's JS to fill in / correct the distance line once
+    the browser has shared a device location.
+    """
+    cid = _int_arg("campsite_id")
+    camp = get_campsite_by_id(cid) if cid else None
+    if not camp or camp.get("latitude") is None:
+        return jsonify({"error": "unknown campsite"}), 404
+
+    origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
+    if not origin:
+        return jsonify({"available": False})
+
+    dist = geo.driving_distance(origin, (camp["latitude"], camp["longitude"]))
+    if not dist:
+        return jsonify({"available": False})
+    dist["available"] = True
+    dist["label"] = label
+    return jsonify(dist)
 
 
 # lets see what next

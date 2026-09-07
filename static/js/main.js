@@ -239,6 +239,88 @@ function initShare() {
   });
 }
 
+// Location: "near me" + campsite driving distance ---------------------
+
+function reloadWithCoords(pos) {
+  const p = new URLSearchParams(window.location.search);
+  p.set("lat", pos.coords.latitude.toFixed(5));
+  p.set("lon", pos.coords.longitude.toFixed(5));
+  window.location.search = p.toString();
+}
+
+function initNearby() {
+  const btn = document.getElementById("useLocationBtn");
+  if (!btn || !navigator.geolocation) return;
+  btn.addEventListener("click", () => {
+    btn.textContent = "Locating…";
+    navigator.geolocation.getCurrentPosition(
+      reloadWithCoords,
+      () => {
+        btn.textContent = "Location blocked — using home if set";
+      },
+      { timeout: 8000 }
+    );
+  });
+}
+
+function formatDrive(d) {
+  let t = `${d.miles} mi`;
+  if (d.minutes) {
+    const h = Math.floor(d.minutes / 60);
+    const m = String(d.minutes % 60).padStart(2, "0");
+    t += ` · ~${h}h ${m}m`;
+  }
+  t += ` from ${d.label}`;
+  if (d.estimated) t += " (estimated)";
+  return t;
+}
+
+function initDrive() {
+  const line = document.getElementById("driveLine");
+  if (!line || !navigator.geolocation) return;
+  const valueEl = document.getElementById("driveValue");
+  const id = line.dataset.campsiteId;
+
+  function fetchFor(lat, lon) {
+    const qs = new URLSearchParams({ campsite_id: id });
+    if (lat != null) {
+      qs.set("lat", lat);
+      qs.set("lon", lon);
+    }
+    fetch(`/api/distance?${qs.toString()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.available) valueEl.textContent = formatDrive(d);
+      })
+      .catch(() => {});
+  }
+
+  const ask = document.getElementById("driveAsk");
+  if (ask) {
+    ask.addEventListener("click", (e) => {
+      e.preventDefault();
+      valueEl.textContent = "locating…";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchFor(pos.coords.latitude.toFixed(5), pos.coords.longitude.toFixed(5)),
+        () => {
+          valueEl.textContent = "location unavailable";
+        },
+        { timeout: 8000 }
+      );
+    });
+    return;
+  }
+
+  // Server already rendered a home-based distance; quietly check whether the
+  // device is far enough from home that the server would switch to "your
+  // location", and update in place if so.
+  navigator.geolocation.getCurrentPosition(
+    (pos) => fetchFor(pos.coords.latitude.toFixed(5), pos.coords.longitude.toFixed(5)),
+    () => {},
+    { timeout: 8000, maximumAge: 300000 }
+  );
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -246,4 +328,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initMap();
   initDateRange();
   initShare();
+  initNearby();
+  initDrive();
 });

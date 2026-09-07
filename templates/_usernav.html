@@ -1,0 +1,10 @@
+{# Account / near-me links for the page header. current_user comes from the
+   inject_user context processor. #}
+<nav class="user-nav" aria-label="Account">
+  <a href="/nearby" class="user-nav-link">📍 Near me</a>
+  {% if current_user %}
+    <a href="/account" class="user-nav-link user-nav-name">{{ current_user.first_name or current_user.username }}</a>
+  {% else %}
+    <a href="/login" class="user-nav-link">Sign in</a>
+  {% endif %}
+</nav>

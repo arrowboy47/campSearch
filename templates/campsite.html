@@ -17,6 +17,7 @@
 					<div class="brand-subtitle">Find open campsites with the right amenities</div>
 				</div>
 			</a>
+			{% include "_usernav.html" %}
 			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
 				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
 				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
@@ -27,6 +28,7 @@
 
 	<main class="page-main detail-layout">
 		<section class="detail-main">
+			{% include "_flash.html" %}
 			<header class="detail-header">
 				<div class="detail-title-row">
 					<h1 class="detail-title">{{ campsite.name }}</h1>
@@ -61,6 +63,19 @@
 					{% if campsite.contact_phone %}
 						<p class="meta-row"><span class="meta-label">Phone</span> <span class="meta-value">{{ campsite.contact_phone }}</span></p>
 					{% endif %}
+
+					<p class="meta-row detail-drive" id="driveLine" data-campsite-id="{{ campsite.id }}"
+					   {% if drive %}data-has="1"{% endif %}>
+						<span class="meta-label">Driving</span>
+						<span class="meta-value" id="driveValue">
+							{% if drive %}
+								{{ drive.miles }} mi{% if drive.minutes %} · ~{{ drive.minutes // 60 }}h {{ '%02d' % (drive.minutes % 60) }}m{% endif %}
+								from {{ drive.label }}{% if drive.estimated %} (estimated){% endif %}
+							{% else %}
+								<a href="#" id="driveAsk" class="link-quiet">use my location</a>
+							{% endif %}
+						</span>
+					</p>
 				</div>
 
 				<div class="badge-row">
@@ -185,6 +200,15 @@
 				{% endif %}
 				<a href="/campsite/{{ campsite.id }}/trip.md{{ date_qs }}" class="btn btn-secondary">Download trip sheet</a>
 				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
+				{% if current_user %}
+					<form method="POST" action="/campsite/{{ campsite.id }}/save" class="inline-form">
+						<input type="hidden" name="action" value="{{ 'unsave' if saved else 'save' }}" />
+						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
+						<button type="submit" class="btn {{ 'btn-primary' if saved else 'btn-secondary' }}">
+							{{ '★ Saved' if saved else '☆ Save' }}
+						</button>
+					</form>
+				{% endif %}
 				<a href="/" class="btn btn-secondary">Back to search</a>
 			</div>
 

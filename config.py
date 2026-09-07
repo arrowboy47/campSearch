@@ -26,11 +26,19 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 RIDB_API_KEY = os.environ.get("RIDB_API_KEY")
 
+# Flask session signing key. A dev fallback keeps `flask run` working without a
+# .env entry, but logins won't survive a restart and it's not safe for prod.
+SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-only-insecure-change-me"
+
 
 def database_url():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL is not set (copy .env.example to .env)")
     return DATABASE_URL
+
+
+def secret_key():
+    return SECRET_KEY
 
 
 def openweather_api_key():

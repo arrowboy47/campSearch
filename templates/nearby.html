@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Campsites near you · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_usernav.html" %}
+			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
+				<button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
+			</div>
+		</div>
+	</header>
+
+	<main class="page-main">
+		{% include "_flash.html" %}
+		<section class="results-header">
+			<div class="results-header-inner">
+				<h1 class="results-title">Campsites near you</h1>
+				{% if has_origin %}
+					<p class="results-subtitle">Closest campsites by straight-line distance from
+						<strong>{{ origin_label }}</strong>.</p>
+				{% else %}
+					<p class="results-subtitle">Share your device location, or
+						<a href="/account" class="link-quiet">set a home address</a>, to see nearby campsites.</p>
+				{% endif %}
+				<button type="button" id="useLocationBtn" class="btn btn-primary">Use my device location</button>
+			</div>
+		</section>
+
+		{% if campsites %}
+			<section class="results-list">
+				<div class="results-grid">
+					{% for camp in campsites %}
+						<article class="result-card">
+							<header class="result-card-header">
+								<h2 class="result-card-title">
+									<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
+								</h2>
+								<span class="badge">{{ camp.distance_miles }} mi away</span>
+							</header>
+							<div class="result-card-body">
+								{% if camp.forest_name %}
+									<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>
+								{% endif %}
+							</div>
+						</article>
+					{% endfor %}
+				</div>
+			</section>
+		{% endif %}
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Distances here are as-the-crow-flies. Open a campsite for driving distance.</p>
+	</footer>
+</body>
+</html>
