@@ -406,6 +406,15 @@ a:hover {
   height: 420px;
 }
 
+.map-shell-compact {
+  height: 300px;
+}
+
+.results-map-card {
+  margin-bottom: 16px;
+  padding: 8px;
+}
+
 :root[data-theme="dark"] .map-shell {
   /* Simple, solid background for tiles; Leaflet adds its own look */
   background: #020617;

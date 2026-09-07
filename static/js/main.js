@@ -85,18 +85,33 @@ function initMap() {
     attribution: "© OpenStreetMap contributors",
   }).addTo(map);
 
-  fetch("/api/map/campsites")
-    .then(async (resp) => {
+  // The results page embeds just its result set as JSON; the home page has no
+  // embedded data and asks the API for every campsite.
+  const embedded = document.getElementById("mapData");
+  let source;
+  if (embedded) {
+    let parsed = [];
+    try {
+      parsed = JSON.parse(embedded.textContent || "[]");
+    } catch (e) {
+      console.error("Could not parse embedded #mapData", e);
+    }
+    source = Promise.resolve(parsed);
+  } else {
+    source = fetch("/api/map/campsites").then(async (resp) => {
       if (!resp.ok) {
         const text = await resp.text().catch(() => "");
         console.error("/api/map/campsites returned an error status", resp.status, text);
         return [];
       }
       return resp.json();
-    })
+    });
+  }
+
+  source
     .then((points) => {
       if (!Array.isArray(points) || !points.length) {
-        console.warn("Map data loaded but no campsite points were returned.");
+        console.warn("Map: no campsite points to plot.");
         return;
       }
 
@@ -145,8 +160,8 @@ function initMap() {
 
         marker.on("click", () => {
           const params = new URLSearchParams();
-          const startEl = document.getElementById("start_date");
-          const endEl = document.getElementById("end_date");
+          const startEl = document.querySelector('input[name="start"]');
+          const endEl = document.querySelector('input[name="end"]');
 
           if (startEl && startEl.value) {
             params.set("start", startEl.value);

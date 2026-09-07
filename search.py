@@ -289,35 +289,21 @@ def get_campsites_for_map():
     # (older schema used managing_unit instead). Try the newer schema
     # first and gracefully fall back to managing_unit only if needed so
     # the map endpoint never hard-crashes.
+    # 'NaN'::numeric guards against the one row with bad coords (a NaN in the
+    # JSON payload is invalid to the browser's JSON.parse and kills the map).
+    coord_filter = (
+        " WHERE latitude IS NOT NULL AND longitude IS NOT NULL"
+        " AND latitude <> 'NaN'::numeric AND longitude <> 'NaN'::numeric"
+    )
     try:
         cur.execute(
-            """
-            SELECT
-                id,
-                name,
-                forest_name,
-                latitude,
-                longitude
-            FROM campsites
-            WHERE latitude IS NOT NULL
-              AND longitude IS NOT NULL
-            """
+            "SELECT id, name, forest_name, latitude, longitude FROM campsites" + coord_filter
         )
         rows = cur.fetchall()
     except Exception:
         conn.rollback()
         cur.execute(
-            """
-            SELECT
-                id,
-                name,
-                managing_unit,
-                latitude,
-                longitude
-            FROM campsites
-            WHERE latitude IS NOT NULL
-              AND longitude IS NOT NULL
-            """
+            "SELECT id, name, managing_unit, latitude, longitude FROM campsites" + coord_filter
         )
         rows = cur.fetchall()
 
@@ -326,13 +312,17 @@ def get_campsites_for_map():
 
     results = []
     for site_id, name, region_label, latitude, longitude in rows:
+        lat = float(latitude) if latitude is not None else None
+        lon = float(longitude) if longitude is not None else None
+        if lat != lat or lon != lon:  # NaN slipped through
+            continue
         results.append(
             {
                 "id": site_id,
                 "name": name,
                 "forest_name": region_label,
-                "latitude": float(latitude) if latitude is not None else None,
-                "longitude": float(longitude) if longitude is not None else None,
+                "latitude": lat,
+                "longitude": lon,
             }
         )
 
