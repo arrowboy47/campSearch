@@ -680,6 +680,91 @@ a:hover {
   color: var(--text-muted);
 }
 
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detail-hero {
+  margin-top: 12px;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.detail-updated {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Nearby trails ------------------------------------------------------- */
+
+.trail-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.trail-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 12px;
+  background: var(--surface-soft);
+}
+
+:root[data-theme="dark"] .trail-card {
+  background: #020617;
+}
+
+.trail-name {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.trail-name a {
+  text-decoration: none;
+}
+
+.trail-name a:hover {
+  text-decoration: underline;
+}
+
+.trail-stats {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.trail-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trail-rating {
+  color: var(--accent-strong);
+}
+
+.trail-more {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.trail-more a {
+  text-decoration: none;
+  color: var(--accent-strong);
+}
+
 /* Buttons & pills ------------------------------------------------------ */
 
 .btn {

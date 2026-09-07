@@ -4,7 +4,7 @@ out of this thing and try to treat comments as like learning tools so i can come
 """
 
 from flask import Flask, request, jsonify, render_template
-from db import get_campsite_by_id
+from db import get_campsite_by_id, get_trails_for_campsite
 from weather import get_forecast
 from datetime import datetime, timedelta
 from search import (
@@ -300,10 +300,15 @@ def campsite(campsite_id):
         except Exception:
             daily_forecast = []
 
+    # Nearby hikes from AllTrails (empty for campsites not yet harvested; the
+    # constructed alltrails_url is the fallback "explore" link in that case).
+    trails = get_trails_for_campsite(campsite_id)
+
     return render_template(
         "campsite.html",
         campsite=campsite_data,
         daily_forecast=daily_forecast,
+        trails=trails,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         alltrails_url=alltrails_url,
