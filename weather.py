@@ -16,7 +16,9 @@ def get_forecast(lat, lon, date):
         "appid": openweather_api_key(),
     }
 
-    response = requests.get(url, params=params)
+    # Always time out: without this a stalled connection hangs the whole
+    # refresh loop indefinitely (seen in the 2026-09 nightly run).
+    response = requests.get(url, params=params, timeout=30)
     response.raise_for_status()
     data = response.json()
     # make a dictionary of the desired fields: precipitation, temp min, temp max, cloud cover

@@ -20,19 +20,21 @@ import refresh_dynamic
 import sync_ridb
 import scrape_fs_usda
 import ingest_ridb_orgs
+import scrape_reservecalifornia
 
 
 JOBS = {
     "daily": [
-        # today + tomorrow, at most 1200 calls (~20 min); leftovers roll to tomorrow.
-        lambda: refresh_dynamic.main(["--days", "2", "--max-calls", "1200"]),
+        # today + tomorrow, ~900 calls at ~1.3s each (~20 min); leftovers roll over.
+        lambda: refresh_dynamic.main(["--days", "2", "--max-calls", "900", "--sleep", "0.3"]),
     ],
     "weekly": [
-        lambda: scrape_fs_usda.main(["--all"]),          # static + open/closed status
+        lambda: scrape_fs_usda.main(["--all"]),              # static + open/closed status
         lambda: scrape_fs_usda.main(["--all", "--detail"]),  # backfill coords/fee for new sites
-        lambda: sync_ridb.main([]),                      # match sites still missing a facility id
-        lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM campgrounds
-        lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1500"]),
+        lambda: sync_ridb.main([]),                          # match sites missing a facility id
+        lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM/USFS campgrounds
+        lambda: scrape_reservecalifornia.main([]),           # CA state park campgrounds
+        lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
     ],
     "smoke": [
         lambda: refresh_dynamic.main(["--limit", "3", "--sleep", "0"]),
