@@ -712,6 +712,18 @@ def nearby():
     )
 
 
+@app.route("/api/me")
+def api_me():
+    """Small bootstrap blob for client JS: the signed-in user's home point
+    (for the map's home marker) if there is one."""
+    user = current_user()
+    home = None
+    if user and user.get("home_lat") is not None and user.get("home_lon") is not None:
+        home = {"lat": user["home_lat"], "lon": user["home_lon"],
+                "label": user.get("home_address")}
+    return jsonify({"signed_in": bool(user), "home": home})
+
+
 @app.route("/api/distance")
 def api_distance():
     """Driving distance for one campsite from the effective origin.

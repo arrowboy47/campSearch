@@ -34,6 +34,28 @@
 					{% endif %}
 				</div>
 
+				{% set res_labels = {
+					'dispersed': '⛺ Dispersed camping',
+					'first-come': '🪧 First-come, first-served',
+					'reservation': '📅 Reservation'
+				} %}
+				{% set land_labels = {
+					'US Forest Service': '🌲 National Forest',
+					'National Park Service': '🏞️ National Park',
+					'California State Parks': '⛲ State Park',
+					'Bureau of Land Management': '🏜️ BLM land'
+				} %}
+				{% if res_labels.get(campsite.reservation_type) or land_labels.get(campsite.agency_name) %}
+					<div class="detail-tags">
+						{% if res_labels.get(campsite.reservation_type) %}
+							<span class="tag tag-res">{{ res_labels[campsite.reservation_type] }}</span>
+						{% endif %}
+						{% if land_labels.get(campsite.agency_name) %}
+							<span class="tag tag-land">{{ land_labels[campsite.agency_name] }}</span>
+						{% endif %}
+					</div>
+				{% endif %}
+
 				<div class="detail-meta-top">
 					{% set forest = campsite.managing_unit or campsite.forest_name %}
 					{% if forest %}

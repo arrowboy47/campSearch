@@ -30,6 +30,7 @@ CAMPSITE_SQL = """
         c.elevation_ft, c.terrain,
         c.site_url, c.source, c.primary_image_url, c.last_scraped,
         a.name           AS agency_name,
+        a.level          AS agency_level,
         am.water         AS has_water,
         am.restrooms     AS has_restrooms,
         am.body_of_water AS body_of_water,

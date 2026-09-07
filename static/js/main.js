@@ -63,6 +63,36 @@ function initTheme() {
 
 // Map handling -----------------------------------------------------------
 
+// A gold star for the signed-in user's saved home, a pin for the browser's
+// current location. Both float above the campsite dots.
+function addContextMarkers(map) {
+  const star = L.divIcon({ className: "map-ctx-icon", html: "⭐", iconSize: [24, 24], iconAnchor: [12, 12] });
+  const pin = L.divIcon({ className: "map-ctx-icon", html: "📍", iconSize: [24, 24], iconAnchor: [12, 24] });
+
+  fetch("/api/me")
+    .then((r) => r.json())
+    .then((me) => {
+      if (me && me.home) {
+        L.marker([me.home.lat, me.home.lon], { icon: star, zIndexOffset: 1000, interactive: true })
+          .bindTooltip("Home" + (me.home.label ? " · " + me.home.label : ""), { direction: "top" })
+          .addTo(map);
+      }
+    })
+    .catch(() => {});
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        L.marker([pos.coords.latitude, pos.coords.longitude], { icon: pin, zIndexOffset: 1000 })
+          .bindTooltip("Your location", { direction: "top" })
+          .addTo(map);
+      },
+      () => {},
+      { timeout: 8000, maximumAge: 300000 }
+    );
+  }
+}
+
 function initMap() {
   const mapEl = document.getElementById("map");
   if (!mapEl) {
@@ -84,6 +114,8 @@ function initMap() {
     maxZoom: 18,
     attribution: "© OpenStreetMap contributors",
   }).addTo(map);
+
+  addContextMarkers(map);
 
   // The results page embeds just its result set as JSON; the home page has no
   // embedded data and asks the API for every campsite.
