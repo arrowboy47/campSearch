@@ -321,10 +321,41 @@ function initDrive() {
   );
 }
 
+// Settings (gear) menu ----------------------------------------------
+
+function initMenu() {
+  const menu = document.querySelector("[data-menu]");
+  if (!menu) return;
+  const toggle = menu.querySelector("[data-menu-toggle]");
+  const panel = menu.querySelector("[data-menu-panel]");
+  if (!toggle || !panel) return;
+
+  const close = () => {
+    panel.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+  };
+  const open = () => {
+    panel.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.hidden ? open() : close();
+  });
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !menu.contains(e.target)) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
+  initMenu();
   initMap();
   initDateRange();
   initShare();

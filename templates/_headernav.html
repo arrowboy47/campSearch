@@ -1,0 +1,31 @@
+{# Right-side header controls: near-me, settings (gear) menu, account (person).
+   current_user comes from the inject_user context processor. #}
+<div class="header-nav">
+  <a href="/nearby" class="icon-btn" title="Campsites near you" aria-label="Campsites near you">📍</a>
+
+  <div class="menu" data-menu>
+    <button type="button" class="icon-btn" data-menu-toggle aria-haspopup="true" aria-expanded="false" aria-label="Settings">⚙️</button>
+    <div class="menu-panel" data-menu-panel hidden>
+      <p class="menu-heading">Theme</p>
+      <div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+        <button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
+        <button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
+        <button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
+      </div>
+      {% if current_user %}
+        <form method="POST" action="/logout" class="menu-form">
+          <button type="submit" class="menu-link">Sign out</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if current_user %}
+    <a href="/account" class="icon-btn icon-btn-user" title="{{ current_user.username }}" aria-label="Account">
+      <span aria-hidden="true">👤</span>
+      <span class="icon-name">{{ current_user.first_name or current_user.username }}</span>
+    </a>
+  {% else %}
+    <a href="/login" class="icon-btn" title="Sign in" aria-label="Sign in">👤</a>
+  {% endif %}
+</div>

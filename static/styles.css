@@ -1029,31 +1029,111 @@ fieldset.filter-group legend {
 
 /* Accounts, near-me, flash ------------------------------------------- */
 
-.user-nav {
+.header-nav {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: 8px;
 }
 
-.user-nav-link {
-  color: var(--text);
-  text-decoration: none;
-  border: 1px solid var(--border-subtle);
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0 9px;
   border-radius: var(--radius-pill);
-  padding: 4px 11px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.user-nav-link:hover {
+:root[data-theme="dark"] .icon-btn {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.icon-btn:hover {
   border-color: var(--accent);
-  color: var(--accent);
 }
 
-.user-nav-name {
+.icon-btn-user {
   background: var(--accent-soft);
   border-color: transparent;
+}
+
+.icon-name {
+  font-size: 13px;
   font-weight: 600;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  min-width: 170px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.menu-heading {
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+}
+
+.menu-panel .theme-toggle {
+  margin: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.menu-panel .theme-toggle-btn {
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.menu-form {
+  margin: 6px 0 0;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 6px;
+}
+
+.menu-link {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 8px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.menu-link:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .flash-stack {
@@ -1144,9 +1224,11 @@ fieldset.filter-group legend {
 }
 
 @media (max-width: 820px) {
-  .user-nav {
-    order: 3;
-    margin-left: 0;
+  .header-nav {
+    margin-left: auto;
+  }
+  .icon-name {
+    display: none;
   }
   .form-row {
     flex-direction: column;

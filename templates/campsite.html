@@ -17,12 +17,7 @@
 					<div class="brand-subtitle">Find open campsites with the right amenities</div>
 				</div>
 			</a>
-			{% include "_usernav.html" %}
-			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
-				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
-				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
-				<button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
-			</div>
+			{% include "_headernav.html" %}
 		</div>
 	</header>
 
@@ -180,12 +175,9 @@
 					{% if alltrails_url %}
 						<p class="trail-more"><a href="{{ alltrails_url }}" target="_blank" rel="noopener">More on AllTrails →</a></p>
 					{% endif %}
-				{% else %}
+				{% elif alltrails_url %}
 					<p class="section-body">
-						No trail data yet for this campsite.
-						{% if alltrails_url %}
-							<a href="{{ alltrails_url }}" target="_blank" rel="noopener">Explore hikes in the area on AllTrails →</a>
-						{% endif %}
+						<a href="{{ alltrails_url }}" target="_blank" rel="noopener">Explore hikes in the area on AllTrails →</a>
 					</p>
 				{% endif %}
 			</section>
@@ -198,7 +190,6 @@
 				{% if campsite.site_url %}
 					<a href="{{ campsite.site_url }}" target="_blank" class="btn btn-secondary">Open official site</a>
 				{% endif %}
-				<a href="/campsite/{{ campsite.id }}/trip.md{{ date_qs }}" class="btn btn-secondary">Download trip sheet</a>
 				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
 				{% if current_user %}
 					<form method="POST" action="/campsite/{{ campsite.id }}/save" class="inline-form">
