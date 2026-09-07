@@ -116,11 +116,11 @@ def fee_text(low_cents, high_cents):
 UPSERT_CAMPSITE = """
     INSERT INTO campsites
         (name, latitude, longitude, managing_unit, reservation_type,
-         site_url, agency_id, fee, primary_image_url, source,
+         site_url, agency_id, fee, num_sites, primary_image_url, source,
          first_seen, last_scraped)
     VALUES
         (%(name)s, %(lat)s, %(lon)s, %(unit)s, 'dispersed',
-         %(url)s, %(agency_id)s, %(fee)s, %(photo)s, 'thedyrt',
+         %(url)s, %(agency_id)s, %(fee)s, %(num_sites)s, %(photo)s, 'thedyrt',
          now(), now())
     ON CONFLICT (site_url) WHERE site_url IS NOT NULL
     DO UPDATE SET
@@ -131,6 +131,7 @@ UPSERT_CAMPSITE = """
         reservation_type = 'dispersed',
         agency_id        = COALESCE(EXCLUDED.agency_id, campsites.agency_id),
         fee              = COALESCE(EXCLUDED.fee, campsites.fee),
+        num_sites        = COALESCE(EXCLUDED.num_sites, campsites.num_sites),
         primary_image_url = COALESCE(EXCLUDED.primary_image_url, campsites.primary_image_url),
         last_scraped     = now()
     RETURNING id, (xmax = 0) AS inserted;
@@ -178,6 +179,7 @@ def main(argv=None):
 
                 run.seen += 1
                 url = f"https://thedyrt.com/camping/{region_slug(region)}/{slug}"
+                site_count = attrs.get("site-count")
                 params = {
                     "name": attrs.get("name"),
                     "lat": float(lat),
@@ -186,6 +188,7 @@ def main(argv=None):
                     "url": url,
                     "agency_id": agency_for(attrs.get("operator"), by_name),
                     "fee": fee_text(attrs.get("price-low-cents"), attrs.get("price-high-cents")),
+                    "num_sites": int(site_count) if site_count else None,
                     "photo": attrs.get("photo-url") or None,
                 }
 

@@ -22,6 +22,9 @@ import scrape_fs_usda
 import ingest_ridb_orgs
 import scrape_reservecalifornia
 import scrape_thedyrt
+import clean_text
+import backfill_elevation
+import derive_attributes
 
 
 JOBS = {
@@ -36,6 +39,9 @@ JOBS = {
         lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM/USFS campgrounds
         lambda: scrape_reservecalifornia.main([]),           # CA state park campgrounds
         lambda: scrape_thedyrt.main([]),                     # dispersed / free camping (The Dyrt)
+        lambda: backfill_elevation.main([]),                 # elevation_ft + terrain for new coords
+        lambda: derive_attributes.main([]),                  # activities[] / water_feature / toilet_type
+        lambda: clean_text.main([]),                         # normalize fee / overview / seasons text
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
     ],
     "smoke": [

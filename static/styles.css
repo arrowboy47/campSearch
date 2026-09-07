@@ -574,6 +574,27 @@ a:hover {
   opacity: 0.75;
 }
 
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.chip {
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 11px;
+  background: var(--accent-soft, rgba(37, 99, 235, 0.12));
+  color: var(--accent, #2563eb);
+  border: 1px solid transparent;
+}
+
+:root[data-theme="dark"] .chip {
+  background: rgba(37, 99, 235, 0.22);
+  color: #bfdbfe;
+}
+
 .empty-state {
   border-radius: var(--radius-lg);
   border: 1px dashed var(--border-subtle);

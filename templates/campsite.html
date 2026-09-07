@@ -64,11 +64,25 @@
 				</div>
 
 				<div class="badge-row">
-					{% if campsite.has_water %}<span class="badge">💧 Water</span>{% endif %}
-					{% if campsite.has_restrooms %}<span class="badge">🚻 Restrooms</span>{% endif %}
-					{% if campsite.body_of_water %}<span class="badge">🌊 {{ campsite.body_of_water }}</span>{% endif %}
+					{% if campsite.is_free %}<span class="badge">🆓 Free</span>
+					{% elif campsite.fee %}<span class="badge">💵 {{ campsite.fee }}</span>{% endif %}
+					{% if campsite.has_water %}<span class="badge">💧 Drinking water</span>{% endif %}
+					{% if campsite.toilet_type == 'flush' %}<span class="badge">🚻 Flush toilets</span>
+					{% elif campsite.toilet_type == 'vault' %}<span class="badge">🚻 Vault toilets</span>
+					{% elif campsite.toilet_type == 'restrooms' or campsite.has_restrooms %}<span class="badge">🚻 Restrooms</span>
+					{% elif campsite.toilet_type == 'none' %}<span class="badge">🚫 No toilets</span>{% endif %}
+					{% if campsite.water_feature and campsite.water_feature != 'water nearby' %}<span class="badge">🌊 {{ campsite.water_feature|capitalize }}</span>
+					{% elif campsite.water_feature %}<span class="badge">🌊 Water nearby</span>{% endif %}
+					{% if campsite.terrain %}<span class="badge">⛰️ {{ campsite.terrain|capitalize }}</span>{% endif %}
+					{% if campsite.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(campsite.elevation_ft) }} ft</span>{% endif %}
 					{% if campsite.reservation_type %}<span class="badge">📋 {{ campsite.reservation_type }}</span>{% endif %}
 				</div>
+
+				{% if campsite.activities %}
+					<div class="chip-row">
+						{% for act in campsite.activities %}<span class="chip">{{ act|capitalize }}</span>{% endfor %}
+					</div>
+				{% endif %}
 			</header>
 
 			{% if campsite.hero_image %}

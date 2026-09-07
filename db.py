@@ -25,12 +25,17 @@ CAMPSITE_SQL = """
         c.address, c.managing_unit, c.forest_name,
         c.reservation_type, c.reservation_url,
         c.contact_name, c.contact_phone,
-        c.seasons_of_use, c.num_sites, c.fee, c.overview,
+        c.seasons_of_use, c.num_sites, c.overview,
+        c.fee, c.fee_min, c.fee_max, c.is_free,
+        c.elevation_ft, c.terrain,
         c.site_url, c.source, c.primary_image_url, c.last_scraped,
         a.name           AS agency_name,
         am.water         AS has_water,
         am.restrooms     AS has_restrooms,
         am.body_of_water AS body_of_water,
+        am.water_feature AS water_feature,
+        am.toilet_type   AS toilet_type,
+        am.activities    AS activities,
         am.amenities_raw AS amenities_raw,
         su.is_open       AS is_open,
         r.reservation_url AS booking_url,
@@ -77,7 +82,7 @@ def get_campsite_by_id(campsite_id):
     site = dict(row)
 
     # Decimals -> float so jsonify and Jinja rounding both behave.
-    for key in ("latitude", "longitude"):
+    for key in ("latitude", "longitude", "fee_min", "fee_max"):
         if site.get(key) is not None:
             site[key] = float(site[key])
 
