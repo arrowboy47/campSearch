@@ -12,8 +12,51 @@ from search import (
     search_campsites,
     get_all_forests,
     get_campsites_for_map,
+    get_facet_options,
 )
 import json
+
+
+def _int_arg(name):
+    raw = request.args.get(name)
+    try:
+        return int(raw) if raw not in (None, "") else None
+    except ValueError:
+        return None
+
+
+def _float_arg(name):
+    raw = request.args.get(name)
+    try:
+        return float(raw) if raw not in (None, "") else None
+    except ValueError:
+        return None
+
+
+def parse_search_filters(args):
+    """Pull the faceted-search filters out of a request's query string.
+
+    Everything is optional; an unset filter is left out so search_campsites
+    doesn't add a WHERE clause for it.
+    """
+
+    toilet = args.get("toilet") or None
+    camping_type = args.get("camping_type") or None
+    return {
+        "is_open": args.get("is_open") == "true",
+        "forest": args.get("forest") or None,
+        "water": args.get("water") == "true",
+        "toilet": toilet if toilet in ("any", "flush", "vault") else None,
+        "free_only": args.get("free_only") == "true",
+        "fee_max": _float_arg("fee_max"),
+        "reservable": args.get("reservable") == "true",
+        "camping_type": camping_type if camping_type in ("dispersed", "developed") else None,
+        "elev_min": _int_arg("elev_min"),
+        "elev_max": _int_arg("elev_max"),
+        "terrain": args.getlist("terrain") or None,
+        "water_feature": args.getlist("water_feature") or None,
+        "activities": args.getlist("activities") or None,
+    }
 
 # Create Flask app
 app = Flask(__name__)
@@ -81,7 +124,8 @@ def home():
     """
 
     forests = get_all_forests()
-    return render_template("index.html", forests=forests)
+    facets = get_facet_options()
+    return render_template("index.html", forests=forests, facets=facets)
 
 @app.route("/api/campsite/<int:campsite_id>")
 def get_campsite(campsite_id):
@@ -159,22 +203,10 @@ def search():
     """
 
     query = request.args.get("query") or ""
-
-    # Optional filters coming from the search form
-    is_open_flag = request.args.get("is_open") == "true"
-    has_water_flag = request.args.get("has_water") == "true"
-    has_restrooms_flag = request.args.get("has_restrooms") == "true"
-    forest = request.args.get("forest") or None
+    filters = parse_search_filters(request.args)
 
     try:
-        matches = search_campsites(
-            query=query or None,
-            is_open=is_open_flag if is_open_flag else None,
-            has_water=has_water_flag if has_water_flag else None,
-            has_restrooms=has_restrooms_flag if has_restrooms_flag else None,
-            forest=forest,
-            limit=200,
-        )
+        matches = search_campsites(query=query or None, limit=200, **filters)
     except Exception as e:
         return jsonify({"error": "Search failed", "details": str(e)}), 500
 
@@ -193,23 +225,12 @@ def results():
     """
 
     query = request.args.get("query") or ""
-
-    is_open_flag = request.args.get("is_open") == "true"
-    has_water_flag = request.args.get("has_water") == "true"
-    has_restrooms_flag = request.args.get("has_restrooms") == "true"
-    forest = request.args.get("forest") or None
+    filters = parse_search_filters(request.args)
     start_str = request.args.get("start")
     end_str = request.args.get("end")
 
     try:
-        campsites = search_campsites(
-            query=query or None,
-            is_open=is_open_flag if is_open_flag else None,
-            has_water=has_water_flag if has_water_flag else None,
-            has_restrooms=has_restrooms_flag if has_restrooms_flag else None,
-            forest=forest,
-            limit=200,
-        )
+        campsites = search_campsites(query=query or None, limit=200, **filters)
     except Exception as e:
         return f"Search failed: {e}", 500
 
@@ -227,6 +248,9 @@ def results():
         campsites=enriched,
         start_date=start_str,
         end_date=end_str,
+        facets=get_facet_options(),
+        filters=filters,
+        result_count=len(enriched),
     )
 
 

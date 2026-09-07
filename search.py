@@ -15,261 +15,240 @@ def normalize(text):
     return re.sub(r"\s+", "", text.strip().lower())
 
 
-def _fetch_filtered_campsites(is_open=None, has_water=None, has_restrooms=None, forest=None):
-    """Return a list of campsite rows after applying DB-level filters.
+# --- faceted filtering -------------------------------------------------------
+#
+# Every campsite row is joined to its one-to-one satellites (status, amenities,
+# reservations, latest weather) once, here. Filters are applied in SQL so the
+# fuzzy pass only ever scores an already-narrowed set. A filter that is None /
+# empty is simply not added to the WHERE clause.
 
-    This lets us apply filters *first* in SQL and then run fuzzy search only
-    on the already-filtered subset, which is what the frontend expects.
-    """
+_BASE_SQL = """
+    SELECT
+        c.id,
+        c.name,
+        c.forest_name,
+        c.latitude,
+        c.longitude,
+        c.source,
+        c.reservation_type,
+        c.num_sites,
+        c.fee,
+        c.fee_min,
+        c.is_free,
+        c.terrain,
+        c.elevation_ft,
+        su.is_open,
+        wf.forecast_json,
+        am.water        AS has_water,
+        am.restrooms    AS has_restrooms,
+        am.toilet_type,
+        am.water_feature,
+        am.activities,
+        r.is_reservable
+    FROM campsites c
+    LEFT JOIN status_updates    su ON c.id = su.campsite_id
+    LEFT JOIN weather_forecasts wf ON c.id = wf.campsite_id
+    LEFT JOIN amenities         am ON c.id = am.campsite_id
+    LEFT JOIN reservations      r  ON c.id = r.campsite_id
+    WHERE 1 = 1
+"""
 
+_ROW_FIELDS = [
+    "id", "name", "forest_name", "latitude", "longitude", "source",
+    "reservation_type", "num_sites", "fee", "fee_min", "is_free", "terrain",
+    "elevation_ft", "is_open", "forecast_json", "has_water", "has_restrooms",
+    "toilet_type", "water_feature", "activities", "is_reservable",
+]
+
+
+def _row_to_dict(row):
+    d = dict(zip(_ROW_FIELDS, row))
+    for key in ("latitude", "longitude", "fee_min"):
+        if d.get(key) is not None:
+            val = float(d[key])
+            d[key] = None if val != val else val  # drop NaN (bad coords)
+    d["has_water"] = bool(d["has_water"]) if d["has_water"] is not None else False
+    d["has_restrooms"] = bool(d["has_restrooms"]) if d["has_restrooms"] is not None else False
+    d["activities"] = d.get("activities") or []
+    # keep the key the results template already reads
+    d["forecast"] = d.get("forecast_json")
+    return d
+
+
+def _build_where(filters):
+    """(sql_fragment, params) for everything in `filters` that is set."""
+    clauses = []
+    params = []
+    f = filters
+
+    if f.get("is_open"):
+        clauses.append("su.is_open = TRUE")
+
+    if f.get("forest"):
+        clauses.append("LOWER(c.forest_name) LIKE %s")
+        params.append(f"%{f['forest'].strip().lower()}%")
+
+    if f.get("water"):
+        clauses.append("am.water = TRUE")
+
+    toilet = f.get("toilet")
+    if toilet in ("flush", "vault"):
+        clauses.append("am.toilet_type = %s")
+        params.append(toilet)
+    elif toilet == "any":
+        clauses.append("(am.toilet_type IS NOT NULL AND am.toilet_type <> 'none')")
+
+    if f.get("free_only"):
+        clauses.append("c.is_free = TRUE")
+    elif f.get("fee_max") is not None:
+        clauses.append("(c.is_free = TRUE OR c.fee_min <= %s)")
+        params.append(f["fee_max"])
+
+    if f.get("reservable"):
+        clauses.append("r.is_reservable = TRUE")
+
+    camping = f.get("camping_type")
+    if camping == "dispersed":
+        clauses.append("c.reservation_type = 'dispersed'")
+    elif camping == "developed":
+        clauses.append("(c.reservation_type IS DISTINCT FROM 'dispersed')")
+
+    if f.get("elev_min") is not None:
+        clauses.append("c.elevation_ft >= %s")
+        params.append(f["elev_min"])
+    if f.get("elev_max") is not None:
+        clauses.append("c.elevation_ft <= %s")
+        params.append(f["elev_max"])
+
+    if f.get("terrain"):
+        clauses.append("c.terrain = ANY(%s)")
+        params.append(list(f["terrain"]))
+
+    if f.get("water_feature"):
+        clauses.append("am.water_feature = ANY(%s)")
+        params.append(list(f["water_feature"]))
+
+    if f.get("activities"):
+        # match a site that offers ANY of the requested activities
+        clauses.append("am.activities && %s")
+        params.append(list(f["activities"]))
+
+    frag = ("".join(f" AND {c}" for c in clauses))
+    return frag, params
+
+
+def _fetch_filtered(filters, hard_limit=2000):
     conn = get_connection()
     cur = conn.cursor()
-
-    sql = """
-        SELECT
-            campsites.id,
-            campsites.name,
-            campsites.forest_name,
-            campsites.latitude,
-            campsites.longitude,
-            status_updates.is_open,
-            weather_forecasts.forecast_json,
-            amenities.water,
-            amenities.restrooms
-        FROM campsites
-        LEFT JOIN status_updates ON campsites.id = status_updates.campsite_id
-        LEFT JOIN weather_forecasts ON campsites.id = weather_forecasts.campsite_id
-        LEFT JOIN amenities ON campsites.id = amenities.campsite_id
-        WHERE 1 = 1
-    """
-
-    params = []
-
-    # Only add filters when the corresponding checkbox was selected.
-    if is_open is True:
-        sql += " AND status_updates.is_open = TRUE"
-
-    if has_water is True:
-        sql += " AND amenities.water = TRUE"
-
-    if has_restrooms is True:
-        sql += " AND amenities.restrooms = TRUE"
-
-    if forest:
-        # Case-insensitive substring match so short values like "stanislaus"
-        # still match "Stanislaus National Forest".
-        sql += " AND LOWER(campsites.forest_name) LIKE %s"
-        params.append(f"%{forest.strip().lower()}%")
-
-    cur.execute(sql, params)
+    frag, params = _build_where(filters)
+    cur.execute(_BASE_SQL + frag + f" LIMIT {int(hard_limit)}", params)
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return rows
+    return [_row_to_dict(r) for r in rows]
 
 
-def search_campsites(
-    query=None,
-    *,
-    is_open=None,
-    has_water=None,
-    has_restrooms=None,
-    forest=None,
-    fuzzthresh=40,
-    limit=200,
-):
-    """Search campsites with optional filters and fuzzy matching.
+def search_campsites(query=None, *, fuzzthresh=40, limit=200, **filters):
+    """Faceted search. Filters run in SQL; an optional text query fuzzy-scores
+    what's left. With no query, results come back sorted by forest then name.
 
-    Filters are applied *first* at the SQL level, then fuzzy search is applied
-    within that subset (if a text query is provided).
-
-    If ``query`` is empty/None, this returns all filtered campsites without
-    fuzzy scoring, sorted by name.
+    Accepted filters: is_open, forest, water, toilet ('any'|'flush'|'vault'),
+    free_only, fee_max, reservable, camping_type ('dispersed'|'developed'),
+    elev_min, elev_max, terrain (list), water_feature (list), activities (list).
     """
 
-    rows = _fetch_filtered_campsites(
-        is_open=is_open,
-        has_water=has_water,
-        has_restrooms=has_restrooms,
-        forest=forest,
-    )
-
+    rows = _fetch_filtered(filters)
     if not rows:
         return []
 
     if not query:
-        # No text search: just map the rows into dictionaries and sort by name.
-        results = []
-        for (
-            site_id,
-            name,
-            forest_name,
-            latitude,
-            longitude,
-            is_open_val,
-            forecast_json,
-            water,
-            restrooms,
-        ) in rows:
-            results.append(
-                {
-                    "id": site_id,
-                    "name": name,
-                    "forest_name": forest_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "is_open": is_open_val,
-                    "forecast": forecast_json,
-                    "has_water": bool(water) if water is not None else False,
-                    "has_restrooms": bool(restrooms) if restrooms is not None else False,
-                }
-            )
+        rows.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))
+        return rows[:limit]
 
-        results.sort(key=lambda x: (x["forest_name"] or "", x["name"]))
-        return results[:limit]
-
-    # --- Fuzzy search path (query provided) ---
     norm_query = normalize(query)
+    scored = []
+    best_site = 0
+    best_forest = 0
+    by_forest = {}
 
-    name_results = []
-    forest_scores = {}
-    best_site_score = 0
-    best_forest_score = 0
+    for row in rows:
+        name_flat = normalize(row["name"])
+        forest_flat = normalize(row["forest_name"])
 
-    for (
-        site_id,
-        name,
-        forest_name,
-        latitude,
-        longitude,
-        is_open_val,
-        forecast_json,
-        water,
-        restrooms,
-    ) in rows:
-        name_flat = normalize(name)
-        forest_flat = normalize(forest_name)
+        token = fuzz.token_sort_ratio(name_flat, norm_query)
+        partial = fuzz.partial_ratio(name_flat, norm_query)
+        if name_flat:
+            partial *= len(norm_query) / len(name_flat)
+        site_score = max(token, partial)
+        best_site = max(best_site, site_score)
 
-        # Name scores
-        token_score = fuzz.token_sort_ratio(name_flat, norm_query)
-        partial_score = fuzz.partial_ratio(name_flat, norm_query)
-        # Adjust partial score based on query length so very short queries
-        # don't dominate long names.
-        if len(name_flat) > 0:
-            partial_adjusted_score = partial_score * (len(norm_query) / len(name_flat))
-        else:
-            partial_adjusted_score = partial_score
-
-        site_score = max(token_score, partial_adjusted_score)
-        best_site_score = max(best_site_score, site_score)
-
-        # Forest name scores
-        partial_forest_score = fuzz.partial_ratio(norm_query, forest_flat) * 0.6
-        exact_forest_substring = int(norm_query in forest_flat) * 100
-        forest_score = max(partial_forest_score, exact_forest_substring)
-        best_forest_score = max(best_forest_score, forest_score)
-
-        # Store top site matches
-        if site_score == 100 and forest_score != 100:
-            return [
-                {
-                    "id": site_id,
-                    "name": name,
-                    "forest_name": forest_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "score": site_score,
-                    "is_open": is_open_val,
-                    "forecast": forecast_json,
-                    "has_water": bool(water) if water is not None else False,
-                    "has_restrooms": bool(restrooms) if restrooms is not None else False,
-                }
-            ]
-
-        # Store site matches
-        if site_score >= fuzzthresh:
-            name_results.append(
-                {
-                    "id": site_id,
-                    "name": name,
-                    "forest_name": forest_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "score": site_score,
-                    "is_open": is_open_val,
-                    "forecast": forecast_json,
-                    "has_water": bool(water) if water is not None else False,
-                    "has_restrooms": bool(restrooms) if restrooms is not None else False,
-                }
-            )
-
-        # Collect potential forest matches
-        if forest_score >= fuzzthresh:
-            forest_scores.setdefault(forest_name, []).append(
-                (
-                    site_id,
-                    name,
-                    latitude,
-                    longitude,
-                    site_score,
-                    is_open_val,
-                    forecast_json,
-                    water,
-                    restrooms,
-                )
-            )
-
-    # Decide if this is primarily a forest search.
-    if best_forest_score >= fuzzthresh and best_forest_score > best_site_score:
-        best_forest_match = max(
-            forest_scores.items(),
-            key=lambda item: fuzz.partial_ratio(norm_query, normalize(item[0])),
-            default=None,
+        forest_score = max(
+            fuzz.partial_ratio(norm_query, forest_flat) * 0.6,
+            100 if norm_query and norm_query in forest_flat else 0,
         )
+        best_forest = max(best_forest, forest_score)
 
-        if best_forest_match:
-            forest_name, site_list = best_forest_match
-            sorted_sites = sorted(site_list, key=lambda x: x[4], reverse=True)
-            return [
-                {
-                    "id": sid,
-                    "name": sname,
-                    "forest_name": forest_name,
-                    "latitude": lat,
-                    "longitude": lon,
-                    "score": score,
-                    "is_open": is_open_val,
-                    "forecast": forecast_json,
-                    "has_water": bool(water) if water is not None else False,
-                    "has_restrooms": bool(restrooms) if restrooms is not None else False,
-                }
-                for (
-                    sid,
-                    sname,
-                    lat,
-                    lon,
-                    score,
-                    is_open_val,
-                    forecast_json,
-                    water,
-                    restrooms,
-                ) in sorted_sites
-            ][:limit]
+        if site_score >= fuzzthresh:
+            row = dict(row, score=site_score)
+            scored.append(row)
+        if forest_score >= fuzzthresh:
+            by_forest.setdefault(row["forest_name"], []).append(row)
 
-    # Otherwise, return top site matches.
-    name_results.sort(key=lambda x: x.get("score", 0), reverse=True)
-    return name_results[:limit]
+    # Forest-name search: query looks more like a forest than a site name.
+    if best_forest >= fuzzthresh and best_forest > best_site and by_forest:
+        forest_name, sites = max(
+            by_forest.items(),
+            key=lambda kv: fuzz.partial_ratio(norm_query, normalize(kv[0])),
+        )
+        sites.sort(key=lambda x: ((x["name"] or "").lower()))
+        return sites[:limit]
+
+    scored.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return scored[:limit]
 
 
 def get_campsite_by_name(query, fuzzthresh=40, limit=10):
-    """Backward-compatible wrapper around :func:`search_campsites`.
-
-    Existing code that only passes a query can keep using this, but all new
-    call sites should prefer ``search_campsites`` so they can take advantage
-    of filter-first behavior.
-    """
-
+    """Backward-compatible wrapper: text-only search, no facets."""
     return search_campsites(query=query, fuzzthresh=fuzzthresh, limit=limit)
+
+
+# --- facet option lists (for building the filter UI) ------------------------
+
+def get_facet_options():
+    """Distinct values present in the data, for populating filter controls."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT DISTINCT terrain FROM campsites WHERE terrain IS NOT NULL ORDER BY terrain"
+    )
+    terrains = [r[0] for r in cur.fetchall()]
+
+    cur.execute(
+        "SELECT DISTINCT water_feature FROM amenities "
+        "WHERE water_feature IS NOT NULL AND water_feature <> 'water nearby' "
+        "ORDER BY water_feature"
+    )
+    water_features = [r[0] for r in cur.fetchall()]
+
+    cur.execute(
+        """
+        SELECT act, COUNT(*) AS n
+        FROM amenities, unnest(activities) AS act
+        GROUP BY act
+        HAVING COUNT(*) >= 5
+        ORDER BY n DESC
+        """
+    )
+    activities = [r[0] for r in cur.fetchall()]
+
+    cur.close()
+    conn.close()
+    return {
+        "terrains": terrains,
+        "water_features": water_features,
+        "activities": activities,
+    }
 
 
 def get_all_forests():
@@ -325,9 +304,7 @@ def get_campsites_for_map():
             """
         )
         rows = cur.fetchall()
-        rows_mode = "forest_name"
     except Exception:
-        # Roll back the failed statement and fall back to managing_unit.
         conn.rollback()
         cur.execute(
             """
@@ -343,7 +320,6 @@ def get_campsites_for_map():
             """
         )
         rows = cur.fetchall()
-        rows_mode = "managing_unit"
 
     cur.close()
     conn.close()
@@ -354,8 +330,6 @@ def get_campsites_for_map():
             {
                 "id": site_id,
                 "name": name,
-                # Prefer the explicit forest_name when present; otherwise
-                # use managing_unit as the region label.
                 "forest_name": region_label,
                 "latitude": float(latitude) if latitude is not None else None,
                 "longitude": float(longitude) if longitude is not None else None,

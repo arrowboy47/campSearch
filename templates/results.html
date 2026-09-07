@@ -25,24 +25,32 @@
 		</div>
 	</header>
 
-	<main class="page-main">
-		<section class="results-header">
+	<main class="page-main results-layout">
+		<aside class="results-filters">
+			<form action="/results" method="GET" class="filter-form">
+				<label for="sidebarQuery" class="field-label">Search</label>
+				<input type="text" id="sidebarQuery" name="query" class="search-input"
+				       value="{{ query }}" placeholder="Name or forest (optional)" />
+
+				{% include "_filters.html" %}
+
+				<div class="filter-form-actions">
+					<button type="submit" class="btn btn-primary">Apply</button>
+					<a href="/results" class="btn btn-secondary">Clear</a>
+				</div>
+			</form>
+		</aside>
+
+		<section class="results-main">
 			<div class="results-header-inner">
 				<h1 class="results-title">Search results</h1>
-				{% if query %}
-					<p class="results-subtitle">
-						Showing matches for <span class="pill pill-soft">"{{ query }}"</span>
-					</p>
-				{% else %}
-					<p class="results-subtitle">
-						Showing results based on filters only.
-					</p>
-				{% endif %}
+				<p class="results-subtitle">
+					{{ result_count }} campsite{{ '' if result_count == 1 else 's' }}
+					{% if query %}for <span class="pill pill-soft">"{{ query }}"</span>{% endif %}
+				</p>
 				<a href="/" class="link-quiet">← New search</a>
 			</div>
-		</section>
 
-		<section class="results-list">
 			{% if campsites %}
 				<div class="results-grid">
 					{% for camp in campsites %}
@@ -55,9 +63,11 @@
 									>{{ camp.name }}</a>
 								</h2>
 
-								<span class="status-chip {% if camp.is_open %}status-open{% else %}status-closed{% endif %}">
-									{% if camp.is_open %}Open{% else %}Closed{% endif %}
-								</span>
+								{% if camp.is_open is not none %}
+									<span class="status-chip {% if camp.is_open %}status-open{% else %}status-closed{% endif %}">
+										{% if camp.is_open %}Open{% else %}Closed{% endif %}
+									</span>
+								{% endif %}
 							</header>
 
 							<div class="result-card-body">
@@ -66,24 +76,27 @@
 								{% endif %}
 
 								<div class="badge-row">
-									{% if camp.has_water %}
-										<span class="badge">💧 Water</span>
-									{% endif %}
-									{% if camp.has_restrooms %}
-										<span class="badge">🚻 Restrooms</span>
-									{% endif %}
-									{% if not camp.has_water and not camp.has_restrooms %}
-										<span class="badge badge-muted">No amenities listed</span>
-									{% endif %}
+									{% if camp.is_free %}<span class="badge">🆓 Free</span>
+									{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
+									{% if camp.reservation_type == 'dispersed' %}<span class="badge">⛺ Dispersed</span>{% endif %}
+									{% if camp.has_water %}<span class="badge">💧 Water</span>{% endif %}
+									{% if camp.toilet_type and camp.toilet_type != 'none' %}<span class="badge">🚻 {{ camp.toilet_type|capitalize }}</span>{% endif %}
+									{% if camp.water_feature and camp.water_feature != 'water nearby' %}<span class="badge">🌊 {{ camp.water_feature|capitalize }}</span>{% endif %}
+									{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
+									{% if camp.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(camp.elevation_ft) }} ft</span>{% endif %}
 								</div>
+
+								{% if camp.activities %}
+									<div class="chip-row">
+										{% for act in camp.activities[:6] %}<span class="chip">{{ act|capitalize }}</span>{% endfor %}
+									</div>
+								{% endif %}
 
 								{% if camp.weather_summary %}
 									<p class="meta-row">
 										<span class="meta-label">Weather</span>
 										<span class="meta-value">
-											{% if camp.weather_summary.sky %}
-												{{ camp.weather_summary.sky }}
-											{% endif %}
+											{% if camp.weather_summary.sky %}{{ camp.weather_summary.sky }}{% endif %}
 											{% if camp.weather_summary.high is not none and camp.weather_summary.low is not none %}
 												· High {{ camp.weather_summary.high|round(0) }}° / Low {{ camp.weather_summary.low|round(0) }}°
 											{% endif %}
@@ -100,8 +113,8 @@
 			{% else %}
 				<div class="empty-state">
 					<h2 class="empty-title">No campsites found</h2>
-					<p class="empty-body">Try a broader search term, a different forest, or remove some filters.</p>
-					<a href="/" class="btn btn-secondary">Start a new search</a>
+					<p class="empty-body">Loosen a filter — drop an activity, widen the elevation range, or clear the forest.</p>
+					<a href="/results" class="btn btn-secondary">Clear filters</a>
 				</div>
 			{% endif %}
 		</section>

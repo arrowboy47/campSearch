@@ -1,0 +1,125 @@
+{# Faceted search filters. Included inside a <form method="GET" action="/results">.
+   Expects: forests (list), facets (dict), filters (dict, optional - current state). #}
+{% set filters = filters | default({}) %}
+
+<div class="filters-grid">
+  <fieldset class="filter-group">
+    <legend class="field-label">Status &amp; type</legend>
+    <label class="checkbox-label">
+      <input type="checkbox" name="is_open" value="true" {{ 'checked' if filters.is_open }} />
+      <span>Open only</span>
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="reservable" value="true" {{ 'checked' if filters.reservable }} />
+      <span>Reservable</span>
+    </label>
+    <label class="radio-label">
+      <input type="radio" name="camping_type" value="" {{ 'checked' if not filters.camping_type }} />
+      <span>Any site type</span>
+    </label>
+    <label class="radio-label">
+      <input type="radio" name="camping_type" value="developed" {{ 'checked' if filters.camping_type == 'developed' }} />
+      <span>Developed campground</span>
+    </label>
+    <label class="radio-label">
+      <input type="radio" name="camping_type" value="dispersed" {{ 'checked' if filters.camping_type == 'dispersed' }} />
+      <span>Dispersed / free</span>
+    </label>
+  </fieldset>
+
+  <fieldset class="filter-group">
+    <legend class="field-label">Water &amp; facilities</legend>
+    <label class="checkbox-label">
+      <input type="checkbox" name="water" value="true" {{ 'checked' if filters.water }} />
+      <span>Drinking water</span>
+    </label>
+    <label class="inline-field">
+      <span>Toilets</span>
+      <select name="toilet" class="select">
+        <option value="">Any / unknown</option>
+        <option value="any"   {{ 'selected' if filters.toilet == 'any' }}>Any toilet</option>
+        <option value="flush" {{ 'selected' if filters.toilet == 'flush' }}>Flush</option>
+        <option value="vault" {{ 'selected' if filters.toilet == 'vault' }}>Vault</option>
+      </select>
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="free_only" value="true" {{ 'checked' if filters.free_only }} />
+      <span>Free only</span>
+    </label>
+    <label class="inline-field">
+      <span>Max $/night</span>
+      <input type="number" name="fee_max" min="0" step="5" class="num-input"
+             value="{{ filters.fee_max if filters.fee_max is not none }}" />
+    </label>
+  </fieldset>
+
+  <fieldset class="filter-group">
+    <legend class="field-label">Location</legend>
+    <label class="inline-field">
+      <span>Forest</span>
+      <select name="forest" class="select">
+        <option value="">Any</option>
+        {% for forest in forests %}
+          <option value="{{ forest }}" {{ 'selected' if filters.forest == forest }}>{{ forest }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="inline-field">
+      <span>Elevation ft</span>
+      <span class="range-pair">
+        <input type="number" name="elev_min" step="500" class="num-input" placeholder="min"
+               value="{{ filters.elev_min if filters.elev_min is not none }}" />
+        <input type="number" name="elev_max" step="500" class="num-input" placeholder="max"
+               value="{{ filters.elev_max if filters.elev_max is not none }}" />
+      </span>
+    </label>
+    <label class="inline-field">
+      <span>Dates</span>
+      <span class="range-pair">
+        <input type="date" name="start" class="date-input" value="{{ request.args.get('start', '') }}" />
+        <input type="date" name="end" class="date-input" value="{{ request.args.get('end', '') }}" />
+      </span>
+    </label>
+  </fieldset>
+
+  {% if facets and facets.terrains %}
+  <fieldset class="filter-group">
+    <legend class="field-label">Terrain</legend>
+    {% for t in facets.terrains %}
+      <label class="checkbox-label">
+        <input type="checkbox" name="terrain" value="{{ t }}"
+               {{ 'checked' if t in (filters.terrain or []) }} />
+        <span>{{ t | capitalize }}</span>
+      </label>
+    {% endfor %}
+  </fieldset>
+  {% endif %}
+
+  {% if facets and facets.water_features %}
+  <fieldset class="filter-group">
+    <legend class="field-label">Water feature</legend>
+    {% for w in facets.water_features %}
+      <label class="checkbox-label">
+        <input type="checkbox" name="water_feature" value="{{ w }}"
+               {{ 'checked' if w in (filters.water_feature or []) }} />
+        <span>{{ w | capitalize }}</span>
+      </label>
+    {% endfor %}
+  </fieldset>
+  {% endif %}
+
+  {% if facets and facets.activities %}
+  <fieldset class="filter-group filter-group-wide">
+    <legend class="field-label">Activities <span class="filters-hint">(matches any)</span></legend>
+    <div class="chip-check-row">
+      {% for a in facets.activities %}
+        <label class="chip-check">
+          <input type="checkbox" name="activities" value="{{ a }}"
+                 {{ 'checked' if a in (filters.activities or []) }} />
+          <span>{{ a | capitalize }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% endif %}
+</div>

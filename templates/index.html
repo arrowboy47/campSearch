@@ -63,61 +63,10 @@
             <div id="filters" class="filters">
               <div class="filters-header">
                 <h2 class="filters-title">Filters</h2>
-                <p class="filters-hint">Refine results by status, amenities, forest, and dates.</p>
+                <p class="filters-hint">Refine by type, water, terrain, elevation, and activities.</p>
               </div>
 
-              <div class="filters-grid">
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="is_open" value="true" />
-                    <span>Open campsites only</span>
-                  </label>
-                </div>
-
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="has_water" value="true" />
-                    <span>Water available</span>
-                  </label>
-                </div>
-
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="has_restrooms" value="true" />
-                    <span>Restrooms available</span>
-                  </label>
-                </div>
-
-                 <div class="filter-group">
-                   <label for="forest" class="field-label">National Forest</label>
-                   <select name="forest" id="forest" class="select">
-                     <option value="">Any</option>
-                     {% for forest in forests %}
-                       <option value="{{ forest }}">{{ forest }}</option>
-                     {% endfor %}
-                   </select>
-                 </div>
-
-                 <div class="filter-group">
-                   <label for="start_date" class="field-label">Start date</label>
-                   <input
-                     type="date"
-                     id="start_date"
-                     name="start"
-                     class="date-input"
-                   />
-                 </div>
-
-                 <div class="filter-group">
-                   <label for="end_date" class="field-label">End date</label>
-                   <input
-                     type="date"
-                     id="end_date"
-                     name="end"
-                     class="date-input"
-                   />
-                 </div>
-               </div>
+              {% include "_filters.html" %}
              </div>
            </div>
         </form>
@@ -138,7 +87,5 @@
   <footer class="page-footer">
     <p class="page-footer-text">Built for quickly scanning national forest campsites.</p>
   </footer>
-
-  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 </body>
 </html>
