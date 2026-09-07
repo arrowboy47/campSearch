@@ -21,6 +21,7 @@ import sync_ridb
 import scrape_fs_usda
 import ingest_ridb_orgs
 import scrape_reservecalifornia
+import scrape_thedyrt
 
 
 JOBS = {
@@ -34,6 +35,7 @@ JOBS = {
         lambda: sync_ridb.main([]),                          # match sites missing a facility id
         lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM/USFS campgrounds
         lambda: scrape_reservecalifornia.main([]),           # CA state park campgrounds
+        lambda: scrape_thedyrt.main([]),                     # dispersed / free camping (The Dyrt)
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
     ],
     "smoke": [
