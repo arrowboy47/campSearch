@@ -48,6 +48,17 @@ def scrape_run(source):
     rec_conn = get_conn()
     rec_conn.autocommit = True
     rec = rec_conn.cursor()
+
+    # Reclaim stale locks: a previous run of this source that was hard-killed
+    # (SIGKILL, power loss) never got to run its finally block, so its row is
+    # stuck at 'running'. Anything still 'running' after 6h is dead.
+    rec.execute(
+        "UPDATE scrape_runs SET status = 'orphaned', finished_at = now(), "
+        "note = COALESCE(note, 'no finally block - process killed') "
+        "WHERE source = %s AND status = 'running' AND started_at < now() - interval '6 hours';",
+        (source,),
+    )
+
     rec.execute(
         "INSERT INTO scrape_runs (source, status) VALUES (%s, 'running') RETURNING id;",
         (source,),
