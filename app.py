@@ -3,7 +3,7 @@ Heads up to future me: This is my first time making a flask app, so I'm going to
 out of this thing and try to treat comments as like learning tools so i can come back and know what tf going on
 """
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from db import get_campsite_by_id, get_trails_for_campsite
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -15,6 +15,7 @@ from search import (
     get_facet_options,
 )
 import json
+import re
 
 
 def _int_arg(name):
@@ -337,6 +338,124 @@ def campsite(campsite_id):
         end_date=end_date.strftime("%Y-%m-%d"),
         alltrails_url=alltrails_url,
     )
+
+def _slugify(text):
+    return re.sub(r"[^a-z0-9]+", "-", (text or "campsite").lower()).strip("-") or "campsite"
+
+
+def build_trip_markdown(camp, trails, forecast, start_str, end_str):
+    """A plain-text trip sheet for a campsite: the stuff you'd want offline."""
+    lines = [f"# {camp['name']}", ""]
+
+    forest = camp.get("managing_unit") or camp.get("forest_name")
+    facts = []
+    if forest:
+        facts.append(f"- **Forest / unit:** {forest}")
+    if camp.get("agency_name"):
+        facts.append(f"- **Managed by:** {camp['agency_name']}")
+    if camp.get("latitude") is not None and camp.get("longitude") is not None:
+        facts.append(f"- **Coordinates:** {camp['latitude']:.5f}, {camp['longitude']:.5f}")
+    if camp.get("elevation_ft"):
+        facts.append(f"- **Elevation:** {camp['elevation_ft']:,} ft")
+    if camp.get("terrain"):
+        facts.append(f"- **Terrain:** {camp['terrain']}")
+    if camp.get("is_free"):
+        facts.append("- **Fee:** Free")
+    elif camp.get("fee"):
+        facts.append(f"- **Fee:** {camp['fee']}")
+    if camp.get("num_sites"):
+        facts.append(f"- **Sites:** {camp['num_sites']}")
+    if camp.get("has_water"):
+        facts.append("- **Water:** drinking water on site")
+    if camp.get("toilet_type") and camp["toilet_type"] != "none":
+        facts.append(f"- **Toilets:** {camp['toilet_type']}")
+    if camp.get("water_feature"):
+        facts.append(f"- **Water feature:** {camp['water_feature']}")
+    if camp.get("contact_phone"):
+        facts.append(f"- **Phone:** {camp['contact_phone']}")
+    lines += facts + [""]
+
+    if start_str:
+        span = start_str if start_str == end_str else f"{start_str} → {end_str}"
+        lines += [f"**Trip dates:** {span}", ""]
+
+    if camp.get("activities"):
+        lines += ["## Activities", ", ".join(camp["activities"]), ""]
+
+    if forecast:
+        lines += ["## Weather"]
+        for day in forecast:
+            bits = [day.get("date") or ""]
+            if day.get("sky"):
+                bits.append(day["sky"])
+            if day.get("high") is not None and day.get("low") is not None:
+                bits.append(f"high {round(day['high'])}° / low {round(day['low'])}°")
+            if day.get("precip_in") is not None:
+                bits.append(f"{day['precip_in']:.2f} in precip")
+            lines.append(f"- {' · '.join(b for b in bits if b)}")
+        lines.append("")
+
+    if camp.get("overview"):
+        lines += ["## Overview", camp["overview"].strip(), ""]
+
+    if trails:
+        lines += ["## Hikes nearby"]
+        for t in trails:
+            stat = []
+            if t.get("difficulty"):
+                stat.append(t["difficulty"])
+            if t.get("length_miles") is not None:
+                stat.append(f"{t['length_miles']:.1f} mi")
+            if t.get("elevation_gain_feet") is not None:
+                stat.append(f"{round(t['elevation_gain_feet'])} ft gain")
+            if t.get("distance_miles") is not None:
+                stat.append(f"{t['distance_miles']:.1f} mi from camp")
+            suffix = f" ({', '.join(stat)})" if stat else ""
+            link = f"[{t['name']}]({t['url']})" if t.get("url") else t["name"]
+            lines.append(f"- {link}{suffix}")
+        lines.append("")
+
+    if camp.get("site_url"):
+        lines += [f"Official listing: {camp['site_url']}"]
+
+    lines += ["", "_Confirm details with the official listing before traveling._", ""]
+    return "\n".join(lines)
+
+
+@app.route("/campsite/<int:campsite_id>/trip.md")
+def campsite_trip_sheet(campsite_id):
+    camp = get_campsite_by_id(campsite_id)
+    if not camp:
+        return "Campsite not found", 404
+
+    start_str = request.args.get("start")
+    end_str = request.args.get("end") or start_str
+
+    forecast = []
+    lat, lon = camp.get("latitude"), camp.get("longitude")
+    if start_str and lat is not None and lon is not None:
+        try:
+            start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            for i in range(max((end_date - start_date).days + 1, 1)):
+                summary = build_weather_summary(
+                    get_forecast(lat, lon, start_date + timedelta(days=i))
+                )
+                if summary:
+                    forecast.append(summary)
+        except Exception:
+            forecast = []
+
+    trails = get_trails_for_campsite(campsite_id)
+    md = build_trip_markdown(camp, trails, forecast, start_str, end_str)
+
+    filename = f"{_slugify(camp['name'])}-trip.md"
+    return Response(
+        md,
+        mimetype="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
 
 # lets see what next
 # runs the app and runs the index route by default, I think?

@@ -175,6 +175,7 @@
 				{% endif %}
 			</section>
 
+			{% set date_qs %}{% if start_date %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
 			<div class="detail-actions">
 				{% if campsite.booking_url %}
 					<a href="{{ campsite.booking_url }}" target="_blank" class="btn btn-primary">Reserve a site</a>
@@ -182,6 +183,8 @@
 				{% if campsite.site_url %}
 					<a href="{{ campsite.site_url }}" target="_blank" class="btn btn-secondary">Open official site</a>
 				{% endif %}
+				<a href="/campsite/{{ campsite.id }}/trip.md{{ date_qs }}" class="btn btn-secondary">Download trip sheet</a>
+				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
 				<a href="/" class="btn btn-secondary">Back to search</a>
 			</div>
 

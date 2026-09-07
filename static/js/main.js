@@ -189,9 +189,61 @@ function initMap() {
     });
 }
 
+// Date range inputs ----------------------------------------------------
+// Native <input type="date"> already gives a calendar popover; this just keeps
+// the pair sane: no past dates, end never before start, and picking a start
+// pre-fills an empty end.
+
+function initDateRange() {
+  const start = document.querySelector('input[name="start"]');
+  const end = document.querySelector('input[name="end"]');
+  if (!start || !end) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  start.min = today;
+  end.min = start.value || today;
+
+  start.addEventListener("change", () => {
+    end.min = start.value || today;
+    if (start.value && (!end.value || end.value < start.value)) {
+      end.value = start.value;
+    }
+  });
+
+  end.addEventListener("change", () => {
+    if (start.value && end.value && end.value < start.value) {
+      end.value = start.value;
+    }
+  });
+}
+
+// Copy-link button -----------------------------------------------------
+
+function initShare() {
+  const btn = document.querySelector("[data-copy-link]");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const url = window.location.href;
+    const label = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = "Link copied";
+    } catch (e) {
+      // Clipboard API unavailable (http, old browser): fall back to a prompt.
+      window.prompt("Copy this link:", url);
+    }
+    setTimeout(() => {
+      btn.textContent = label;
+    }, 1800);
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initMap();
+  initDateRange();
+  initShare();
 });
