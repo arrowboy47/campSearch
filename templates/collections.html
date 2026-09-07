@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Collections · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main account-layout">
+		{% include "_accountside.html" %}
+
+		<div class="account-body">
+			{% include "_flash.html" %}
+			<h1>Collections</h1>
+			<p class="muted-note">Group campsites into your own lists — a trip shortlist, “backpacking”, “weekend with the dog”, whatever.</p>
+
+			<form method="POST" action="/account/collections" class="stack-form new-collection-form">
+				<label>New collection
+					<input type="text" name="name" maxlength="80" placeholder="e.g. Summer 2027" required />
+				</label>
+				<button type="submit" class="btn btn-primary">Create</button>
+			</form>
+
+			{% if collections %}
+				<ul class="collection-list">
+					{% for c in collections %}
+						<li class="collection-row">
+							<a href="/account/collections/{{ c.id }}" class="collection-name">{{ c.name }}</a>
+							<span class="muted-note">{{ c.count }} campsite{{ '' if c.count == 1 else 's' }}</span>
+						</li>
+					{% endfor %}
+				</ul>
+			{% else %}
+				<p class="muted-note">No collections yet.</p>
+			{% endif %}
+		</div>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Always confirm details with the official listing before traveling.</p>
+	</footer>
+</body>
+</html>

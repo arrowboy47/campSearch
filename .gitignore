@@ -19,6 +19,9 @@ data/
 # Large sample data (kept locally, not tracked)
 factest.json
 
+# User uploads (profile pictures, etc.)
+static/uploads/
+
 # Editor / OS
 .DS_Store
 *.swp

@@ -383,14 +383,47 @@ function initMenu() {
   });
 }
 
+// "Add to collection": reveal the name box when "New collection" is picked.
+
+function initCollectionAdd() {
+  const sel = document.querySelector("[data-collection-select]");
+  const nameInput = document.querySelector("[data-collection-new]");
+  if (!sel || !nameInput) return;
+  sel.addEventListener("change", () => {
+    const isNew = sel.value === "__new";
+    nameInput.hidden = !isNew;
+    if (isNew) nameInput.focus();
+  });
+}
+
+// Fold long prose behind a "Show more" toggle.
+
+function initReadMore() {
+  document.querySelectorAll("[data-readmore]").forEach((wrap) => {
+    const btn = wrap.querySelector("[data-readmore-toggle]");
+    const body = wrap.querySelector(".section-body");
+    if (!btn || !body) return;
+    if (body.scrollHeight <= 260) return; // short enough, leave it
+
+    wrap.classList.add("is-clamped");
+    btn.hidden = false;
+    btn.addEventListener("click", () => {
+      const clamped = wrap.classList.toggle("is-clamped");
+      btn.textContent = clamped ? "Show more" : "Show less";
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initMenu();
+  initReadMore();
   initMap();
   initDateRange();
   initShare();
   initNearby();
   initDrive();
+  initCollectionAdd();
 });

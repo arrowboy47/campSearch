@@ -21,68 +21,79 @@
 		</div>
 	</header>
 
-	<main class="page-main narrow-main">
-		{% include "_flash.html" %}
-		<div class="account-head">
-			<h1>{{ user.username }}</h1>
-			<form method="POST" action="/logout" class="inline-form">
-				<button type="submit" class="btn btn-secondary">Sign out</button>
-			</form>
-		</div>
+	<main class="page-main account-layout">
+		{% include "_accountside.html" %}
 
-		<section class="detail-section">
-			<h2 class="section-title">Profile</h2>
-			<form method="POST" action="/account" class="stack-form">
-				<div class="form-row">
-					<label>First name<input type="text" name="first_name" value="{{ user.first_name or '' }}" /></label>
-					<label>Last name<input type="text" name="last_name" value="{{ user.last_name or '' }}" /></label>
-				</div>
-				<label>Email<input type="email" name="email" value="{{ user.email or '' }}" /></label>
-				<label>Home address or city <span class="muted-note">(driving-distance only)</span>
-					<input type="text" name="home_address" value="{{ user.home_address or '' }}" placeholder="e.g. Sacramento, CA" /></label>
-				{% if user.home_address and user.home_lat is none %}
-					<p class="muted-note">Heads up: that address didn't geocode, so distance-from-home is off until it does.</p>
-				{% endif %}
-				<button type="submit" class="btn btn-primary">Save profile</button>
-			</form>
-		</section>
+		<div class="account-body">
+			{% include "_flash.html" %}
+			<div class="account-head">
+				<h1>{{ user.username }}</h1>
+				<form method="POST" action="/logout" class="inline-form">
+					<button type="submit" class="btn btn-secondary">Sign out</button>
+				</form>
+			</div>
 
-		<section class="detail-section">
-			<h2 class="section-title">Your data</h2>
-			<p><a href="/account/export" class="btn btn-secondary">Export account (JSON)</a></p>
-		</section>
+			<section class="detail-section">
+				<h2 class="section-title">Profile</h2>
+				<form method="POST" action="/account" class="stack-form" enctype="multipart/form-data">
+					<div class="avatar-field">
+						{% if user.avatar_path %}
+							<img class="avatar" src="{{ url_for('static', filename=user.avatar_path) }}" alt="Your profile picture" />
+						{% else %}
+							<span class="avatar avatar-fallback" aria-hidden="true">👤</span>
+						{% endif %}
+						<label>Profile picture <span class="muted-note">PNG / JPG / WEBP / GIF, under 3 MB</span>
+							<input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" />
+						</label>
+					</div>
+					<div class="form-row">
+						<label>First name<input type="text" name="first_name" value="{{ user.first_name or '' }}" /></label>
+						<label>Last name<input type="text" name="last_name" value="{{ user.last_name or '' }}" /></label>
+					</div>
+					<label>Email<input type="email" name="email" value="{{ user.email or '' }}" /></label>
+					<label>Home address or city <span class="muted-note">(driving-distance only; must be a real place)</span>
+						<input type="text" name="home_address" value="{{ user.home_address or '' }}" placeholder="e.g. Sacramento, CA" /></label>
+					<button type="submit" class="btn btn-primary">Save profile</button>
+				</form>
+			</section>
 
-		<section class="detail-section">
-			<h2 class="section-title">Saved campsites ({{ saved | length }})</h2>
-			{% if saved %}
-				<div class="results-grid">
-					{% for camp in saved %}
-						<article class="result-card">
-							<header class="result-card-header">
-								<h3 class="result-card-title">
-									<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
-								</h3>
-								<form method="POST" action="/campsite/{{ camp.id }}/save" class="inline-form">
-									<input type="hidden" name="action" value="unsave" />
-									<input type="hidden" name="next" value="/account" />
-									<button type="submit" class="btn btn-secondary btn-sm">Remove</button>
-								</form>
-							</header>
-							<div class="result-card-body">
-								{% if camp.forest_name %}<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>{% endif %}
-								<div class="badge-row">
-									{% if camp.is_free %}<span class="badge">🆓 Free</span>{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
-									{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
-									{% if camp.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(camp.elevation_ft) }} ft</span>{% endif %}
+			<section class="detail-section">
+				<h2 class="section-title">Your data</h2>
+				<p><a href="/account/export" class="btn btn-secondary">Export account (JSON)</a></p>
+			</section>
+
+			<section class="detail-section">
+				<h2 class="section-title">Saved campsites ({{ saved | length }})</h2>
+				{% if saved %}
+					<div class="results-grid">
+						{% for camp in saved %}
+							<article class="result-card">
+								<header class="result-card-header">
+									<h3 class="result-card-title">
+										<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
+									</h3>
+									<form method="POST" action="/campsite/{{ camp.id }}/save" class="inline-form">
+										<input type="hidden" name="action" value="unsave" />
+										<input type="hidden" name="next" value="/account" />
+										<button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+									</form>
+								</header>
+								<div class="result-card-body">
+									{% if camp.forest_name %}<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>{% endif %}
+									<div class="badge-row">
+										{% if camp.is_free %}<span class="badge">🆓 Free</span>{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
+										{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
+										{% if camp.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(camp.elevation_ft) }} ft</span>{% endif %}
+									</div>
 								</div>
-							</div>
-						</article>
-					{% endfor %}
-				</div>
-			{% else %}
-				<p class="muted-note">Nothing saved yet. Hit “☆ Save” on any campsite page.</p>
-			{% endif %}
-		</section>
+							</article>
+						{% endfor %}
+					</div>
+				{% else %}
+					<p class="muted-note">Nothing saved yet. Hit “☆ Save” on any campsite page.</p>
+				{% endif %}
+			</section>
+		</div>
 	</main>
 
 	<footer class="page-footer">

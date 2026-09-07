@@ -24,18 +24,18 @@
 	<main class="page-main narrow-main">
 		{% include "_flash.html" %}
 		<h1>Create an account</h1>
-		<p class="muted-note">You don't need one to search. An account lets you save
-			campsites and get distances from a home location when your browser won't
-			share your position.</p>
+		<p class="muted-note">Optional — an account saves campsites and remembers a home location for distance calculations.</p>
 
-		<form method="POST" action="/signup" class="stack-form">
+		<form method="POST" action="/signup" class="stack-form" enctype="multipart/form-data">
 			<div class="form-row">
 				<label>First name<input type="text" name="first_name" value="{{ form.first_name or '' }}" /></label>
 				<label>Last name<input type="text" name="last_name" value="{{ form.last_name or '' }}" /></label>
 			</div>
 			<label>Email <span class="muted-note">(optional)</span>
 				<input type="email" name="email" value="{{ form.email or '' }}" /></label>
-			<label>Home address or city <span class="muted-note">(only used for driving-distance math)</span>
+			<label>Profile picture <span class="muted-note">(optional; PNG / JPG / WEBP / GIF, under 3 MB)</span>
+				<input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" /></label>
+			<label>Home address or city <span class="muted-note">(only used for driving-distance math; must be a real place)</span>
 				<input type="text" name="home_address" value="{{ form.home_address or '' }}"
 				       placeholder="e.g. Sacramento, CA" /></label>
 			<hr />

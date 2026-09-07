@@ -1,0 +1,16 @@
+{# Left-hand personal menu, shown on account / collections pages.
+   Expects `active` in the context ('saved' | 'collections'). #}
+<nav class="side-menu" aria-label="Your account">
+  <div class="side-menu-user">
+    {% if current_user and current_user.avatar_path %}
+      <img class="avatar avatar-sm" src="{{ url_for('static', filename=current_user.avatar_path) }}" alt="" />
+    {% else %}
+      <span class="avatar avatar-sm avatar-fallback" aria-hidden="true">👤</span>
+    {% endif %}
+    <span class="side-menu-name">{{ current_user.first_name or current_user.username }}</span>
+  </div>
+
+  <p class="side-menu-title">Your stuff</p>
+  <a class="side-menu-link {{ 'is-active' if active == 'saved' }}" href="/account">★ Saved campsites</a>
+  <a class="side-menu-link {{ 'is-active' if active == 'collections' }}" href="/account/collections">🗂 Collections</a>
+</nav>

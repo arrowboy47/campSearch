@@ -146,7 +146,10 @@
 			{% if campsite.overview %}
 				<section class="detail-section">
 					<h2 class="section-title">Overview</h2>
-					<p class="section-body">{{ campsite.overview }}</p>
+					<div class="readmore" data-readmore>
+						<p class="section-body">{{ campsite.overview }}</p>
+						<button type="button" class="readmore-toggle" data-readmore-toggle hidden>Show more</button>
+					</div>
 				</section>
 			{% endif %}
 
@@ -220,6 +223,17 @@
 						<button type="submit" class="btn {{ 'btn-primary' if saved else 'btn-secondary' }}">
 							{{ '★ Saved' if saved else '☆ Save' }}
 						</button>
+					</form>
+					<form method="POST" action="/campsite/{{ campsite.id }}/collection" class="inline-form collection-add">
+						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
+						<select name="collection_id" class="select" data-collection-select>
+							<option value="">Add to collection…</option>
+							{% for c in user_collections %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+							<option value="__new">＋ New collection</option>
+						</select>
+						<input type="text" name="new_collection" class="num-input" placeholder="New collection name"
+						       data-collection-new hidden />
+						<button type="submit" class="btn btn-secondary">Add</button>
 					</form>
 				{% endif %}
 				<a href="/" class="btn btn-secondary">Back to search</a>

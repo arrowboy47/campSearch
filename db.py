@@ -132,7 +132,7 @@ def get_trails_for_campsite(campsite_id, limit=12):
 
 _USER_COLS = (
     "id, username, first_name, last_name, email, "
-    "home_address, home_lat, home_lon, created_at"
+    "home_address, home_lat, home_lon, avatar_path, created_at"
 )
 
 
@@ -207,7 +207,7 @@ def update_user_profile(user_id, **fields):
     """Update the given profile columns (only keys that are passed)."""
     allowed = (
         "first_name", "last_name", "email",
-        "home_address", "home_lat", "home_lon",
+        "home_address", "home_lat", "home_lon", "avatar_path",
     )
     sets = {k: fields[k] for k in allowed if k in fields}
     if not sets:
@@ -319,4 +319,129 @@ def get_saved_campsites(user_id):
             if r.get(key) is not None:
                 val = float(r[key])
                 r[key] = None if val != val else val
+    return rows
+
+
+# --- collections (migration 0016) ----------------------------------------
+
+def create_collection(user_id, name):
+    """Returns the new collection dict, or None if the name is already used."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(
+            "INSERT INTO collections (user_id, name) VALUES (%s, %s) "
+            "RETURNING id, name, created_at;",
+            (user_id, name),
+        )
+        row = cur.fetchone()
+        conn.commit()
+        return dict(row)
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        return None
+    finally:
+        cur.close()
+        conn.close()
+
+
+def get_collections(user_id):
+    """A user's collections with a member count each."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.created_at,
+               count(cc.campsite_id) AS count
+        FROM collections c
+        LEFT JOIN collection_campsites cc ON cc.collection_id = c.id
+        WHERE c.user_id = %s
+        GROUP BY c.id
+        ORDER BY c.name;
+        """,
+        (user_id,),
+    )
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return rows
+
+
+def get_collection(user_id, collection_id):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        "SELECT id, name, created_at FROM collections WHERE id = %s AND user_id = %s;",
+        (collection_id, user_id),
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return dict(row) if row else None
+
+
+def delete_collection(user_id, collection_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM collections WHERE id = %s AND user_id = %s;",
+        (collection_id, user_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def add_to_collection(user_id, collection_id, campsite_id):
+    """No-op if the collection isn't the user's, or the campsite is already in it."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO collection_campsites (collection_id, campsite_id)
+        SELECT %s, %s
+        WHERE EXISTS (SELECT 1 FROM collections WHERE id = %s AND user_id = %s)
+        ON CONFLICT DO NOTHING;
+        """,
+        (collection_id, campsite_id, collection_id, user_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def remove_from_collection(user_id, collection_id, campsite_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        DELETE FROM collection_campsites cc
+        USING collections c
+        WHERE cc.collection_id = c.id
+          AND c.user_id = %s AND c.id = %s AND cc.campsite_id = %s;
+        """,
+        (user_id, collection_id, campsite_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_collection_campsites(collection_id):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.forest_name, c.terrain, c.elevation_ft,
+               c.fee, c.is_free, c.reservation_type, cc.added_at
+        FROM collection_campsites cc
+        JOIN campsites c ON c.id = cc.campsite_id
+        WHERE cc.collection_id = %s
+        ORDER BY cc.added_at DESC;
+        """,
+        (collection_id,),
+    )
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    conn.close()
     return rows

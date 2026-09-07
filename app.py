@@ -13,6 +13,8 @@ from db import (
     create_user, get_user, get_user_for_login, update_user_profile,
     export_user_data, save_campsite, unsave_campsite, is_campsite_saved,
     get_saved_campsites,
+    create_collection, get_collections, get_collection, delete_collection,
+    add_to_collection, remove_from_collection, get_collection_campsites,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -27,6 +29,38 @@ from search import (
 import geo
 import json
 import re
+import os
+
+# Profile-picture uploads land under static/ so Flask can serve them directly.
+AVATAR_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads", "avatars")
+AVATAR_EXT = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif"}
+MAX_AVATAR_BYTES = 3 * 1024 * 1024
+
+
+def save_avatar(file_storage, user_id):
+    """Persist an uploaded image as static/uploads/avatars/<user_id>.<ext>.
+
+    Returns the path relative to static/ (for url_for), or None if no file was
+    given. Raises ValueError on a bad type or oversize file.
+    """
+    if not file_storage or not file_storage.filename:
+        return None
+    ext = AVATAR_EXT.get(file_storage.mimetype)
+    if not ext:
+        raise ValueError("Profile picture must be a PNG, JPG, WEBP, or GIF.")
+    file_storage.stream.seek(0, os.SEEK_END)
+    size = file_storage.stream.tell()
+    file_storage.stream.seek(0)
+    if size > MAX_AVATAR_BYTES:
+        raise ValueError("Profile picture must be under 3 MB.")
+
+    os.makedirs(AVATAR_DIR, exist_ok=True)
+    for old in AVATAR_EXT.values():
+        p = os.path.join(AVATAR_DIR, f"{user_id}.{old}")
+        if old != ext and os.path.exists(p):
+            os.remove(p)
+    file_storage.save(os.path.join(AVATAR_DIR, f"{user_id}.{ext}"))
+    return f"uploads/avatars/{user_id}.{ext}"
 
 
 def _int_arg(name):
@@ -407,7 +441,11 @@ def campsite(campsite_id):
                 dist["label"] = label
                 drive = dist
 
-    saved = bool(current_user()) and is_campsite_saved(session["user_id"], campsite_id)
+    saved = False
+    user_collections = []
+    if current_user():
+        saved = is_campsite_saved(session["user_id"], campsite_id)
+        user_collections = get_collections(session["user_id"])
 
     return render_template(
         "campsite.html",
@@ -416,6 +454,7 @@ def campsite(campsite_id):
         trails=trails,
         drive=drive,
         saved=saved,
+        user_collections=user_collections,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         alltrails_url=alltrails_url,
@@ -556,6 +595,8 @@ def signup():
         if len(password) < 8:
             errors.append("Password must be at least 8 characters.")
 
+        # Address is optional, but if given it must resolve to a real place —
+        # distance-from-home is useless with a bogus address.
         home_address = (form.get("home_address") or "").strip() or None
         home_lat = home_lon = None
         if home_address:
@@ -563,7 +604,7 @@ def signup():
             if hit:
                 home_lat, home_lon = hit
             else:
-                flash("Couldn't locate that home address — saved as text only.")
+                errors.append("We couldn't find that home address. Check it, or leave it blank.")
 
         if errors:
             for e in errors:
@@ -583,6 +624,13 @@ def signup():
         if not user:
             flash("That username is taken.")
             return render_template("signup.html", form=form)
+
+        try:
+            avatar_path = save_avatar(request.files.get("avatar"), user["id"])
+            if avatar_path:
+                update_user_profile(user["id"], avatar_path=avatar_path)
+        except ValueError as exc:
+            flash(str(exc) + " (Account created without a picture.)")
 
         session.clear()
         session["user_id"] = user["id"]
@@ -633,15 +681,24 @@ def account():
         }
         new_address = (form.get("home_address") or "").strip() or None
         if new_address != user.get("home_address"):
-            fields["home_address"] = new_address
             if new_address:
                 hit = geo.geocode(new_address)
-                fields["home_lat"] = hit[0] if hit else None
-                fields["home_lon"] = hit[1] if hit else None
                 if not hit:
-                    flash("Couldn't locate that address — saved as text only.")
+                    flash("We couldn't find that address — home not changed.")
+                else:
+                    fields["home_address"] = new_address
+                    fields["home_lat"], fields["home_lon"] = hit
             else:
+                fields["home_address"] = None
                 fields["home_lat"] = fields["home_lon"] = None
+
+        try:
+            avatar_path = save_avatar(request.files.get("avatar"), user["id"])
+            if avatar_path:
+                fields["avatar_path"] = avatar_path
+        except ValueError as exc:
+            flash(str(exc))
+
         update_user_profile(user["id"], **fields)
         g.pop("user", None)
         flash("Profile updated.")
@@ -651,6 +708,8 @@ def account():
         "account.html",
         user=user,
         saved=get_saved_campsites(user["id"]),
+        collections=get_collections(user["id"]),
+        active="saved",
     )
 
 
@@ -678,6 +737,88 @@ def toggle_saved(campsite_id):
         save_campsite(uid, campsite_id)
     nxt = request.form.get("next")
     return redirect(nxt if nxt and nxt.startswith("/") else url_for("campsite", campsite_id=campsite_id))
+
+
+# --- collections ---------------------------------------------------------
+
+def _safe_next(default):
+    nxt = request.form.get("next")
+    return nxt if nxt and nxt.startswith("/") else default
+
+
+@app.route("/account/collections", methods=["GET", "POST"])
+@login_required
+def collections_page():
+    uid = current_user()["id"]
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        if not name:
+            flash("Give the collection a name.")
+        elif not create_collection(uid, name):
+            flash(f"You already have a collection called “{name}”.")
+        else:
+            flash(f"Created “{name}”.")
+        return redirect(url_for("collections_page"))
+
+    return render_template(
+        "collections.html",
+        collections=get_collections(uid),
+        active="collections",
+        user=current_user(),
+    )
+
+
+@app.route("/account/collections/<int:collection_id>", methods=["GET", "POST"])
+@login_required
+def collection_detail(collection_id):
+    uid = current_user()["id"]
+    coll = get_collection(uid, collection_id)
+    if not coll:
+        abort(404)
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "delete":
+            delete_collection(uid, collection_id)
+            flash(f"Deleted “{coll['name']}”.")
+            return redirect(url_for("collections_page"))
+        if action == "remove":
+            cid = request.form.get("campsite_id", type=int)
+            if cid:
+                remove_from_collection(uid, collection_id, cid)
+        return redirect(url_for("collection_detail", collection_id=collection_id))
+
+    return render_template(
+        "collection_detail.html",
+        collection=coll,
+        campsites=get_collection_campsites(collection_id),
+        collections=get_collections(uid),
+        active="collections",
+        user=current_user(),
+    )
+
+
+@app.route("/campsite/<int:campsite_id>/collection", methods=["POST"])
+@login_required
+def campsite_add_to_collection(campsite_id):
+    if not get_campsite_by_id(campsite_id):
+        abort(404)
+    uid = current_user()["id"]
+    cid = request.form.get("collection_id", type=int)
+    new_name = (request.form.get("new_collection") or "").strip()
+
+    if new_name:
+        coll = create_collection(uid, new_name)
+        if coll:
+            cid = coll["id"]
+        else:
+            flash(f"You already have a collection called “{new_name}”.")
+            cid = None
+    if cid:
+        add_to_collection(uid, cid, campsite_id)
+        flash("Added to collection.")
+
+    return redirect(_safe_next(url_for("campsite", campsite_id=campsite_id)))
 
 
 # --- campsites near me ------------------------------------------------------

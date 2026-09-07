@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ collection.name }} · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main account-layout">
+		{% include "_accountside.html" %}
+
+		<div class="account-body">
+			{% include "_flash.html" %}
+			<div class="account-head">
+				<h1>{{ collection.name }}</h1>
+				<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form"
+				      onsubmit="return confirm('Delete this collection?');">
+					<input type="hidden" name="action" value="delete" />
+					<button type="submit" class="btn btn-secondary btn-sm">Delete collection</button>
+				</form>
+			</div>
+			<p><a href="/account/collections" class="link-quiet">← All collections</a></p>
+
+			{% if campsites %}
+				<div class="results-grid">
+					{% for camp in campsites %}
+						<article class="result-card">
+							<header class="result-card-header">
+								<h3 class="result-card-title">
+									<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
+								</h3>
+								<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form">
+									<input type="hidden" name="action" value="remove" />
+									<input type="hidden" name="campsite_id" value="{{ camp.id }}" />
+									<button type="submit" class="btn btn-secondary btn-sm">Remove</button>
+								</form>
+							</header>
+							<div class="result-card-body">
+								{% if camp.forest_name %}<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>{% endif %}
+								<div class="badge-row">
+									{% if camp.is_free %}<span class="badge">🆓 Free</span>{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
+									{% if camp.reservation_type %}<span class="badge">📋 {{ camp.reservation_type }}</span>{% endif %}
+									{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
+								</div>
+							</div>
+						</article>
+					{% endfor %}
+				</div>
+			{% else %}
+				<p class="muted-note">Nothing here yet. Open a campsite and use “Add to collection”.</p>
+			{% endif %}
+		</div>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Always confirm details with the official listing before traveling.</p>
+	</footer>
+</body>
+</html>
