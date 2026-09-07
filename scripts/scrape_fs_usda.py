@@ -134,14 +134,15 @@ def iter_list_items(session, forest_path):
 
 UPSERT_CAMPSITE = """
     INSERT INTO campsites (name, forest_name, managing_unit, site_url, fs_usda_url,
-                           overview, source, first_seen, last_scraped)
+                           overview, agency_id, source, first_seen, last_scraped)
     VALUES (%(name)s, %(forest)s, %(unit)s, %(url)s, %(forest_url)s,
-            %(blurb)s, 'fs_usda', now(), now())
+            %(blurb)s, %(agency_id)s, 'fs_usda', now(), now())
     ON CONFLICT (site_url) WHERE site_url IS NOT NULL
     DO UPDATE SET
         name          = EXCLUDED.name,
         managing_unit = COALESCE(campsites.managing_unit, EXCLUDED.managing_unit),
         forest_name   = COALESCE(campsites.forest_name, EXCLUDED.forest_name),
+        agency_id     = COALESCE(campsites.agency_id, EXCLUDED.agency_id),
         last_scraped  = now()
     RETURNING id, (xmax = 0) AS inserted;
 """
@@ -166,6 +167,9 @@ UPSERT_AMENITIES = """
 
 def run_list_tier(conn, session, forests, run):
     cur = conn.cursor()
+    cur.execute("SELECT id FROM agencies WHERE name = 'US Forest Service';")
+    row = cur.fetchone()
+    usfs_agency_id = row[0] if row else None
     for forest_path in forests:
         slug = forest_slug(forest_path)
         unit = managing_unit_from_slug(slug)
@@ -176,7 +180,7 @@ def run_list_tier(conn, session, forests, run):
                 cur.execute(UPSERT_CAMPSITE, {
                     "name": item["name"], "forest": slug, "unit": unit,
                     "url": item["url"], "forest_url": forest_url,
-                    "blurb": item["blurb"],
+                    "blurb": item["blurb"], "agency_id": usfs_agency_id,
                 })
                 camp_id, inserted = cur.fetchone()
 
