@@ -47,9 +47,19 @@ _BASE_SQL = """
         r.is_reservable
     FROM campsites c
     LEFT JOIN status_updates    su ON c.id = su.campsite_id
-    LEFT JOIN weather_forecasts wf ON c.id = wf.campsite_id
     LEFT JOIN amenities         am ON c.id = am.campsite_id
     LEFT JOIN reservations      r  ON c.id = r.campsite_id
+    -- weather_forecasts has one row PER DAY (migration 0004), so a plain join
+    -- multiplies every campsite by its forecast-day count (~4250 rows for 2440
+    -- campsites) and the row cap then silently drops real matches. Pull just
+    -- the earliest forecast so the join stays 1:1.
+    LEFT JOIN LATERAL (
+        SELECT forecast_json
+        FROM weather_forecasts
+        WHERE campsite_id = c.id
+        ORDER BY forecast_date NULLS LAST
+        LIMIT 1
+    ) wf ON TRUE
     WHERE 1 = 1
 """
 
@@ -137,7 +147,7 @@ def _build_where(filters):
     return frag, params
 
 
-def _fetch_filtered(filters, hard_limit=2000):
+def _fetch_filtered(filters, hard_limit=5000):
     conn = get_connection()
     cur = conn.cursor()
     frag, params = _build_where(filters)
@@ -148,8 +158,32 @@ def _fetch_filtered(filters, hard_limit=2000):
     return [_row_to_dict(r) for r in rows]
 
 
-def search_campsites(query=None, *, fuzzthresh=40, limit=200, **filters):
-    """Faceted search. Filters run in SQL; an optional text query fuzzy-scores
+def _name_score(name_flat, nq):
+    """0-100 relevance of a whitespace-stripped campsite name to the query.
+
+    Substring hits win outright (a search for "pinecrest" must surface
+    "Pinecrest Campground" first); everything else falls back to rapidfuzz,
+    with partial_ratio discounted because on its own it over-matches short
+    queries.
+    """
+    if not name_flat:
+        return 0.0
+    if nq in name_flat:
+        pos = name_flat.index(nq)
+        # full name == query -> 100; leading match of a longer name -> ~90;
+        # buried match -> lower, but never below 80 (still a real hit).
+        return max(80.0, 100.0 - pos * 0.8 - (len(name_flat) - len(nq)) * 0.3)
+    if name_flat in nq:
+        return 82.0
+    return max(
+        fuzz.token_set_ratio(name_flat, nq),
+        fuzz.token_sort_ratio(name_flat, nq),
+        fuzz.partial_ratio(name_flat, nq) * 0.8,
+    )
+
+
+def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
+    """Faceted search. Filters run in SQL; an optional text query then scores
     what's left. With no query, results come back sorted by forest then name.
 
     Accepted filters: is_open, forest, water, toilet ('any'|'flush'|'vault'),
@@ -161,53 +195,34 @@ def search_campsites(query=None, *, fuzzthresh=40, limit=200, **filters):
     if not rows:
         return []
 
-    if not query:
-        rows.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))
-        return rows[:limit]
+    def _by_forest_then_name(items):
+        items.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))
+        return items
 
-    norm_query = normalize(query)
+    nq = normalize(query) if query else ""
+    if not nq:
+        return _by_forest_then_name(rows)[:limit]
+
+    # Forest-name search: the query is a substring of a forest slug and matches
+    # more forests than site names (e.g. "stanislaus", "shasta"). Needs >=4
+    # chars so short fragments don't hijack a site-name search.
+    if len(nq) >= 4:
+        forest_hits = [r for r in rows if nq in normalize(r["forest_name"])]
+        name_substr = sum(1 for r in rows if nq in normalize(r["name"]))
+        if forest_hits and len(forest_hits) > name_substr:
+            return _by_forest_then_name(forest_hits)[:limit]
+
     scored = []
-    best_site = 0
-    best_forest = 0
-    by_forest = {}
-
     for row in rows:
-        name_flat = normalize(row["name"])
-        forest_flat = normalize(row["forest_name"])
+        score = _name_score(normalize(row["name"]), nq)
+        if score >= fuzzthresh:
+            scored.append(dict(row, score=score))
 
-        token = fuzz.token_sort_ratio(name_flat, norm_query)
-        partial = fuzz.partial_ratio(name_flat, norm_query)
-        if name_flat:
-            partial *= len(norm_query) / len(name_flat)
-        site_score = max(token, partial)
-        best_site = max(best_site, site_score)
-
-        forest_score = max(
-            fuzz.partial_ratio(norm_query, forest_flat) * 0.6,
-            100 if norm_query and norm_query in forest_flat else 0,
-        )
-        best_forest = max(best_forest, forest_score)
-
-        if site_score >= fuzzthresh:
-            row = dict(row, score=site_score)
-            scored.append(row)
-        if forest_score >= fuzzthresh:
-            by_forest.setdefault(row["forest_name"], []).append(row)
-
-    # Forest-name search: query looks more like a forest than a site name.
-    if best_forest >= fuzzthresh and best_forest > best_site and by_forest:
-        forest_name, sites = max(
-            by_forest.items(),
-            key=lambda kv: fuzz.partial_ratio(norm_query, normalize(kv[0])),
-        )
-        sites.sort(key=lambda x: ((x["name"] or "").lower()))
-        return sites[:limit]
-
-    scored.sort(key=lambda x: x.get("score", 0), reverse=True)
+    scored.sort(key=lambda x: (-x["score"], (x["name"] or "").lower()))
     return scored[:limit]
 
 
-def get_campsite_by_name(query, fuzzthresh=40, limit=10):
+def get_campsite_by_name(query, fuzzthresh=62, limit=10):
     """Backward-compatible wrapper: text-only search, no facets."""
     return search_campsites(query=query, fuzzthresh=fuzzthresh, limit=limit)
 
