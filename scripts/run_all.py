@@ -25,6 +25,10 @@ JOBS = {
         lambda: sync_ridb.main([]),               # sites still missing a facility id
         lambda: refresh_dynamic.main(["--days", "7"]),
     ],
+    # cheap end-to-end check: DB reachable, keys valid, one upsert path exercised.
+    "smoke": [
+        lambda: refresh_dynamic.main(["--limit", "3", "--sleep", "0"]),
+    ],
 }
 
 

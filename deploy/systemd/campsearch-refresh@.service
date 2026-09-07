@@ -1,0 +1,26 @@
+# CampSearch data refresh — templated: %i is "daily" or "weekly".
+# systemd *user* unit on the AI-core host (Jadu Z4 G4), mirroring how PDW sync
+# runs there. Postgres is reached over a short-lived SSH tunnel on local port
+# 5435 (5434 is left free for a hand-run dev tunnel).
+#
+# Install: see ./README.md
+
+[Unit]
+Description=CampSearch data refresh (%i)
+After=network-online.target
+Wants=network-online.target
+OnFailure=campsearch-refresh-failed@%i.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/campsearch/refresh.env
+WorkingDirectory=%h/projects/campSearch
+
+# Bring up the tunnel, run the job, tear the tunnel down. -f backgrounds ssh;
+# ExitOnForwardFailure makes ExecStartPre fail loudly if 5435 is already taken.
+ExecStartPre=/usr/bin/ssh -f -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -L 5435:localhost:5434 thebigbox
+ExecStart=%h/projects/campSearch/.venv/bin/python scripts/run_all.py %i
+ExecStopPost=-/usr/bin/pkill -f "5435:localhost:5434 thebigbox"
+
+TimeoutStartSec=3600
+Nice=10
