@@ -1,20 +1,19 @@
 import requests
-from datetime import datetime
+
+from config import openweather_api_key
 
 # get forecast for ONE day
 def get_forecast(lat, lon, date):
     """
     Calls OpenWeather One Call API and returns daily forecast data.
     """
-    API_KEY = "7c61c03997ee3bf70f5e685ca593254d"
-
     url = "https://api.openweathermap.org/data/3.0/onecall/day_summary"
     params = {
         "lat": lat,
         "lon": lon,
         "date": date.strftime("%Y-%m-%d"),
-        "units": "imperial",  # or "metric" 
-        "appid": API_KEY
+        "units": "imperial",  # or "metric"
+        "appid": openweather_api_key(),
     }
 
     response = requests.get(url, params=params)

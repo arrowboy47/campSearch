@@ -1,12 +1,19 @@
 import psycopg2
 
-DB_NAME = "camping"
-DB_USER = "arrowboy"
+from config import database_url
+
 
 def get_connection():
-    return psycopg2.connect(dbname=DB_NAME, user=DB_USER)
+    """Open a new Postgres connection from DATABASE_URL.
 
-# useful for weather data and anything that needs the campsite site_url: so things like updating site status and when it was last updated 
+    Was hardcoded to a local unix socket (dbname=camping user=arrowboy); now
+    points wherever DATABASE_URL says — a local dev container, or campsearch-pg
+    on thebigbox over an SSH tunnel.
+    """
+    return psycopg2.connect(database_url())
+
+
+# useful for weather data and anything that needs the campsite site_url: so things like updating site status and when it was last updated
 # returns dict with id, name, latitude, longitude, site_url
 def get_campsite_by_id(campsite_id):
     conn = get_connection()

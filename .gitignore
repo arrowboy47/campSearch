@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.uv/
+
+# Env / secrets
+.env
+*.local
+
+# Scraper working files
+data/
+*.csv
+*.dump
+*.sql.gz
+
+# Large sample data (kept locally, not tracked)
+factest.json
+
+# Editor / OS
+.DS_Store
+*.swp
