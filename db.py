@@ -128,6 +128,38 @@ def get_trails_for_campsite(campsite_id, limit=12):
     return rows
 
 
+def get_campsites_with_thumbs():
+    """Every campsite that has coordinates, plus its first image URL.
+
+    Powers the homepage "Campsites near you" carousel. Distance ranking is done
+    in the route so this stays a plain, cacheable scan.
+    """
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.forest_name, c.latitude, c.longitude,
+               COALESCE(c.primary_image_url, img.image_url) AS image_url
+        FROM campsites c
+        LEFT JOIN LATERAL (
+            SELECT image_url FROM images
+            WHERE campsite_id = c.id
+            ORDER BY id
+            LIMIT 1
+        ) img ON TRUE
+        WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+          AND c.latitude <> 'NaN'::numeric AND c.longitude <> 'NaN'::numeric;
+        """
+    )
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+    for r in rows:
+        for key in ("latitude", "longitude"):
+            r[key] = float(r[key]) if r[key] is not None else None
+    return rows
+
+
 # --- users & saved campsites (migration 0014) ------------------------------
 
 _USER_COLS = (

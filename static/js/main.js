@@ -396,6 +396,25 @@ function initCollectionAdd() {
   });
 }
 
+// Homepage "Campsites near you": if the server had no origin, quietly ask the
+// browser for a location once and reload with it as ?lat=&lon=.
+
+function initNearHome() {
+  const el = document.querySelector("[data-near-locate]");
+  if (!el || !navigator.geolocation) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("lat")) return; // already tried this page load
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      params.set("lat", pos.coords.latitude.toFixed(5));
+      params.set("lon", pos.coords.longitude.toFixed(5));
+      window.location.search = params.toString();
+    },
+    () => {},
+    { timeout: 8000, maximumAge: 300000 }
+  );
+}
+
 // Fold long prose behind a "Show more" toggle.
 
 function initReadMore() {
@@ -419,6 +438,7 @@ function initReadMore() {
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initMenu();
+  initNearHome();
   initReadMore();
   initMap();
   initDateRange();

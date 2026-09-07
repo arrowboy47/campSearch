@@ -355,6 +355,94 @@ a:hover {
   background: #020617;
 }
 
+/* "Campsites near you" carousel ------------------------------------- */
+
+.near-section {
+  margin-top: 26px;
+}
+
+.near-title {
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+
+.near-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.near-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.near-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+
+.near-carousel::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 999px;
+}
+
+.near-card {
+  flex: 0 0 150px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.near-thumb {
+  width: 150px;
+  height: 150px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.near-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.near-card:hover .near-thumb {
+  border-color: var(--accent);
+}
+
+.near-thumb-fallback {
+  font-size: 40px;
+}
+
+.near-name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.near-dist {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* Map shell ------------------------------------------------------------ */
 
 .map-section {
@@ -1004,6 +1092,41 @@ fieldset.filter-group legend {
 
   .detail-actions {
     align-items: stretch;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .map-shell {
+    height: 320px;
+  }
+
+  .near-card,
+  .near-thumb {
+    flex-basis: 132px;
+    width: 132px;
+  }
+
+  .near-thumb {
+    height: 132px;
+  }
+
+  .new-collection-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-actions .btn,
+  .detail-actions .inline-form,
+  .detail-actions .collection-add,
+  .detail-actions .inline-form .btn {
+    width: 100%;
+  }
+
+  .account-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

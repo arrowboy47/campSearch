@@ -10,6 +10,7 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import (
     get_campsite_by_id, get_trails_for_campsite,
+    get_campsites_with_thumbs,
     create_user, get_user, get_user_for_login, update_user_profile,
     export_user_data, save_campsite, unsave_campsite, is_campsite_saved,
     get_saved_campsites,
@@ -226,7 +227,32 @@ def home():
 
     forests = get_all_forests()
     facets = get_facet_options()
-    return render_template("index.html", forests=forests, facets=facets)
+
+    # "Campsites near you" carousel. Origin = the browser's shared location if
+    # it handed one over via ?lat=&lon=, else the signed-in user's saved home.
+    origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
+    near = []
+    if origin:
+        rows = get_campsites_with_thumbs()
+        for r in rows:
+            if r["latitude"] is None or r["longitude"] is None:
+                continue
+            r["distance_miles"] = round(
+                geo.haversine_miles(origin, (r["latitude"], r["longitude"])), 1
+            )
+        rows.sort(key=lambda x: x.get("distance_miles", 9e9))
+        nearest = rows[:40]
+        with_pic = [r for r in nearest if r.get("image_url")]
+        near = (with_pic or nearest)[:12]
+
+    return render_template(
+        "index.html",
+        forests=forests,
+        facets=facets,
+        near=near,
+        near_label="you" if label == "your location" else "home",
+        near_prompt=not origin,
+    )
 
 @app.route("/api/campsite/<int:campsite_id>")
 def get_campsite(campsite_id):

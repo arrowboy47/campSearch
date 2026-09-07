@@ -70,6 +70,35 @@
       </div>
     </section>
 
+    {% if near %}
+      <section class="near-section">
+        <h2 class="near-title">Campsites near {{ near_label }}</h2>
+        <div class="near-carousel" role="list">
+          {% for c in near %}
+            <a class="near-card" role="listitem" href="/campsite/{{ c.id }}">
+              <div class="near-thumb">
+                {% if c.image_url %}
+                  <img src="{{ c.image_url }}" alt="{{ c.name }}" loading="lazy" />
+                {% else %}
+                  <span class="near-thumb-fallback" aria-hidden="true">🏕️</span>
+                {% endif %}
+              </div>
+              <span class="near-name">{{ c.name }}</span>
+              {% if c.distance_miles is not none %}
+                <span class="near-dist">{{ c.distance_miles }} mi away</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% elif near_prompt %}
+      <section class="near-section" data-near-locate>
+        <h2 class="near-title">Campsites near you</h2>
+        <p class="near-hint">Allow location access to see the closest campsites, or
+          <a href="/account" class="link-quiet">set a home address</a>.</p>
+      </section>
+    {% endif %}
+
     <section class="map-section">
       <div class="map-card">
         <div class="map-header">
