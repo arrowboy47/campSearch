@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Orchestrator for the refresh jobs. Point cron at this.
+"""Orchestrator for the refresh jobs. Point the systemd timers at this.
 
-    python scripts/run_all.py daily     # weather refresh (today), + status when it exists
-    python scripts/run_all.py weekly    # daily + RIDB reservation re-sync
+    python scripts/run_all.py daily     # weather for the next 2 days, call-budgeted
+    python scripts/run_all.py weekly    # static re-scrape + RIDB (matches + org ingest)
+    python scripts/run_all.py smoke     # cheap end-to-end check
 
-Each underlying job writes its own scrape_runs row; this just sequences them and
-exits non-zero if any job raised, so cron / Telegram alerting has something to
-key on.
+Each underlying job writes its own scrape_runs row; this sequences them and exits
+non-zero if any job raised, so the OnFailure handler / alerting has a signal.
+
+Sizing note: a full weather sweep is ~1 API call per (site, day) at ~1s each —
+1000+ sites makes 7-day sweeps multi-hour. So the daily job is capped with
+--max-calls and only looks 2 days out; the weekly job does NOT do a big weather
+pass (the daily one keeps it fresh).
 """
 
 import sys
@@ -14,18 +19,21 @@ import sys
 import refresh_dynamic
 import sync_ridb
 import scrape_fs_usda
+import ingest_ridb_orgs
 
 
 JOBS = {
     "daily": [
-        lambda: refresh_dynamic.main(["--days", "1"]),
+        # today + tomorrow, at most 1200 calls (~20 min); leftovers roll to tomorrow.
+        lambda: refresh_dynamic.main(["--days", "2", "--max-calls", "1200"]),
     ],
     "weekly": [
-        lambda: scrape_fs_usda.main(["--all"]),   # static refresh + open/closed status
-        lambda: sync_ridb.main([]),               # sites still missing a facility id
-        lambda: refresh_dynamic.main(["--days", "7"]),
+        lambda: scrape_fs_usda.main(["--all"]),          # static + open/closed status
+        lambda: scrape_fs_usda.main(["--all", "--detail"]),  # backfill coords/fee for new sites
+        lambda: sync_ridb.main([]),                      # match sites still missing a facility id
+        lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM campgrounds
+        lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1500"]),
     ],
-    # cheap end-to-end check: DB reachable, keys valid, one upsert path exercised.
     "smoke": [
         lambda: refresh_dynamic.main(["--limit", "3", "--sleep", "0"]),
     ],

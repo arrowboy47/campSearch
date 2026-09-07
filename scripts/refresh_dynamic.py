@@ -37,7 +37,10 @@ def parse_args(argv=None):
         default=12.0,
         help="skip a day whose cached row is younger than this (default 12)",
     )
-    p.add_argument("--sleep", type=float, default=1.0, help="base seconds between API calls")
+    p.add_argument("--sleep", type=float, default=0.7,
+                   help="base seconds between API calls (actual = base + rand[0,base])")
+    p.add_argument("--max-calls", type=int, default=None,
+                   help="stop after this many API calls; the rest wait for the next run")
     return p.parse_args(argv)
 
 
@@ -82,23 +85,35 @@ def main(argv=None):
 
         with scrape_run("weather") as run:
             work = conn.cursor()
+            calls = 0
+            stopped_early = False
             for site_id, lat, lon in sites:
+                if stopped_early:
+                    break
                 for day in dates:
                     run.seen += 1
                     work.execute(FRESH, (site_id, day, args.max_age_hours))
                     if work.fetchone():
                         continue
+                    if args.max_calls is not None and calls >= args.max_calls:
+                        run.note = f"hit --max-calls {args.max_calls}; rest deferred"
+                        stopped_early = True
+                        break
                     try:
                         forecast = get_forecast(lat, lon, day)
+                        calls += 1
                         work.execute(UPSERT, (site_id, day, json.dumps(forecast)))
                         run.upserted += 1
                         conn.commit()
                     except Exception as exc:  # noqa: BLE001
+                        calls += 1
                         conn.rollback()
                         run.errors += 1
                         print(f"  site {site_id} {day}: {type(exc).__name__}: {exc}")
                     time.sleep(args.sleep + random.uniform(0, args.sleep))
             work.close()
+            if stopped_early:
+                print(f"  stopped after {calls} calls (--max-calls)")
 
     # TODO(2026-09): open/closed status has no real source yet. When one exists
     # (forest alerts feed / recreation.gov), upsert into status_updates here on

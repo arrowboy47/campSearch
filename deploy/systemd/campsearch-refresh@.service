@@ -22,5 +22,8 @@ ExecStartPre=/usr/bin/ssh -f -N -o ExitOnForwardFailure=yes -o ServerAliveInterv
 ExecStart=%h/projects/campSearch/.venv/bin/python scripts/run_all.py %i
 ExecStopPost=-/usr/bin/pkill -f "5435:localhost:5434 thebigbox"
 
-TimeoutStartSec=3600
+# The jobs bound themselves (--max-calls, polite sleeps); a wall-clock timeout
+# here just kills a legitimately long weekly run mid-write. Let it run.
+TimeoutStartSec=0
+TimeoutStopSec=120
 Nice=10
