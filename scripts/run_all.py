@@ -13,6 +13,7 @@ import sys
 
 import refresh_dynamic
 import sync_ridb
+import scrape_fs_usda
 
 
 JOBS = {
@@ -20,8 +21,9 @@ JOBS = {
         lambda: refresh_dynamic.main(["--days", "1"]),
     ],
     "weekly": [
+        lambda: scrape_fs_usda.main(["--all"]),   # static refresh + open/closed status
+        lambda: sync_ridb.main([]),               # sites still missing a facility id
         lambda: refresh_dynamic.main(["--days", "7"]),
-        lambda: sync_ridb.main([]),  # sites still missing a facility id
     ],
 }
 
