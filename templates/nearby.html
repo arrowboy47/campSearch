@@ -50,7 +50,7 @@
 							</header>
 							<div class="result-card-body">
 								{% if camp.forest_name %}
-									<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>
+									<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name | forest }}</span></p>
 								{% endif %}
 							</div>
 						</article>

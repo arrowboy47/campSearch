@@ -60,7 +60,7 @@
       <select name="forest" class="select">
         <option value="">Any</option>
         {% for forest in forests %}
-          <option value="{{ forest }}" {{ 'selected' if filters.forest == forest }}>{{ forest }}</option>
+          <option value="{{ forest }}" {{ 'selected' if filters.forest == forest }}>{{ forest | forest }}</option>
         {% endfor %}
       </select>
     </label>

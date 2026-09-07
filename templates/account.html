@@ -79,7 +79,7 @@
 									</form>
 								</header>
 								<div class="result-card-body">
-									{% if camp.forest_name %}<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name }}</span></p>{% endif %}
+									{% if camp.forest_name %}<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name | forest }}</span></p>{% endif %}
 									<div class="badge-row">
 										{% if camp.is_free %}<span class="badge">🆓 Free</span>{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
 										{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}

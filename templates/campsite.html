@@ -59,7 +59,7 @@
 				<div class="detail-meta-top">
 					{% set forest = campsite.managing_unit or campsite.forest_name %}
 					{% if forest %}
-						<p class="meta-row"><span class="meta-label">Forest / unit</span> <span class="meta-value">{{ forest }}</span></p>
+						<p class="meta-row"><span class="meta-label">Forest / unit</span> <span class="meta-value">{{ forest | forest }}</span></p>
 					{% endif %}
 
 					{% if campsite.agency_name %}

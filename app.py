@@ -31,6 +31,7 @@ import geo
 import json
 import re
 import os
+from forests import forest_label
 
 # Profile-picture uploads land under static/ so Flask can serve them directly.
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads", "avatars")
@@ -126,6 +127,12 @@ def current_user():
 def inject_user():
     # Makes `current_user` available in every template.
     return {"current_user": current_user()}
+
+
+@app.template_filter("forest")
+def _forest_filter(value):
+    """`{{ slug | forest }}` -> a readable forest name."""
+    return forest_label(value)
 
 
 def login_required(view):
