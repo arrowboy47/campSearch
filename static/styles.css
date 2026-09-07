@@ -160,6 +160,10 @@ a:hover {
 
 .page-main {
   flex: 1;
+  /* width:100% is load-bearing: body.page is a column flex container, and a
+     flex child with `margin: 0 auto` loses its stretch and collapses to
+     content width without an explicit size. */
+  width: 100%;
   max-width: 1120px;
   margin: 0 auto;
   padding: 24px 22px 32px;
@@ -657,7 +661,10 @@ fieldset.filter-group legend {
 }
 
 .filter-form .filters-grid {
-  grid-template-columns: 1fr;
+  /* minmax(0,1fr), not 1fr: a bare 1fr track is min-sized to its widest
+     child's content (the long forest <option> strings), which pushed the
+     selects past the 290px sidebar. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-top: 10px;
 }
@@ -666,6 +673,22 @@ fieldset.filter-group legend {
   display: flex;
   gap: 8px;
   margin-top: 14px;
+}
+
+/* Text/select/number/date controls in the narrow (290px) results sidebar must
+   not spill past it. Checkboxes and radios keep their intrinsic size. */
+.results-filters select,
+.results-filters input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* <fieldset> defaults to min-width:min-content and ignores flex shrink, so the
+   "Location" group (long forest option strings) blew past the sidebar. */
+.results-filters fieldset.filter-group,
+.results-filters .range-pair {
+  min-width: 0;
 }
 
 @media (max-width: 820px) {
