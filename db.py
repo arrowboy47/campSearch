@@ -160,6 +160,111 @@ def get_campsites_with_thumbs():
     return rows
 
 
+def get_suggested_campsites(user_id, limit=12):
+    """A rough "suggested for you" deck from what the user has already saved or
+    put in a collection.
+
+    Not the ML ranker from the roadmap — a transparent overlap score: build a
+    taste profile (forests, terrain bands, activities, water features, free vs
+    paid) from the user's saved + collection campsites, then rank every other
+    campsite by how much it shares, breaking ties on global pick_count. Returns
+    [] when there isn't enough signal (fewer than 2 liked sites).
+    """
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # everything the user has signalled a liking for
+    cur.execute(
+        """
+        SELECT DISTINCT c.id, c.forest_name, c.terrain, c.is_free,
+               c.reservation_type, a.water_feature, a.activities
+        FROM campsites c
+        LEFT JOIN amenities a ON a.campsite_id = c.id
+        WHERE c.id IN (
+            SELECT campsite_id FROM saved_campsites WHERE user_id = %(uid)s
+            UNION
+            SELECT cc.campsite_id FROM collection_campsites cc
+            JOIN collections col ON col.id = cc.collection_id
+            WHERE col.user_id = %(uid)s
+        )
+        """,
+        {"uid": user_id},
+    )
+    liked = cur.fetchall()
+    if len(liked) < 2:
+        cur.close()
+        conn.close()
+        return []
+
+    liked_ids = {r["id"] for r in liked}
+
+    def _tally(key):
+        counts = {}
+        for r in liked:
+            v = r[key]
+            if v:
+                counts[v] = counts.get(v, 0) + 1
+        return counts
+
+    forests = _tally("forest_name")
+    terrains = _tally("terrain")
+    waters = _tally("water_feature")
+    rtypes = _tally("reservation_type")
+    acts = {}
+    for r in liked:
+        for a in (r["activities"] or []):
+            acts[a] = acts.get(a, 0) + 1
+    free_share = sum(1 for r in liked if r["is_free"]) / len(liked)
+    n = len(liked)
+
+    # candidate pool: everything with coordinates + its attributes + a thumb
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.forest_name, c.terrain, c.is_free,
+               c.reservation_type, c.pick_count,
+               a.water_feature, a.activities,
+               COALESCE(c.primary_image_url, img.image_url) AS image_url
+        FROM campsites c
+        LEFT JOIN amenities a ON a.campsite_id = c.id
+        LEFT JOIN LATERAL (
+            SELECT image_url FROM images WHERE campsite_id = c.id ORDER BY id LIMIT 1
+        ) img ON TRUE
+        WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+        """
+    )
+    pool = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    scored = []
+    for r in pool:
+        if r["id"] in liked_ids:
+            continue
+        s = 0.0
+        s += 3.0 * forests.get(r["forest_name"], 0) / n
+        s += 2.0 * terrains.get(r["terrain"], 0) / n
+        s += 2.0 * waters.get(r["water_feature"], 0) / n
+        s += 1.0 * rtypes.get(r["reservation_type"], 0) / n
+        overlap = sum(acts.get(a, 0) for a in (r["activities"] or []))
+        s += 1.5 * overlap / n
+        if r["is_free"] and free_share >= 0.5:
+            s += 0.75
+        if s <= 0:
+            continue
+        if r["image_url"]:
+            s += 0.4  # a card with a photo is a better suggestion
+        scored.append((s, r["pick_count"] or 0, r))
+
+    scored.sort(key=lambda x: (-x[0], -x[1], (x[2]["name"] or "").lower()))
+    out = []
+    for _, _, r in scored[:limit]:
+        out.append({
+            "id": r["id"], "name": r["name"],
+            "forest_name": r["forest_name"], "image_url": r["image_url"],
+        })
+    return out
+
+
 def record_pick(campsite_id):
     """Bump a campsite's selection counter (migration 0017).
 

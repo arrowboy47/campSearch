@@ -21,6 +21,7 @@ import sync_ridb
 import scrape_fs_usda
 import ingest_ridb_orgs
 import scrape_reservecalifornia
+import scrape_parks_ca
 import scrape_thedyrt
 import enrich_thedyrt
 import clean_text
@@ -39,6 +40,7 @@ JOBS = {
         lambda: sync_ridb.main([]),                          # match sites missing a facility id
         lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM/USFS campgrounds
         lambda: scrape_reservecalifornia.main([]),           # CA state park campgrounds
+        lambda: scrape_parks_ca.main([]),                    # park-level amenities from parks.ca.gov
         lambda: scrape_thedyrt.main([]),                     # dispersed / free camping (The Dyrt)
         lambda: enrich_thedyrt.main([]),                     # The Dyrt detail: overview + amenity flags
         lambda: backfill_elevation.main([]),                 # elevation_ft + terrain for new coords
