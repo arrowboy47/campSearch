@@ -9,7 +9,10 @@ Dispersed / ReserveCalifornia rows mostly have no prose and stay sparse.
     python scripts/derive_attributes.py
     python scripts/derive_attributes.py --dry-run --limit 40
 
-Idempotent: every run recomputes from source text and overwrites.
+Accumulative: activities from the text are UNIONed with whatever is already on
+the row, and water_feature / toilet_type only fill a NULL. This lets it run in a
+chain after a scraper that already wrote structured flags (enrich_thedyrt) or
+after itself, without clobbering that data.
 """
 
 import re
@@ -117,7 +120,13 @@ SELECT_SQL = """
 
 UPDATE_SQL = """
     UPDATE amenities
-    SET activities = %(acts)s, water_feature = %(water)s, toilet_type = %(toilet)s
+    SET activities = ARRAY(
+            SELECT DISTINCT e
+            FROM unnest(activities || %(acts)s::text[]) AS e
+            WHERE e <> ''
+        ),
+        water_feature = COALESCE(water_feature, %(water)s),
+        toilet_type   = COALESCE(toilet_type, %(toilet)s)
     WHERE campsite_id = %(id)s
 """
 
