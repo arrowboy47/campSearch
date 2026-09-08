@@ -1,0 +1,11 @@
+[Unit]
+Description=CampSearch daily refresh (weather, today)
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=campsearch-refresh@daily.service
+
+[Install]
+WantedBy=timers.target

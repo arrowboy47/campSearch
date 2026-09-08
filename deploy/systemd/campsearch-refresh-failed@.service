@@ -1,0 +1,15 @@
+# OnFailure handler for campsearch-refresh@%i. Dumps the failed run's tail into
+# the journal, and calls an optional user notify hook if present
+# (~/.config/campsearch/notify.sh "<message>" — e.g. a curl to Telegram).
+
+[Unit]
+Description=CampSearch refresh failure notice (%i)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '\
+  echo "campsearch-refresh@%i FAILED at $(date -Is)"; \
+  systemctl --user status "campsearch-refresh@%i.service" --no-pager -l | tail -n 40; \
+  if [ -x "%h/.config/campsearch/notify.sh" ]; then \
+    "%h/.config/campsearch/notify.sh" "campsearch refresh %i failed - see: journalctl --user -u campsearch-refresh@%i"; \
+  fi'

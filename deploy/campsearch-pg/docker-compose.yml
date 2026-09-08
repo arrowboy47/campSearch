@@ -1,0 +1,30 @@
+# campsearch-pg — Postgres 16 for CampSearch, on thebigbox.
+# Follows the PDW / homelab pattern: localhost-bound only (no LAN exposure),
+# reached from the AI-core host over an SSH tunnel. Named volume for pgdata.
+#
+# Deploy: see ./README.md
+# Live path on thebigbox: /media/containers/campsearch-pg/docker-compose.yml
+
+services:
+  campsearch-pg:
+    image: postgres:16
+    container_name: campsearch-pg
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=camping
+      - POSTGRES_USER=campsearch
+      - POSTGRES_PASSWORD=${CAMPSEARCH_PG_PASSWORD:?set in .env}
+      - TZ=America/Chicago
+    ports:
+      # localhost only. 5432 = honcho, 5433 = pdw, 5434 = campsearch.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - campsearch_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campsearch -d camping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  campsearch_pgdata:

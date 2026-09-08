@@ -1,0 +1,11 @@
+[Unit]
+Description=CampSearch weekly refresh (fs.usda static + RIDB + 7-day weather)
+
+[Timer]
+OnCalendar=Sun *-*-* 04:10:00
+Persistent=true
+RandomizedDelaySec=600
+Unit=campsearch-refresh@weekly.service
+
+[Install]
+WantedBy=timers.target

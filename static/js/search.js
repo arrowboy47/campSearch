@@ -1,70 +1,42 @@
-function buildSearchParams() {
+// Home-page search. The form is a plain GET to /results and works with JS off;
+// this handler just adds a shortcut: if the current filters resolve to exactly
+// one campsite, jump straight to its detail page instead of a 1-row results list.
+
+function formParams(form) {
+  // FormData picks up every named control, including the multi-value
+  // checkboxes (terrain / activities / water_feature). Empty values are
+  // dropped so the URL stays clean.
   const params = new URLSearchParams();
-
-  const searchInput = document.getElementById("searchInput");
-  const query = searchInput ? searchInput.value.trim() : "";
-  if (query) {
-    params.set("query", query);
+  for (const [key, value] of new FormData(form).entries()) {
+    if (value !== "" && value != null) {
+      params.append(key, value);
+    }
   }
-
-  const isOpenEl = document.querySelector('input[name="is_open"]');
-  const hasWaterEl = document.querySelector('input[name="has_water"]');
-  const hasRestroomsEl = document.querySelector('input[name="has_restrooms"]');
-  const forestEl = document.getElementById("forest");
-  const startEl = document.getElementById("start_date");
-  const endEl = document.getElementById("end_date");
-
-  if (isOpenEl && isOpenEl.checked) {
-    params.set("is_open", "true");
-  }
-  if (hasWaterEl && hasWaterEl.checked) {
-    params.set("has_water", "true");
-  }
-  if (hasRestroomsEl && hasRestroomsEl.checked) {
-    params.set("has_restrooms", "true");
-  }
-  if (forestEl && forestEl.value) {
-    params.set("forest", forestEl.value);
-  }
-
-   if (startEl && startEl.value) {
-    params.set("start", startEl.value);
-  }
-
-  if (endEl && endEl.value) {
-    params.set("end", endEl.value);
-  }
-
   return params;
 }
 
 async function handleSearchSubmit(event) {
   event.preventDefault();
-
-  const params = buildSearchParams();
+  const form = event.currentTarget;
+  const params = formParams(form);
+  const qs = params.toString();
 
   try {
-    const res = await fetch(`/api/search?${params.toString()}`);
+    const res = await fetch(`/api/search?${qs}`);
     const data = await res.json();
 
-    if (res.status === 404 || !Array.isArray(data) || data.length === 0) {
-      alert("No campsites found for that combination of filters.");
-      return;
-    }
-
-    const qs = params.toString();
-
-    if (data.length === 1) {
+    if (res.ok && Array.isArray(data) && data.length === 1) {
       window.location.href = qs
         ? `/campsite/${data[0].id}?${qs}`
         : `/campsite/${data[0].id}`;
-    } else {
-      window.location.href = qs ? `/results?${qs}` : "/results";
+      return;
     }
   } catch (err) {
-    console.error("Search failed:", err);
-    alert("Something went wrong while searching.");
+    console.error("Search shortcut failed, falling back to results page:", err);
   }
+
+  // Anything else (many matches, none, or an error): let the results page render.
+  window.location.href = qs ? `/results?${qs}` : "/results";
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -75,7 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const searchInput = document.getElementById("searchInput");
   const filters = document.getElementById("filters");
-
   if (searchInput && filters) {
     searchInput.addEventListener("focus", function () {
       filters.style.display = "block";
