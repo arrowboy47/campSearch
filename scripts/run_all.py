@@ -27,6 +27,7 @@ import enrich_thedyrt
 import clean_text
 import backfill_elevation
 import derive_attributes
+import ingest_trails_osm
 
 
 JOBS = {
@@ -47,6 +48,11 @@ JOBS = {
         lambda: derive_attributes.main([]),                  # activities[] / water_feature / toilet_type
         lambda: clean_text.main([]),                         # normalize fee / overview / seasons text
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
+    ],
+    "monthly": [
+        # trails move slowly and Overpass is a shared public resource — once a
+        # month is plenty. ~45-90 min for the non-dispersed set.
+        lambda: ingest_trails_osm.main(["--sleep", "1.5"]),
     ],
     "smoke": [
         lambda: refresh_dynamic.main(["--limit", "3", "--sleep", "0"]),
