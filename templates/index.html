@@ -99,6 +99,30 @@
       </section>
     {% endif %}
 
+    {% if suggested %}
+      <section class="near-section">
+        <h2 class="near-title">Suggested for you</h2>
+        <p class="near-hint">Based on the campsites you've saved.</p>
+        <div class="near-carousel" role="list">
+          {% for c in suggested %}
+            <a class="near-card" role="listitem" href="/campsite/{{ c.id }}" data-pick="{{ c.id }}">
+              <div class="near-thumb">
+                {% if c.image_url %}
+                  <img src="{{ c.image_url }}" alt="{{ c.name }}" loading="lazy" />
+                {% else %}
+                  <span class="near-thumb-fallback" aria-hidden="true">🏕️</span>
+                {% endif %}
+              </div>
+              <span class="near-name">{{ c.name }}</span>
+              {% if c.forest_name %}
+                <span class="near-dist">{{ c.forest_name | forest }}</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
     <section class="map-section">
       <div class="map-card">
         <div class="map-header">

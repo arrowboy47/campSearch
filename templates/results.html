@@ -67,6 +67,7 @@
 									<a
 									  href="/campsite/{{ camp.id }}{% if start_date or end_date %}?{% endif %}{% if start_date %}start={{ start_date }}{% endif %}{% if start_date and end_date %}&{% endif %}{% if end_date %}end={{ end_date }}{% endif %}"
 									  class="result-card-link"
+									  data-pick="{{ camp.id }}"
 									>{{ camp.name }}</a>
 								</h2>
 

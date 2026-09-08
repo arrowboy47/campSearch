@@ -433,6 +433,25 @@ function initReadMore() {
   });
 }
 
+// Selection counter: ping the server when a result is opened from the list so
+// popular campsites can float up in search scoring (migration 0017). Fire and
+// forget — sendBeacon survives the page unload, and a failure changes nothing.
+
+function initPickTracking() {
+  document.querySelectorAll("[data-pick]").forEach((link) => {
+    link.addEventListener("click", () => {
+      const id = link.getAttribute("data-pick");
+      if (!id) return;
+      const url = `/api/campsite/${id}/pick`;
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url);
+      } else {
+        fetch(url, { method: "POST", keepalive: true }).catch(() => {});
+      }
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -446,4 +465,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearby();
   initDrive();
   initCollectionAdd();
+  initPickTracking();
 });

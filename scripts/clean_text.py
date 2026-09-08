@@ -35,8 +35,29 @@ from _pipeline import get_conn, scrape_run
 _LABEL_PREFIXES = ("overview", "description", "general description")
 
 
+# Section headers the fs.usda / recreation.gov pages drop mid-text with no
+# spacing ("...best trout fishing.Recreation\nScenic hiking..."). We give them
+# a paragraph break so the prose stops reading as one run-on sentence.
+_SECTION_WORDS = (
+    "Recreation", "Overview", "Description", "Facilities", "Activities",
+    "Directions", "Camping", "Nearby Attractions", "Natural Features",
+    "Weather", "Restrictions", "History", "Wildlife", "Fees",
+)
+_GLUED_HEADER = re.compile(
+    r"([a-z0-9)\"'.!?])\s*\n?\s*(" + "|".join(_SECTION_WORDS) + r")\s*\n"
+)
+# lowercase/close-quote/digit, then sentence punctuation, then straight into a
+# capital with no space ("Thank you!Tuolumne Meadows...", "the lake.Enjoy...")
+_GLUED_SENTENCE = re.compile(r"([a-z0-9)\"'])([.!?])(?=[A-Z])")
+# a single newline sitting mid-sentence (both sides lowercase) — a wrapped line,
+# not a paragraph break ("water skiing and\nfishing")
+_WRAP_NEWLINE = re.compile(r"(?<=[a-z,])\n(?=[a-z])")
+
+
 def clean_prose(text):
-    """Collapse whitespace, drop nbsp, strip a leading 'Overview'-style label."""
+    """Collapse whitespace, drop nbsp, strip a leading 'Overview'-style label,
+    and repair the scraped-prose run-ons (missing space after a full stop, a
+    section header glued onto the previous sentence, a hard-wrapped line)."""
     if not text:
         return None
     s = text.replace("\xa0", " ").replace("\r\n", "\n").replace("\r", "\n")
@@ -51,7 +72,10 @@ def clean_prose(text):
             if rest[:1] in (":", "\n", " ", "") or rest[:1].isupper():
                 s = rest.lstrip(": \n")
                 break
+    s = _GLUED_HEADER.sub(r"\1\n\n\2\n", s)
+    s = _GLUED_SENTENCE.sub(r"\1\2 ", s)
     s = re.sub(r"[ \t]+", " ", s)
+    s = _WRAP_NEWLINE.sub(" ", s)
     s = re.sub(r" *\n *", "\n", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip() or None

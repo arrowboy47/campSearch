@@ -21,7 +21,7 @@ import argparse
 
 import requests
 
-from _pipeline import get_conn, scrape_run
+from _pipeline import get_conn, scrape_run, is_map_image
 from sync_ridb import headers, clean_html  # reuse (headers() reads the key)
 
 BASE_URL = "https://ridb.recreation.gov/api/v1"
@@ -218,6 +218,8 @@ def main(argv=None):
                         })
                         for m in fac.get("MEDIA", []) or []:
                             if m.get("MediaType") == "Image" and m.get("URL"):
+                                if is_map_image(m.get("Title")):
+                                    continue
                                 work.execute(UPSERT_IMAGE, (camp_id, m["URL"], m.get("Title")))
                         conn.commit()
                         run.upserted += 1

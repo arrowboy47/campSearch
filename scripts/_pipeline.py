@@ -18,10 +18,23 @@ all fine on the caller side).
 """
 
 import os
+import re
 import sys
 import contextlib
 
 import psycopg2
+
+# recreation.gov / RIDB facility "MEDIA" often includes the campground layout
+# map as an Image. It has no place in a photo gallery and looks terrible as a
+# card thumbnail, so the scrapers drop any media whose title reads like a map.
+_MAP_TITLE_RE = re.compile(
+    r"\b(maps?|site\s?plan|diagram|layout|vicinity)\b", re.I
+)
+
+
+def is_map_image(title):
+    """True if an image title marks it as a campground/vicinity map, not a photo."""
+    return bool(title and _MAP_TITLE_RE.search(title))
 
 # Allow `python scripts/foo.py` to import config.py from the repo root.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
