@@ -21,11 +21,13 @@ import sync_ridb
 import scrape_fs_usda
 import ingest_ridb_orgs
 import scrape_reservecalifornia
+import scrape_parks_ca
 import scrape_thedyrt
 import enrich_thedyrt
 import clean_text
 import backfill_elevation
 import derive_attributes
+import ingest_trails_osm
 
 
 JOBS = {
@@ -39,12 +41,18 @@ JOBS = {
         lambda: sync_ridb.main([]),                          # match sites missing a facility id
         lambda: ingest_ridb_orgs.main(["--org", "all", "--state", "CA"]),  # NPS/BLM/USFS campgrounds
         lambda: scrape_reservecalifornia.main([]),           # CA state park campgrounds
+        lambda: scrape_parks_ca.main([]),                    # park-level amenities from parks.ca.gov
         lambda: scrape_thedyrt.main([]),                     # dispersed / free camping (The Dyrt)
         lambda: enrich_thedyrt.main([]),                     # The Dyrt detail: overview + amenity flags
         lambda: backfill_elevation.main([]),                 # elevation_ft + terrain for new coords
         lambda: derive_attributes.main([]),                  # activities[] / water_feature / toilet_type
         lambda: clean_text.main([]),                         # normalize fee / overview / seasons text
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
+    ],
+    "monthly": [
+        # trails move slowly and Overpass is a shared public resource — once a
+        # month is plenty. ~45-90 min for the non-dispersed set.
+        lambda: ingest_trails_osm.main(["--sleep", "1.5"]),
     ],
     "smoke": [
         lambda: refresh_dynamic.main(["--limit", "3", "--sleep", "0"]),

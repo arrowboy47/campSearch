@@ -10,7 +10,7 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import (
     get_campsite_by_id, get_trails_for_campsite,
-    get_campsites_with_thumbs,
+    get_campsites_with_thumbs, record_pick, get_suggested_campsites,
     create_user, get_user, get_user_for_login, update_user_profile,
     export_user_data, save_campsite, unsave_campsite, is_campsite_saved,
     get_saved_campsites,
@@ -252,6 +252,12 @@ def home():
         with_pic = [r for r in nearest if r.get("image_url")]
         near = (with_pic or nearest)[:12]
 
+    # "Suggested for you" — only for a signed-in user with enough saved history.
+    suggested = []
+    user = current_user()
+    if user:
+        suggested = get_suggested_campsites(user["id"], limit=12)
+
     return render_template(
         "index.html",
         forests=forests,
@@ -259,6 +265,7 @@ def home():
         near=near,
         near_label="you" if label == "your location" else "home",
         near_prompt=not origin,
+        suggested=suggested,
     )
 
 @app.route("/api/campsite/<int:campsite_id>")
@@ -270,6 +277,17 @@ def get_campsite(campsite_id):
 
 # weather route
 # one note the onecall openweather api only does forecasts a year and a half in the future
+@app.route("/api/campsite/<int:campsite_id>/pick", methods=["POST"])
+def campsite_pick(campsite_id):
+    """Record a result-list click-through (migration 0017).
+
+    Fired by a `navigator.sendBeacon` on the results page, so it must be cheap
+    and never error. Feeds the popularity bonus in search scoring.
+    """
+    record_pick(campsite_id)
+    return "", 204
+
+
 @app.route("/api/weather")
 def weather():
     """

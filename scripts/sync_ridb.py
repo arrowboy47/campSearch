@@ -24,7 +24,7 @@ import argparse
 import requests
 
 # _pipeline puts the repo root on sys.path, so `config` imports after it.
-from _pipeline import get_conn, scrape_run  # noqa: E402
+from _pipeline import get_conn, scrape_run, is_map_image  # noqa: E402
 from config import ridb_api_key  # noqa: E402
 
 BASE_URL = "https://ridb.recreation.gov/api/v1"
@@ -223,6 +223,8 @@ def main(argv=None):
                     })
                     for media in fac.get("MEDIA", []):
                         if media.get("MediaType") == "Image" and media.get("URL"):
+                            if is_map_image(media.get("Title")):
+                                continue
                             work.execute(UPSERT_IMAGE, (site_id, media["URL"], media.get("Title")))
                     conn.commit()
                     run.upserted += 1
