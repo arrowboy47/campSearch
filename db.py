@@ -160,6 +160,29 @@ def get_campsites_with_thumbs():
     return rows
 
 
+def record_pick(campsite_id):
+    """Bump a campsite's selection counter (migration 0017).
+
+    Called when someone opens a campsite from a results list. Best-effort: a
+    bad id just updates nothing, and any DB hiccup is swallowed so a tracking
+    ping can never break navigation.
+    """
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE campsites "
+            "SET pick_count = pick_count + 1, last_picked_at = now() "
+            "WHERE id = %s",
+            (campsite_id,),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+
+
 # --- users & saved campsites (migration 0014) ------------------------------
 
 _USER_COLS = (

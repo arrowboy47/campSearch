@@ -1,6 +1,20 @@
 from rapidfuzz import fuzz
 from db import get_connection
+import math
 import re
+
+# Popularity bonus: how many result-list click-throughs a campsite has had
+# (campsites.pick_count, migration 0017) nudges its score. Log-scaled so the
+# first few picks matter and a runaway favourite can't dominate, and hard-capped
+# well below the gap between a real name match and a fuzzy one.
+_POPULARITY_WEIGHT = 2.2
+_POPULARITY_CAP = 8.0
+
+
+def _popularity_bonus(pick_count):
+    if not pick_count or pick_count < 1:
+        return 0.0
+    return min(_POPULARITY_CAP, _POPULARITY_WEIGHT * math.log1p(pick_count))
 
 
 def normalize(text):
@@ -37,6 +51,7 @@ _BASE_SQL = """
         c.is_free,
         c.terrain,
         c.elevation_ft,
+        c.pick_count,
         su.is_open,
         wf.forecast_json,
         am.water        AS has_water,
@@ -66,7 +81,7 @@ _BASE_SQL = """
 _ROW_FIELDS = [
     "id", "name", "forest_name", "latitude", "longitude", "source",
     "reservation_type", "num_sites", "fee", "fee_min", "is_free", "terrain",
-    "elevation_ft", "is_open", "forecast_json", "has_water", "has_restrooms",
+    "elevation_ft", "pick_count", "is_open", "forecast_json", "has_water", "has_restrooms",
     "toilet_type", "water_feature", "activities", "is_reservable",
 ]
 
@@ -214,11 +229,14 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
 
     scored = []
     for row in rows:
-        score = _name_score(normalize(row["name"]), nq)
-        if score >= fuzzthresh:
-            scored.append(dict(row, score=score))
+        name_score = _name_score(normalize(row["name"]), nq)
+        if name_score < fuzzthresh:
+            continue
+        # Popularity only breaks ties / nudges; the name match still leads.
+        total = name_score + _popularity_bonus(row.get("pick_count"))
+        scored.append(dict(row, score=total, name_score=name_score))
 
-    scored.sort(key=lambda x: (-x["score"], (x["name"] or "").lower()))
+    scored.sort(key=lambda x: (-x["score"], -(x.get("pick_count") or 0), (x["name"] or "").lower()))
     return scored[:limit]
 
 
