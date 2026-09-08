@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Create account · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main narrow-main">
+		{% include "_flash.html" %}
+		<h1>Create an account</h1>
+		<p class="muted-note">Optional — an account saves campsites and remembers a home location for distance calculations.</p>
+
+		<form method="POST" action="/signup" class="stack-form" enctype="multipart/form-data">
+			<div class="form-row">
+				<label>First name<input type="text" name="first_name" value="{{ form.first_name or '' }}" /></label>
+				<label>Last name<input type="text" name="last_name" value="{{ form.last_name or '' }}" /></label>
+			</div>
+			<label>Email <span class="muted-note">(optional)</span>
+				<input type="email" name="email" value="{{ form.email or '' }}" /></label>
+			<label>Profile picture <span class="muted-note">(optional; PNG / JPG / WEBP / GIF, under 3 MB)</span>
+				<input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" /></label>
+			<label>Home address or city <span class="muted-note">(only used for driving-distance math; must be a real place)</span>
+				<input type="text" name="home_address" value="{{ form.home_address or '' }}"
+				       placeholder="e.g. Sacramento, CA" /></label>
+			<hr />
+			<label>Username <span class="req">*</span>
+				<input type="text" name="username" required minlength="3" value="{{ form.username or '' }}" /></label>
+			<label>Password <span class="req">*</span>
+				<input type="password" name="password" required minlength="8" /></label>
+			<button type="submit" class="btn btn-primary">Create account</button>
+		</form>
+		<p><a href="/login" class="link-quiet">Already have an account? Sign in</a></p>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Your password is stored hashed. Home address is only used for distance calculations.</p>
+	</footer>
+</body>
+</html>

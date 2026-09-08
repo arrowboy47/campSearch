@@ -17,22 +17,53 @@
 					<div class="brand-subtitle">Find open campsites with the right amenities</div>
 				</div>
 			</a>
-			<div class="theme-toggle" role="radiogroup" aria-label="Color theme">
-				<button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
-				<button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
-				<button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
-			</div>
+			{% include "_headernav.html" %}
 		</div>
 	</header>
 
 	<main class="page-main detail-layout">
 		<section class="detail-main">
+			{% include "_flash.html" %}
 			<header class="detail-header">
-				<h1 class="detail-title">{{ campsite.name }}</h1>
+				<div class="detail-title-row">
+					<h1 class="detail-title">{{ campsite.name }}</h1>
+					{% if campsite.is_open is not none %}
+						<span class="status-chip {% if campsite.is_open %}status-open{% else %}status-closed{% endif %}">
+							{% if campsite.is_open %}Open{% else %}Closed{% endif %}
+						</span>
+					{% endif %}
+				</div>
+
+				{% set res_labels = {
+					'dispersed': '⛺ Dispersed camping',
+					'first-come': '🪧 First-come, first-served',
+					'reservation': '📅 Reservation'
+				} %}
+				{% set land_labels = {
+					'US Forest Service': '🌲 National Forest',
+					'National Park Service': '🏞️ National Park',
+					'California State Parks': '⛲ State Park',
+					'Bureau of Land Management': '🏜️ BLM land'
+				} %}
+				{% if res_labels.get(campsite.reservation_type) or land_labels.get(campsite.agency_name) %}
+					<div class="detail-tags">
+						{% if res_labels.get(campsite.reservation_type) %}
+							<span class="tag tag-res">{{ res_labels[campsite.reservation_type] }}</span>
+						{% endif %}
+						{% if land_labels.get(campsite.agency_name) %}
+							<span class="tag tag-land">{{ land_labels[campsite.agency_name] }}</span>
+						{% endif %}
+					</div>
+				{% endif %}
 
 				<div class="detail-meta-top">
-					{% if campsite.managing_unit %}
-						<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ campsite.managing_unit }}</span></p>
+					{% set forest = campsite.managing_unit or campsite.forest_name %}
+					{% if forest %}
+						<p class="meta-row"><span class="meta-label">Forest / unit</span> <span class="meta-value">{{ forest | forest }}</span></p>
+					{% endif %}
+
+					{% if campsite.agency_name %}
+						<p class="meta-row"><span class="meta-label">Managed by</span> <span class="meta-value">{{ campsite.agency_name }}</span></p>
 					{% endif %}
 
 					{% if campsite.latitude and campsite.longitude %}
@@ -41,8 +72,53 @@
 							<span class="meta-value">{{ campsite.latitude }}, {{ campsite.longitude }}</span>
 						</p>
 					{% endif %}
+
+					{% if campsite.num_sites %}
+						<p class="meta-row"><span class="meta-label">Sites</span> <span class="meta-value">{{ campsite.num_sites }}</span></p>
+					{% endif %}
+
+					{% if campsite.contact_phone %}
+						<p class="meta-row"><span class="meta-label">Phone</span> <span class="meta-value">{{ campsite.contact_phone }}</span></p>
+					{% endif %}
+
+					<p class="meta-row detail-drive" id="driveLine" data-campsite-id="{{ campsite.id }}"
+					   {% if drive %}data-has="1"{% endif %}>
+						<span class="meta-label">Driving</span>
+						<span class="meta-value" id="driveValue">
+							{% if drive %}
+								{{ drive.miles }} mi{% if drive.minutes %} · ~{{ drive.minutes // 60 }}h {{ '%02d' % (drive.minutes % 60) }}m{% endif %}
+								from {{ drive.label }}{% if drive.estimated %} (estimated){% endif %}
+							{% else %}
+								<a href="#" id="driveAsk" class="link-quiet">use my location</a>
+							{% endif %}
+						</span>
+					</p>
 				</div>
+
+				<div class="badge-row">
+					{% if campsite.is_free %}<span class="badge">🆓 Free</span>
+					{% elif campsite.fee %}<span class="badge">💵 {{ campsite.fee }}</span>{% endif %}
+					{% if campsite.has_water %}<span class="badge">💧 Drinking water</span>{% endif %}
+					{% if campsite.toilet_type == 'flush' %}<span class="badge">🚻 Flush toilets</span>
+					{% elif campsite.toilet_type == 'vault' %}<span class="badge">🚻 Vault toilets</span>
+					{% elif campsite.toilet_type == 'restrooms' or campsite.has_restrooms %}<span class="badge">🚻 Restrooms</span>
+					{% elif campsite.toilet_type == 'none' %}<span class="badge">🚫 No toilets</span>{% endif %}
+					{% if campsite.water_feature and campsite.water_feature != 'water nearby' %}<span class="badge">🌊 {{ campsite.water_feature|capitalize }}</span>
+					{% elif campsite.water_feature %}<span class="badge">🌊 Water nearby</span>{% endif %}
+					{% if campsite.terrain %}<span class="badge">⛰️ {{ campsite.terrain|capitalize }}</span>{% endif %}
+					{% if campsite.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(campsite.elevation_ft) }} ft</span>{% endif %}
+				</div>
+
+				{% if campsite.activities %}
+					<div class="chip-row">
+						{% for act in campsite.activities %}<span class="chip">{{ act|capitalize }}</span>{% endfor %}
+					</div>
+				{% endif %}
 			</header>
+
+			{% if campsite.hero_image %}
+				<img class="detail-hero" src="{{ campsite.hero_image }}" alt="{{ campsite.name }}" loading="lazy" />
+			{% endif %}
 
 			{% if daily_forecast %}
 				<section class="detail-section">
@@ -69,11 +145,16 @@
 			{% if campsite.overview %}
 				<section class="detail-section">
 					<h2 class="section-title">Overview</h2>
-					<p class="section-body">{{ campsite.overview }}</p>
+					<div class="readmore" data-readmore>
+						<p class="section-body">{{ campsite.overview }}</p>
+						<button type="button" class="readmore-toggle" data-readmore-toggle hidden>Show more</button>
+					</div>
 				</section>
 			{% endif %}
 
-			{% if campsite.fee %}
+			{# Only a prose fee policy earns its own section; a short "$25" is already
+			   in the badge row above. #}
+			{% if campsite.fee and campsite.fee | length > 25 %}
 				<section class="detail-section">
 					<h2 class="section-title">Fees</h2>
 					<p class="section-body">{{ campsite.fee }}</p>
@@ -87,19 +168,80 @@
 				</section>
 			{% endif %}
 
+			<section class="detail-section">
+				<h2 class="section-title">Hikes nearby</h2>
+				{% if trails %}
+					<div class="trail-grid">
+						{% for t in trails %}
+							<article class="trail-card">
+								<p class="trail-name">
+									{% if t.url %}
+										<a href="{{ t.url }}" target="_blank" rel="noopener">{{ t.name }}</a>
+									{% else %}
+										{{ t.name }}
+									{% endif %}
+								</p>
+								<p class="trail-stats">
+									{% if t.difficulty %}{{ t.difficulty }}{% endif %}
+									{% if t.route_type %} · {{ t.route_type }}{% endif %}
+									{% if t.length_miles is not none %} · {{ t.length_miles|round(1) }} mi{% endif %}
+									{% if t.elevation_gain_feet is not none %} · {{ t.elevation_gain_feet|round(0)|int }} ft gain{% endif %}
+								</p>
+								<p class="trail-sub">
+									{% if t.distance_miles is not none %}
+										<span class="trail-dist">{{ t.distance_miles|round(1) }} mi from camp</span>
+									{% endif %}
+									{% if t.avg_rating is not none %}
+										<span class="trail-rating">★ {{ t.avg_rating|round(1) }}</span>
+									{% endif %}
+								</p>
+							</article>
+						{% endfor %}
+					</div>
+					{% if alltrails_url %}
+						<p class="trail-more"><a href="{{ alltrails_url }}" target="_blank" rel="noopener">More on AllTrails →</a></p>
+					{% endif %}
+				{% elif alltrails_url %}
+					<p class="section-body">
+						<a href="{{ alltrails_url }}" target="_blank" rel="noopener">Explore hikes in the area on AllTrails →</a>
+					</p>
+				{% endif %}
+			</section>
+
+			{% set date_qs %}{% if start_date %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
 			<div class="detail-actions">
+				{% if campsite.booking_url %}
+					<a href="{{ campsite.booking_url }}" target="_blank" class="btn btn-primary">Reserve a site</a>
+				{% endif %}
 				{% if campsite.site_url %}
-					<a href="{{ campsite.site_url }}" target="_blank" class="btn btn-primary">Open official site</a>
+					<a href="{{ campsite.site_url }}" target="_blank" class="btn btn-secondary">Open official site</a>
+				{% endif %}
+				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
+				{% if current_user %}
+					<form method="POST" action="/campsite/{{ campsite.id }}/save" class="inline-form">
+						<input type="hidden" name="action" value="{{ 'unsave' if saved else 'save' }}" />
+						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
+						<button type="submit" class="btn {{ 'btn-primary' if saved else 'btn-secondary' }}">
+							{{ '★ Saved' if saved else '☆ Save' }}
+						</button>
+					</form>
+					<form method="POST" action="/campsite/{{ campsite.id }}/collection" class="inline-form collection-add">
+						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
+						<select name="collection_id" class="select" data-collection-select>
+							<option value="">Add to collection…</option>
+							{% for c in user_collections %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+							<option value="__new">＋ New collection</option>
+						</select>
+						<input type="text" name="new_collection" class="num-input" placeholder="New collection name"
+						       data-collection-new hidden />
+						<button type="submit" class="btn btn-secondary">Add</button>
+					</form>
 				{% endif %}
 				<a href="/" class="btn btn-secondary">Back to search</a>
 			</div>
 
-			{% if alltrails_url %}
-				<section class="detail-section">
-					<a href="{{ alltrails_url }}" target="_blank" rel="noopener">
-						Check out Hikes in the Area
-					</a>
-				</section>
+			{% if campsite.last_scraped %}
+				<p class="detail-updated">Data last refreshed {{ campsite.last_scraped.strftime('%Y-%m-%d') }}</p>
 			{% endif %}
 		</section>
 	</main>

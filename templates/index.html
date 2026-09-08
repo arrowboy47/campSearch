@@ -30,15 +30,12 @@
         </div>
       </a>
 
-      <div class="theme-toggle" role="radiogroup" aria-label="Color theme">
-        <button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
-        <button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
-        <button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
-      </div>
+      {% include "_headernav.html" %}
     </div>
   </header>
 
   <main class="page-main">
+    {% include "_flash.html" %}
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">Find your next campsite</h1>
@@ -63,72 +60,50 @@
             <div id="filters" class="filters">
               <div class="filters-header">
                 <h2 class="filters-title">Filters</h2>
-                <p class="filters-hint">Refine results by status, amenities, forest, and dates.</p>
+                <p class="filters-hint">Refine by type, water, terrain, elevation, and activities.</p>
               </div>
 
-              <div class="filters-grid">
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="is_open" value="true" />
-                    <span>Open campsites only</span>
-                  </label>
-                </div>
-
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="has_water" value="true" />
-                    <span>Water available</span>
-                  </label>
-                </div>
-
-                <div class="filter-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" name="has_restrooms" value="true" />
-                    <span>Restrooms available</span>
-                  </label>
-                </div>
-
-                 <div class="filter-group">
-                   <label for="forest" class="field-label">National Forest</label>
-                   <select name="forest" id="forest" class="select">
-                     <option value="">Any</option>
-                     {% for forest in forests %}
-                       <option value="{{ forest }}">{{ forest }}</option>
-                     {% endfor %}
-                   </select>
-                 </div>
-
-                 <div class="filter-group">
-                   <label for="start_date" class="field-label">Start date</label>
-                   <input
-                     type="date"
-                     id="start_date"
-                     name="start"
-                     class="date-input"
-                   />
-                 </div>
-
-                 <div class="filter-group">
-                   <label for="end_date" class="field-label">End date</label>
-                   <input
-                     type="date"
-                     id="end_date"
-                     name="end"
-                     class="date-input"
-                   />
-                 </div>
-               </div>
+              {% include "_filters.html" %}
              </div>
            </div>
         </form>
       </div>
     </section>
 
+    {% if near %}
+      <section class="near-section">
+        <h2 class="near-title">Campsites near {{ near_label }}</h2>
+        <div class="near-carousel" role="list">
+          {% for c in near %}
+            <a class="near-card" role="listitem" href="/campsite/{{ c.id }}">
+              <div class="near-thumb">
+                {% if c.image_url %}
+                  <img src="{{ c.image_url }}" alt="{{ c.name }}" loading="lazy" />
+                {% else %}
+                  <span class="near-thumb-fallback" aria-hidden="true">🏕️</span>
+                {% endif %}
+              </div>
+              <span class="near-name">{{ c.name }}</span>
+              {% if c.distance_miles is not none %}
+                <span class="near-dist">{{ c.distance_miles }} mi away</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% elif near_prompt %}
+      <section class="near-section" data-near-locate>
+        <h2 class="near-title">Campsites near you</h2>
+        <p class="near-hint">Allow location access to see the closest campsites, or
+          <a href="/account" class="link-quiet">set a home address</a>.</p>
+      </section>
+    {% endif %}
+
     <section class="map-section">
       <div class="map-card">
         <div class="map-header">
           <div class="map-label">Explore on the map</div>
-          <p class="map-caption">When wired up, this area can render an interactive map with campsite markers.</p>
+          <p class="map-caption">Every California campsite with coordinates. Click a marker to open its page.</p>
         </div>
         <div id="map" class="map-shell"></div>
       </div>
@@ -138,7 +113,5 @@
   <footer class="page-footer">
     <p class="page-footer-text">Built for quickly scanning national forest campsites.</p>
   </footer>
-
-  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 </body>
 </html>

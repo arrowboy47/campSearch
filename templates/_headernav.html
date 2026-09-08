@@ -1,0 +1,40 @@
+{# Right-side header controls: near-me, settings (gear) menu, account (person).
+   current_user comes from the inject_user context processor. Icons are inline
+   Lucide-style SVGs so there's no icon-font / emoji dependency. #}
+{% set icon_pin %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{% endset %}
+{% set icon_gear %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>{% endset %}
+{% set icon_user %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{% endset %}
+
+<div class="header-nav">
+  <a href="/nearby" class="icon-btn" title="Campsites near you" aria-label="Campsites near you">{{ icon_pin }}</a>
+
+  <div class="menu" data-menu>
+    <button type="button" class="icon-btn" data-menu-toggle aria-haspopup="true" aria-expanded="false" aria-label="Settings">{{ icon_gear }}</button>
+    <div class="menu-panel" data-menu-panel hidden>
+      <p class="menu-heading">Theme</p>
+      <div class="theme-toggle" role="radiogroup" aria-label="Color theme">
+        <button type="button" class="theme-toggle-btn" data-theme-choice="light">Light</button>
+        <button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
+        <button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
+      </div>
+      {% if current_user %}
+        <form method="POST" action="/logout" class="menu-form">
+          <button type="submit" class="menu-link">Sign out</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if current_user %}
+    <a href="/account" class="icon-btn icon-btn-user" title="{{ current_user.username }}" aria-label="Account">
+      {% if current_user.avatar_path %}
+        <img class="avatar avatar-xs" src="{{ url_for('static', filename=current_user.avatar_path) }}" alt="" />
+      {% else %}
+        {{ icon_user }}
+      {% endif %}
+      <span class="icon-name">{{ current_user.first_name or current_user.username }}</span>
+    </a>
+  {% else %}
+    <a href="/login" class="icon-btn" title="Sign in" aria-label="Sign in">{{ icon_user }}</a>
+  {% endif %}
+</div>

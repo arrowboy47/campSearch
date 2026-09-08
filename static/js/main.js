@@ -63,6 +63,36 @@ function initTheme() {
 
 // Map handling -----------------------------------------------------------
 
+// A gold star for the signed-in user's saved home, a pin for the browser's
+// current location. Both float above the campsite dots.
+function addContextMarkers(map) {
+  const star = L.divIcon({ className: "map-ctx-icon", html: "⭐", iconSize: [24, 24], iconAnchor: [12, 12] });
+  const pin = L.divIcon({ className: "map-ctx-icon", html: "📍", iconSize: [24, 24], iconAnchor: [12, 24] });
+
+  fetch("/api/me")
+    .then((r) => r.json())
+    .then((me) => {
+      if (me && me.home) {
+        L.marker([me.home.lat, me.home.lon], { icon: star, zIndexOffset: 1000, interactive: true })
+          .bindTooltip("Home" + (me.home.label ? " · " + me.home.label : ""), { direction: "top" })
+          .addTo(map);
+      }
+    })
+    .catch(() => {});
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        L.marker([pos.coords.latitude, pos.coords.longitude], { icon: pin, zIndexOffset: 1000 })
+          .bindTooltip("Your location", { direction: "top" })
+          .addTo(map);
+      },
+      () => {},
+      { timeout: 8000, maximumAge: 300000 }
+    );
+  }
+}
+
 function initMap() {
   const mapEl = document.getElementById("map");
   if (!mapEl) {
@@ -85,18 +115,35 @@ function initMap() {
     attribution: "© OpenStreetMap contributors",
   }).addTo(map);
 
-  fetch("/api/map/campsites")
-    .then(async (resp) => {
+  addContextMarkers(map);
+
+  // The results page embeds just its result set as JSON; the home page has no
+  // embedded data and asks the API for every campsite.
+  const embedded = document.getElementById("mapData");
+  let source;
+  if (embedded) {
+    let parsed = [];
+    try {
+      parsed = JSON.parse(embedded.textContent || "[]");
+    } catch (e) {
+      console.error("Could not parse embedded #mapData", e);
+    }
+    source = Promise.resolve(parsed);
+  } else {
+    source = fetch("/api/map/campsites").then(async (resp) => {
       if (!resp.ok) {
         const text = await resp.text().catch(() => "");
         console.error("/api/map/campsites returned an error status", resp.status, text);
         return [];
       }
       return resp.json();
-    })
+    });
+  }
+
+  source
     .then((points) => {
       if (!Array.isArray(points) || !points.length) {
-        console.warn("Map data loaded but no campsite points were returned.");
+        console.warn("Map: no campsite points to plot.");
         return;
       }
 
@@ -145,8 +192,8 @@ function initMap() {
 
         marker.on("click", () => {
           const params = new URLSearchParams();
-          const startEl = document.getElementById("start_date");
-          const endEl = document.getElementById("end_date");
+          const startEl = document.querySelector('input[name="start"]');
+          const endEl = document.querySelector('input[name="end"]');
 
           if (startEl && startEl.value) {
             params.set("start", startEl.value);
@@ -174,9 +221,229 @@ function initMap() {
     });
 }
 
+// Date range inputs ----------------------------------------------------
+// Native <input type="date"> already gives a calendar popover; this just keeps
+// the pair sane: no past dates, end never before start, and picking a start
+// pre-fills an empty end.
+
+function initDateRange() {
+  const start = document.querySelector('input[name="start"]');
+  const end = document.querySelector('input[name="end"]');
+  if (!start || !end) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  start.min = today;
+  end.min = start.value || today;
+
+  start.addEventListener("change", () => {
+    end.min = start.value || today;
+    if (start.value && (!end.value || end.value < start.value)) {
+      end.value = start.value;
+    }
+  });
+
+  end.addEventListener("change", () => {
+    if (start.value && end.value && end.value < start.value) {
+      end.value = start.value;
+    }
+  });
+}
+
+// Copy-link button -----------------------------------------------------
+
+function initShare() {
+  const btn = document.querySelector("[data-copy-link]");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const url = window.location.href;
+    const label = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = "Link copied";
+    } catch (e) {
+      // Clipboard API unavailable (http, old browser): fall back to a prompt.
+      window.prompt("Copy this link:", url);
+    }
+    setTimeout(() => {
+      btn.textContent = label;
+    }, 1800);
+  });
+}
+
+// Location: "near me" + campsite driving distance ---------------------
+
+function reloadWithCoords(pos) {
+  const p = new URLSearchParams(window.location.search);
+  p.set("lat", pos.coords.latitude.toFixed(5));
+  p.set("lon", pos.coords.longitude.toFixed(5));
+  window.location.search = p.toString();
+}
+
+function initNearby() {
+  const btn = document.getElementById("useLocationBtn");
+  if (!btn || !navigator.geolocation) return;
+  btn.addEventListener("click", () => {
+    btn.textContent = "Locating…";
+    navigator.geolocation.getCurrentPosition(
+      reloadWithCoords,
+      () => {
+        btn.textContent = "Location blocked — using home if set";
+      },
+      { timeout: 8000 }
+    );
+  });
+}
+
+function formatDrive(d) {
+  let t = `${d.miles} mi`;
+  if (d.minutes) {
+    const h = Math.floor(d.minutes / 60);
+    const m = String(d.minutes % 60).padStart(2, "0");
+    t += ` · ~${h}h ${m}m`;
+  }
+  t += ` from ${d.label}`;
+  if (d.estimated) t += " (estimated)";
+  return t;
+}
+
+function initDrive() {
+  const line = document.getElementById("driveLine");
+  if (!line || !navigator.geolocation) return;
+  const valueEl = document.getElementById("driveValue");
+  const id = line.dataset.campsiteId;
+
+  function fetchFor(lat, lon) {
+    const qs = new URLSearchParams({ campsite_id: id });
+    if (lat != null) {
+      qs.set("lat", lat);
+      qs.set("lon", lon);
+    }
+    fetch(`/api/distance?${qs.toString()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.available) valueEl.textContent = formatDrive(d);
+      })
+      .catch(() => {});
+  }
+
+  const ask = document.getElementById("driveAsk");
+  if (ask) {
+    ask.addEventListener("click", (e) => {
+      e.preventDefault();
+      valueEl.textContent = "locating…";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchFor(pos.coords.latitude.toFixed(5), pos.coords.longitude.toFixed(5)),
+        () => {
+          valueEl.textContent = "location unavailable";
+        },
+        { timeout: 8000 }
+      );
+    });
+    return;
+  }
+
+  // Server already rendered a home-based distance; quietly check whether the
+  // device is far enough from home that the server would switch to "your
+  // location", and update in place if so.
+  navigator.geolocation.getCurrentPosition(
+    (pos) => fetchFor(pos.coords.latitude.toFixed(5), pos.coords.longitude.toFixed(5)),
+    () => {},
+    { timeout: 8000, maximumAge: 300000 }
+  );
+}
+
+// Settings (gear) menu ----------------------------------------------
+
+function initMenu() {
+  const menu = document.querySelector("[data-menu]");
+  if (!menu) return;
+  const toggle = menu.querySelector("[data-menu-toggle]");
+  const panel = menu.querySelector("[data-menu-panel]");
+  if (!toggle || !panel) return;
+
+  const close = () => {
+    panel.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+  };
+  const open = () => {
+    panel.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+  };
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.hidden ? open() : close();
+  });
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !menu.contains(e.target)) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+}
+
+// "Add to collection": reveal the name box when "New collection" is picked.
+
+function initCollectionAdd() {
+  const sel = document.querySelector("[data-collection-select]");
+  const nameInput = document.querySelector("[data-collection-new]");
+  if (!sel || !nameInput) return;
+  sel.addEventListener("change", () => {
+    const isNew = sel.value === "__new";
+    nameInput.hidden = !isNew;
+    if (isNew) nameInput.focus();
+  });
+}
+
+// Homepage "Campsites near you": if the server had no origin, quietly ask the
+// browser for a location once and reload with it as ?lat=&lon=.
+
+function initNearHome() {
+  const el = document.querySelector("[data-near-locate]");
+  if (!el || !navigator.geolocation) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("lat")) return; // already tried this page load
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      params.set("lat", pos.coords.latitude.toFixed(5));
+      params.set("lon", pos.coords.longitude.toFixed(5));
+      window.location.search = params.toString();
+    },
+    () => {},
+    { timeout: 8000, maximumAge: 300000 }
+  );
+}
+
+// Fold long prose behind a "Show more" toggle.
+
+function initReadMore() {
+  document.querySelectorAll("[data-readmore]").forEach((wrap) => {
+    const btn = wrap.querySelector("[data-readmore-toggle]");
+    const body = wrap.querySelector(".section-body");
+    if (!btn || !body) return;
+    if (body.scrollHeight <= 260) return; // short enough, leave it
+
+    wrap.classList.add("is-clamped");
+    btn.hidden = false;
+    btn.addEventListener("click", () => {
+      const clamped = wrap.classList.toggle("is-clamped");
+      btn.textContent = clamped ? "Show more" : "Show less";
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
+  initMenu();
+  initNearHome();
+  initReadMore();
   initMap();
+  initDateRange();
+  initShare();
+  initNearby();
+  initDrive();
+  initCollectionAdd();
 });
