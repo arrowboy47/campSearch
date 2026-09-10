@@ -124,7 +124,7 @@
 
 			{% if daily_forecast %}
 				<section class="detail-section">
-					<h2 class="section-title">Weather forecast{% if start_date and end_date %} ({{ start_date }} → {{ end_date }}){% endif %}{% if coord_is_approx %}<span class="approx-tag" tabindex="0"
+					<h2 class="section-title">Weather forecast{% if dates_explicit %} ({{ start_date }} → {{ end_date }}){% else %} — next 7 days{% endif %}{% if coord_is_approx %}<span class="approx-tag" tabindex="0"
 						title="This campground publishes no exact location. The forecast is for the centre of its county — treat it as a regional guide, not a site-specific forecast.">approximate</span>{% endif %}</h2>
 					{% if coord_is_approx %}
 						<p class="approx-note">No exact coordinates on file — showing the forecast for the surrounding county.</p>
@@ -214,7 +214,7 @@
 				{% endif %}
 			</section>
 
-			{% set date_qs %}{% if start_date %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
+			{% set date_qs %}{% if dates_explicit %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
 			<div class="detail-actions">
 				{% if campsite.booking_url %}
 					<a href="{{ campsite.booking_url }}" target="_blank" class="btn btn-primary">Reserve a site</a>

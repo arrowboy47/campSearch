@@ -148,6 +148,7 @@ def get_campsites_with_thumbs():
     cur.execute(
         """
         SELECT c.id, c.name, c.forest_name, c.latitude, c.longitude,
+               c.is_free, c.reservation_type,
                COALESCE(c.primary_image_url, img.image_url) AS image_url
         FROM campsites c
         LEFT JOIN LATERAL (

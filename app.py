@@ -260,22 +260,32 @@ def home():
     forests = get_all_forests()
     facets = get_facet_options()
 
-    # "Campsites near you" carousel. Origin = the browser's shared location if
-    # it handed one over via ?lat=&lon=, else the signed-in user's saved home.
+    # Carousels. Origin = the browser's shared location if it handed one over via
+    # ?lat=&lon=, else the signed-in user's saved home.
     origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
-    near = []
+    all_thumbs = get_campsites_with_thumbs()
     if origin:
-        rows = get_campsites_with_thumbs()
-        for r in rows:
-            if r["latitude"] is None or r["longitude"] is None:
-                continue
-            r["distance_miles"] = round(
-                geo.haversine_miles(origin, (r["latitude"], r["longitude"])), 1
-            )
-        rows.sort(key=lambda x: x.get("distance_miles", 9e9))
-        nearest = rows[:40]
-        with_pic = [r for r in nearest if r.get("image_url")]
-        near = (with_pic or nearest)[:12]
+        for r in all_thumbs:
+            if r["latitude"] is not None and r["longitude"] is not None:
+                r["distance_miles"] = round(
+                    geo.haversine_miles(origin, (r["latitude"], r["longitude"])), 1
+                )
+
+    def _pick(rows, n=12, pool=40):
+        """Nearest `n` when we have an origin (photo'd preferred), else the first
+        `n` photo'd rows."""
+        if origin:
+            ranked = sorted(rows, key=lambda x: x.get("distance_miles", 9e9))[:pool]
+            with_pic = [r for r in ranked if r.get("image_url")]
+            return (with_pic or ranked)[:n]
+        return [r for r in rows if r.get("image_url")][:n]
+
+    near = _pick(all_thumbs) if origin else []
+
+    # "Free & dispersed camping" carousel — is_free or a dispersed reservation type.
+    free_rows = [r for r in all_thumbs
+                 if r.get("is_free") or r.get("reservation_type") == "dispersed"]
+    free_dispersed = _pick(free_rows)
 
     # "Suggested for you" — only for a signed-in user with enough saved history.
     suggested = []
@@ -290,6 +300,7 @@ def home():
         near=near,
         near_label="you" if label == "your location" else "home",
         near_prompt=not origin,
+        free_dispersed=free_dispersed,
         suggested=suggested,
     )
 
@@ -465,7 +476,11 @@ def campsite(campsite_id):
     today = datetime.now().date()
     try:
         start_date = datetime.strptime(start_str, "%Y-%m-%d").date() if start_str else today
-        end_date = datetime.strptime(end_str, "%Y-%m-%d").date() if end_str else start_date
+        # no explicit end -> show a 7-day outlook from the start day
+        if end_str:
+            end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+        else:
+            end_date = start_date + timedelta(days=6)
     except ValueError:
         # Fallback to a single-day forecast if parsing fails.
         start_date = today
@@ -543,6 +558,7 @@ def campsite(campsite_id):
         user_collections=user_collections,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
+        dates_explicit=bool(start_str or end_str),
         alltrails_url=alltrails_url,
         coord_is_approx=coord_is_approx,
         approx_area=campsite_data.get("address"),

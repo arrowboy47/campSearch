@@ -99,6 +99,32 @@
       </section>
     {% endif %}
 
+    {% if free_dispersed %}
+      <section class="near-section">
+        <h2 class="near-title">Free &amp; dispersed camping</h2>
+        <p class="near-hint">No fee or no reservation needed{% if free_dispersed[0].distance_miles is not none %}, nearest first{% endif %}.</p>
+        <div class="near-carousel" role="list">
+          {% for c in free_dispersed %}
+            <a class="near-card" role="listitem" href="/campsite/{{ c.id }}" data-pick="{{ c.id }}">
+              <div class="near-thumb">
+                {% if c.image_url %}
+                  <img src="{{ c.image_url }}" alt="{{ c.name }}" loading="lazy" />
+                {% else %}
+                  <span class="near-thumb-fallback" aria-hidden="true">🏕️</span>
+                {% endif %}
+              </div>
+              <span class="near-name">{{ c.name }}</span>
+              {% if c.distance_miles is not none %}
+                <span class="near-dist">{{ c.distance_miles }} mi away</span>
+              {% elif c.forest_name %}
+                <span class="near-dist">{{ c.forest_name | forest }}</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
     {% if suggested %}
       <section class="near-section">
         <h2 class="near-title">Suggested for you</h2>
