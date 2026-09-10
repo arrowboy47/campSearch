@@ -1,0 +1,11 @@
+[Unit]
+Description=CampSearch monthly refresh (OSM nearby-trail ingest)
+
+[Timer]
+OnCalendar=*-*-01 04:40:00
+Persistent=true
+RandomizedDelaySec=1800
+Unit=campsearch-refresh@monthly.service
+
+[Install]
+WantedBy=timers.target
