@@ -310,8 +310,9 @@ def weather():
     if not campsite:
         return jsonify({"error": "Campsite not found"}), 404
 
-    lat = campsite["latitude"]
-    lon = campsite["longitude"]
+    lat, lon, coord_is_approx = geo.effective_coords(campsite)
+    if lat is None:
+        return jsonify({"error": "No location on file for this campsite"}), 422
 
     # Handle and parse start/end dates
     # if no start date is provided, set it to today and end date doesnt matter
@@ -342,6 +343,7 @@ def weather():
         "site_id": site_id,
         "lat": lat,
         "lon": lon,
+        "approximate": coord_is_approx,
         "forecast": forecast_data
     })
 
@@ -442,15 +444,19 @@ def campsite(campsite_id):
         start_date = today
         end_date = today
 
-    lat = campsite_data.get("latitude")
-    lon = campsite_data.get("longitude")
+    # Real coordinates for anything precise (map, AllTrails box). A county-level
+    # approx point only backs the rough distance + weather, and only with a
+    # visible "approximate" flag.
+    real_lat = campsite_data.get("latitude")
+    real_lon = campsite_data.get("longitude")
+    lat, lon, coord_is_approx = geo.effective_coords(campsite_data)
 
     # Build an AllTrails explore URL for hikes in the area using
-    # a small bounding box around the campsite coordinates.
+    # a small bounding box around the campsite coordinates. Real coords only.
     alltrails_url = None
-    if lat is not None and lon is not None:
-        lat_f = float(lat)
-        lon_f = float(lon)
+    if real_lat is not None and real_lon is not None:
+        lat_f = float(real_lat)
+        lon_f = float(real_lon)
         offset = 0.01450
         lat1 = lat_f + offset  # top-left latitude
         lng1 = lon_f - offset  # top-left longitude
@@ -484,12 +490,13 @@ def campsite(campsite_id):
     # far from home). Computed server-side only when we already have a home on
     # file; otherwise the page's JS offers to use the browser location.
     drive = None
-    if lat is not None and lon is not None and campsite_data.get("latitude") is not None:
+    if lat is not None and lon is not None:
         origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
         if origin:
-            dist = geo.driving_distance(origin, (campsite_data["latitude"], campsite_data["longitude"]))
+            dist = geo.driving_distance(origin, (lat, lon))
             if dist:
                 dist["label"] = label
+                dist["approximate"] = coord_is_approx
                 drive = dist
 
     saved = False
@@ -509,6 +516,8 @@ def campsite(campsite_id):
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         alltrails_url=alltrails_url,
+        coord_is_approx=coord_is_approx,
+        approx_area=campsite_data.get("address"),
     )
 
 def _slugify(text):
@@ -925,18 +934,23 @@ def api_distance():
     """
     cid = _int_arg("campsite_id")
     camp = get_campsite_by_id(cid) if cid else None
-    if not camp or camp.get("latitude") is None:
+    if not camp:
         return jsonify({"error": "unknown campsite"}), 404
+
+    dest_lat, dest_lon, coord_is_approx = geo.effective_coords(camp)
+    if dest_lat is None:
+        return jsonify({"available": False})
 
     origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
     if not origin:
         return jsonify({"available": False})
 
-    dist = geo.driving_distance(origin, (camp["latitude"], camp["longitude"]))
+    dist = geo.driving_distance(origin, (dest_lat, dest_lon))
     if not dist:
         return jsonify({"available": False})
     dist["available"] = True
     dist["label"] = label
+    dist["approximate"] = coord_is_approx
     return jsonify(dist)
 
 

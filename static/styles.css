@@ -810,6 +810,31 @@ fieldset.filter-group legend {
   opacity: 0.75;
 }
 
+/* Marks a distance/weather value derived from a county-level approximate
+   coordinate, not the campground's real location. */
+.approx-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--text-muted);
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.approx-note {
+  margin: 2px 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

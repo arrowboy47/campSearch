@@ -295,6 +295,10 @@ function initNearby() {
   });
 }
 
+const APPROX_TITLE =
+  "This campground publishes no exact location. Distance is measured from the " +
+  "centre of its county, so it can be off by many miles.";
+
 function formatDrive(d) {
   let t = `${d.miles} mi`;
   if (d.minutes) {
@@ -305,6 +309,20 @@ function formatDrive(d) {
   t += ` from ${d.label}`;
   if (d.estimated) t += " (estimated)";
   return t;
+}
+
+// Rebuild the drive line, re-adding the "approximate" tag when the API says the
+// distance came from a county-level coordinate.
+function renderDrive(valueEl, d) {
+  valueEl.textContent = formatDrive(d);
+  if (d.approximate) {
+    const tag = document.createElement("span");
+    tag.className = "approx-tag";
+    tag.tabIndex = 0;
+    tag.title = APPROX_TITLE;
+    tag.textContent = "approximate";
+    valueEl.append(" ", tag);
+  }
 }
 
 function initDrive() {
@@ -322,7 +340,7 @@ function initDrive() {
     fetch(`/api/distance?${qs.toString()}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.available) valueEl.textContent = formatDrive(d);
+        if (d && d.available) renderDrive(valueEl, d);
       })
       .catch(() => {});
   }

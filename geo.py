@@ -7,8 +7,13 @@ are cached in-process so repeat lookups during a request are cheap.
   - geocode(address)            -> (lat, lon) | None      via OSM Nominatim
   - driving_distance(a, b)      -> {"miles", "minutes", "estimated"}  via OSRM
   - haversine_miles(a, b)       -> float
+  - county_centroid(state, county) -> (lat, lon) | None   from the vendored file
+  - effective_coords(row)       -> (lat, lon, is_approx)  real coords preferred
 """
 
+import os
+import re
+import csv
 import math
 import time
 import functools
@@ -95,3 +100,81 @@ def driving_distance(origin, dest):
             "minutes": round(miles / 55 * 60),  # ~55 mph average
             "estimated": True,
         }
+
+
+# --- approximate (county-level) coordinates --------------------------------
+#
+# For campsites the scrapers found with no real lat/lon. The point is the
+# county's Census "internal point" (guaranteed inside the county) — good enough
+# for a rough distance or a weather forecast, never for a map marker.
+
+_CENTROID_FILE = os.path.join(os.path.dirname(__file__), "data", "county_centroids.tsv")
+
+
+def _norm_county(name):
+    """'Kern County' / 'st. clair' -> 'kern' / 'st clair' for keying."""
+    s = (name or "").lower()
+    s = re.sub(r"\bcounty\b", " ", s)
+    s = re.sub(r"[^a-z0-9]+", " ", s)
+    return s.strip()
+
+
+@functools.lru_cache(maxsize=1)
+def _centroids():
+    """{(state_upper, norm_county): (lat, lon)} from the vendored Census file."""
+    out = {}
+    try:
+        with open(_CENTROID_FILE, newline="") as fh:
+            for row in csv.DictReader(fh, delimiter="\t"):
+                try:
+                    out[(row["state"].upper(), _norm_county(row["county"]))] = (
+                        float(row["lat"]), float(row["lon"])
+                    )
+                except (ValueError, KeyError):
+                    continue
+    except FileNotFoundError:
+        pass
+    return out
+
+
+def county_centroid(state, county):
+    """(lat, lon) for a US county, or None. Keys on state too, so same-named
+    counties in different states don't collide."""
+    if not state or not county:
+        return None
+    return _centroids().get((state.upper(), _norm_county(county)))
+
+
+_COUNTY_RE = re.compile(r"([A-Za-z][A-Za-z .'\-]+?)\s+County,\s*([A-Z]{2})\b")
+
+
+def parse_county_state(address):
+    """Pull ('Kern', 'CA') out of a '..., Kern County, CA' address, or None."""
+    if not address:
+        return None
+    m = _COUNTY_RE.search(address)
+    return (m.group(1).strip(), m.group(2)) if m else None
+
+
+def effective_coords(row):
+    """(lat, lon, is_approx) for a campsite dict/row.
+
+    Real latitude/longitude always win. Falls back to approx_latitude/
+    approx_longitude (county-level) with is_approx=True. (None, None, False)
+    when neither is available.
+    """
+    def _get(k):
+        v = row.get(k) if hasattr(row, "get") else None
+        try:
+            f = float(v)
+            return None if f != f else f  # drop NaN
+        except (TypeError, ValueError):
+            return None
+
+    lat, lon = _get("latitude"), _get("longitude")
+    if lat is not None and lon is not None:
+        return lat, lon, False
+    lat, lon = _get("approx_latitude"), _get("approx_longitude")
+    if lat is not None and lon is not None:
+        return lat, lon, True
+    return None, None, False

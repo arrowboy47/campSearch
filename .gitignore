@@ -11,7 +11,9 @@ venv/
 *.local
 
 # Scraper working files
-data/
+data/*
+!data/README.md
+!data/county_centroids.tsv
 *.csv
 *.dump
 *.sql.gz
