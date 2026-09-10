@@ -38,12 +38,18 @@ def haversine_miles(a, b):
     return 2 * r * math.asin(min(1.0, math.sqrt(h)))
 
 
-@functools.lru_cache(maxsize=512)
+# Only successful lookups are cached — caching a transient Nominatim
+# timeout/429 would permanently reject a valid address for the process lifetime.
+_geocode_hits = {}
+
+
 def geocode(address):
     """Free-text address / city -> (lat, lon), or None if it can't be resolved."""
     address = (address or "").strip()
     if not address:
         return None
+    if address in _geocode_hits:
+        return _geocode_hits[address]
     try:
         r = requests.get(
             _NOMINATIM,
@@ -56,7 +62,10 @@ def geocode(address):
         hits = r.json()
         if not hits:
             return None
-        return float(hits[0]["lat"]), float(hits[0]["lon"])
+        result = (float(hits[0]["lat"]), float(hits[0]["lon"]))
+        if len(_geocode_hits) < 4096:
+            _geocode_hits[address] = result
+        return result
     except Exception:
         return None
 

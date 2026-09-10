@@ -66,13 +66,17 @@ _BASE_SQL = """
     LEFT JOIN reservations      r  ON c.id = r.campsite_id
     -- weather_forecasts has one row PER DAY (migration 0004), so a plain join
     -- multiplies every campsite by its forecast-day count (~4250 rows for 2440
-    -- campsites) and the row cap then silently drops real matches. Pull just
-    -- the earliest forecast so the join stays 1:1.
+    -- campsites) and the row cap then silently drops real matches. Pull one row
+    -- via LATERAL so the join stays 1:1 -- and prefer today-or-later (old rows
+    -- are never pruned, so ORDER BY date ASC alone would surface a stale past
+    -- day) with a fallback to the most recent stored row.
     LEFT JOIN LATERAL (
         SELECT forecast_json
         FROM weather_forecasts
         WHERE campsite_id = c.id
-        ORDER BY forecast_date NULLS LAST
+        ORDER BY (forecast_date >= CURRENT_DATE) DESC NULLS LAST,
+                 CASE WHEN forecast_date >= CURRENT_DATE THEN forecast_date END ASC,
+                 forecast_date DESC
         LIMIT 1
     ) wf ON TRUE
     WHERE 1 = 1

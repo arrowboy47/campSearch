@@ -55,28 +55,35 @@ CAMPSITE_SQL = """
 # useful for weather data and anything that needs the campsite site_url: so things like updating site status and when it was last updated
 # returns the full campsites row + agency/amenities/status/reservation + images
 def get_campsite_by_id(campsite_id):
+    # Callers pass this straight from request args; a non-numeric value would
+    # otherwise raise inside execute() and leak the connection.
+    try:
+        campsite_id = int(campsite_id)
+    except (TypeError, ValueError):
+        return None
+
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(CAMPSITE_SQL, (campsite_id,))
+        row = cur.fetchone()
 
-    cur.execute(CAMPSITE_SQL, (campsite_id,))
-    row = cur.fetchone()
-
-    images = []
-    if row:
-        cur.execute(
-            """
-            SELECT image_url, description
-            FROM images
-            WHERE campsite_id = %s
-            ORDER BY id
-            LIMIT 8
-            """,
-            (campsite_id,),
-        )
-        images = [dict(r) for r in cur.fetchall()]
-
-    cur.close()
-    conn.close()
+        images = []
+        if row:
+            cur.execute(
+                """
+                SELECT image_url, description
+                FROM images
+                WHERE campsite_id = %s
+                ORDER BY id
+                LIMIT 8
+                """,
+                (campsite_id,),
+            )
+            images = [dict(r) for r in cur.fetchall()]
+    finally:
+        cur.close()
+        conn.close()
 
     if not row:
         return None
@@ -275,6 +282,11 @@ def record_pick(campsite_id):
     ping can never break navigation.
     """
     try:
+        campsite_id = int(campsite_id)
+    except (TypeError, ValueError):
+        return
+    conn = None
+    try:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(
@@ -284,10 +296,11 @@ def record_pick(campsite_id):
             (campsite_id,),
         )
         conn.commit()
-        cur.close()
-        conn.close()
     except Exception:
         pass
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 # --- users & saved campsites (migration 0014) ------------------------------

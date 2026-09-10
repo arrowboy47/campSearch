@@ -2,6 +2,14 @@
 
 const THEME_STORAGE_KEY = "campsearch-theme";
 
+// Escape text before it goes into an innerHTML string. Campsite names are
+// third-party scraped data, so they must never be trusted as markup.
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
 function getSystemTheme() {
   if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
     return "dark";
@@ -178,8 +186,8 @@ function initMap() {
         // Hover tooltip: small "mini card" with name + link
         marker.bindTooltip(
           `<div class="map-tooltip-card">
-             <div class="map-tooltip-title">${site.name}</div>
-             <a class="map-tooltip-link" href="/campsite/${site.id}">Open campsite</a>
+             <div class="map-tooltip-title">${esc(site.name)}</div>
+             <a class="map-tooltip-link" href="/campsite/${encodeURIComponent(site.id)}">Open campsite</a>
            </div>`,
           {
             direction: "top",

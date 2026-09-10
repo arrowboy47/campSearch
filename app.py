@@ -29,6 +29,7 @@ from search import (
 )
 import geo
 import json
+import math
 import re
 import os
 from forests import forest_label
@@ -73,12 +74,36 @@ def _int_arg(name):
         return None
 
 
+def _is_safe_next(nxt):
+    """True only for a same-site relative path. Rejects `//host`, `/\\host` and
+    absolute URLs so `?next=` can't be turned into an open redirect."""
+    return bool(nxt) and nxt.startswith("/") and not nxt.startswith(("//", "/\\"))
+
+
+# A weather forecast is one synchronous OpenWeather call per day. Cap the span a
+# request can ask for so `?start=..&end=..+18mo` can't pin a worker / drain the
+# shared API key.
+MAX_FORECAST_DAYS = 16
+
+
+def _clamp_end_date(start_date, end_date):
+    """end_date, pulled back so the span is at most MAX_FORECAST_DAYS."""
+    if end_date < start_date:
+        return start_date
+    limit = start_date + timedelta(days=MAX_FORECAST_DAYS - 1)
+    return min(end_date, limit)
+
+
 def _float_arg(name):
     raw = request.args.get(name)
     try:
-        return float(raw) if raw not in (None, "") else None
+        val = float(raw) if raw not in (None, "") else None
     except ValueError:
         return None
+    # reject inf / nan: they slip past float() and blow up trig in haversine
+    if val is not None and not math.isfinite(val):
+        return None
+    return val
 
 
 def parse_search_filters(args):
@@ -331,6 +356,7 @@ def weather():
             forecast_data.append(forecast)
         else:
             # loop through the dates and get the weather for each day
+            end_date = _clamp_end_date(start_date, end_date)
             days = (end_date - start_date).days + 1
             for i in range(days):
                 current_day = start_date + timedelta(days=i)
@@ -402,6 +428,7 @@ def results():
         campsites=enriched,
         start_date=start_str,
         end_date=end_str,
+        forests=get_all_forests(),
         facets=get_facet_options(),
         filters=filters,
         result_count=len(enriched),
@@ -472,7 +499,8 @@ def campsite(campsite_id):
     daily_forecast = []
     if lat is not None and lon is not None:
         try:
-            days = (end_date - start_date).days + 1
+            fc_end = _clamp_end_date(start_date, end_date)
+            days = (fc_end - start_date).days + 1
             for i in range(max(days, 1)):
                 current_day = start_date + timedelta(days=i)
                 raw = get_forecast(lat, lon, current_day)
@@ -613,11 +641,13 @@ def campsite_trip_sheet(campsite_id):
     end_str = request.args.get("end") or start_str
 
     forecast = []
-    lat, lon = camp.get("latitude"), camp.get("longitude")
+    lat, lon, _approx = geo.effective_coords(camp)
     if start_str and lat is not None and lon is not None:
         try:
             start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            end_date = _clamp_end_date(
+                start_date, datetime.strptime(end_str, "%Y-%m-%d").date()
+            )
             for i in range(max((end_date - start_date).days + 1, 1)):
                 summary = build_weather_summary(
                     get_forecast(lat, lon, start_date + timedelta(days=i))
@@ -715,7 +745,7 @@ def login():
         session.clear()
         session["user_id"] = row["id"]
         nxt = request.args.get("next") or request.form.get("next")
-        return redirect(nxt if nxt and nxt.startswith("/") else url_for("account"))
+        return redirect(nxt if _is_safe_next(nxt) else url_for("account"))
 
     return render_template("login.html", username="")
 
@@ -796,14 +826,14 @@ def toggle_saved(campsite_id):
     else:
         save_campsite(uid, campsite_id)
     nxt = request.form.get("next")
-    return redirect(nxt if nxt and nxt.startswith("/") else url_for("campsite", campsite_id=campsite_id))
+    return redirect(nxt if _is_safe_next(nxt) else url_for("campsite", campsite_id=campsite_id))
 
 
 # --- collections ---------------------------------------------------------
 
 def _safe_next(default):
     nxt = request.form.get("next")
-    return nxt if nxt and nxt.startswith("/") else default
+    return nxt if _is_safe_next(nxt) else default
 
 
 @app.route("/account/collections", methods=["GET", "POST"])
