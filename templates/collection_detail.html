@@ -37,6 +37,20 @@
 			</div>
 			<p><a href="/account/collections" class="link-quiet">← All collections</a></p>
 
+			<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form visibility-form">
+				{{ csrf_input() }}
+				<input type="hidden" name="action" value="visibility" />
+				<label class="checkbox-label">
+					<input type="checkbox" name="public" {{ 'checked' if collection.is_public }}
+					       onchange="this.form.submit()" />
+					<span>Public — show on the
+						{% if collection.is_public %}<a href="/users/{{ user.username }}/collections/{{ collection.id }}">community page</a>
+						{% else %}community page{% endif %}
+					</span>
+				</label>
+				<noscript><button type="submit" class="btn btn-secondary btn-sm">Update</button></noscript>
+			</form>
+
 			{% if campsites %}
 				<div class="results-grid">
 					{% for camp in campsites %}

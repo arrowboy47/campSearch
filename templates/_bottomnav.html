@@ -1,5 +1,5 @@
 {# Fixed bottom navigation. `body.page` gets padding-bottom so nothing hides
-   behind it. Add a "Community" tab here once the public users page exists. #}
+   behind it. #}
 <nav class="bottom-nav" aria-label="Primary">
   <a href="/" class="bottom-nav-item{% if request.path == '/' %} is-active{% endif %}">
     <span class="bottom-nav-icon" aria-hidden="true">🏕️</span>
@@ -8,6 +8,10 @@
   <a href="/nearby" class="bottom-nav-item{% if request.path == '/nearby' %} is-active{% endif %}">
     <span class="bottom-nav-icon" aria-hidden="true">📍</span>
     <span class="bottom-nav-label">Nearby</span>
+  </a>
+  <a href="/users" class="bottom-nav-item{% if request.path.startswith('/users') %} is-active{% endif %}">
+    <span class="bottom-nav-icon" aria-hidden="true">👥</span>
+    <span class="bottom-nav-label">Community</span>
   </a>
   <a href="/account" class="bottom-nav-item{% if request.path.startswith('/account') %} is-active{% endif %}">
     <span class="bottom-nav-icon" aria-hidden="true">★</span>

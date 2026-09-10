@@ -535,6 +535,12 @@ a:hover {
   height: 300px;
 }
 
+.visibility-form {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* "Sign in to save" modal (anonymous campsite visitors) */
 .auth-gate {
   position: fixed;

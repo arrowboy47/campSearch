@@ -16,6 +16,8 @@ from db import (
     get_saved_campsites,
     create_collection, get_collections, get_collection, delete_collection,
     add_to_collection, remove_from_collection, get_collection_campsites,
+    set_collection_public, get_public_users, get_public_profile,
+    get_public_collection,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -934,6 +936,11 @@ def collection_detail(collection_id):
             cid = request.form.get("campsite_id", type=int)
             if cid:
                 remove_from_collection(uid, collection_id, cid)
+        if action == "visibility":
+            make_public = request.form.get("public") == "on"
+            set_collection_public(uid, collection_id, make_public)
+            flash("Collection is now public." if make_public
+                  else "Collection is private again.")
         return redirect(url_for("collection_detail", collection_id=collection_id))
 
     return render_template(
@@ -967,6 +974,34 @@ def campsite_add_to_collection(campsite_id):
         flash("Added to collection.")
 
     return redirect(_safe_next(url_for("campsite", campsite_id=campsite_id)))
+
+
+# --- public users / shared collections -----------------------------------
+
+@app.route("/users")
+def users_directory():
+    """Everyone who has published at least one collection."""
+    return render_template("users.html", people=get_public_users())
+
+
+@app.route("/users/<username>")
+def public_profile(username):
+    profile, collections = get_public_profile(username)
+    if not profile:
+        abort(404)
+    return render_template(
+        "public_profile.html", profile=profile, collections=collections
+    )
+
+
+@app.route("/users/<username>/collections/<int:collection_id>")
+def public_collection(username, collection_id):
+    coll, campsites = get_public_collection(username, collection_id)
+    if not coll:
+        abort(404)
+    return render_template(
+        "public_collection.html", collection=coll, campsites=campsites, owner=username
+    )
 
 
 # --- campsites near me ------------------------------------------------------
