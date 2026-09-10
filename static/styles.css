@@ -65,6 +65,13 @@
   box-sizing: border-box;
 }
 
+/* The `hidden` attribute must always win, even over class rules that set a
+   `display` (e.g. `.auth-gate { display: flex }`). Without this, an element
+   like the "sign in to save" modal renders on page load despite `hidden`. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
