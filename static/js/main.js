@@ -487,6 +487,32 @@ function initPickTracking() {
   });
 }
 
+// Floating "sign in to save" prompt for anonymous visitors.
+function initAuthGate() {
+  const gate = document.getElementById("authGate");
+  if (!gate) return;
+  const open = () => {
+    gate.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+  const close = () => {
+    gate.hidden = true;
+    document.body.style.overflow = "";
+  };
+  document.querySelectorAll("[data-auth-gate]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      open();
+    });
+  });
+  gate.querySelectorAll("[data-auth-gate-close]").forEach((el) =>
+    el.addEventListener("click", close)
+  );
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !gate.hidden) close();
+  });
+}
+
 // Single-marker map on a campsite page (real coordinates only).
 function initSiteMap() {
   const el = document.getElementById("siteMap");
@@ -519,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initReadMore();
   initMap();
   initSiteMap();
+  initAuthGate();
   initDateRange();
   initShare();
   initNearby();

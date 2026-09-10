@@ -260,9 +260,27 @@
 						       data-collection-new hidden />
 						<button type="submit" class="btn btn-secondary">Add</button>
 					</form>
+				{% else %}
+					<button type="button" class="btn btn-secondary" data-auth-gate>☆ Save</button>
+					<button type="button" class="btn btn-secondary" data-auth-gate>Add to collection…</button>
 				{% endif %}
 				<a href="/" class="btn btn-secondary">Back to search</a>
 			</div>
+
+			{% if not current_user %}
+			<div class="auth-gate" id="authGate" hidden>
+				<div class="auth-gate-backdrop" data-auth-gate-close></div>
+				<div class="auth-gate-card" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
+					<button type="button" class="auth-gate-x" data-auth-gate-close aria-label="Close">×</button>
+					<h2 id="authGateTitle" class="auth-gate-title">Sign in to save campsites</h2>
+					<p class="auth-gate-text">An account lets you keep a list of campsites and build trip collections. It's free and you can still search without one.</p>
+					<div class="auth-gate-actions">
+						<a class="btn btn-primary" href="/login?next=/campsite/{{ campsite.id }}{{ date_qs }}">Log in</a>
+						<a class="btn btn-secondary" href="/signup">Create account</a>
+					</div>
+				</div>
+			</div>
+			{% endif %}
 
 			{% if campsite.last_scraped %}
 				<p class="detail-updated">Data last refreshed {{ campsite.last_scraped.strftime('%Y-%m-%d') }}</p>
