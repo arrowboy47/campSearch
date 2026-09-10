@@ -27,6 +27,7 @@ import enrich_thedyrt
 import clean_text
 import backfill_elevation
 import backfill_approx_coords
+import geocode_coordless
 import derive_attributes
 import ingest_trails_osm
 
@@ -48,7 +49,8 @@ JOBS = {
         lambda: backfill_elevation.main([]),                 # elevation_ft + terrain for new coords
         lambda: derive_attributes.main([]),                  # activities[] / water_feature / toilet_type
         lambda: clean_text.main([]),                         # normalize fee / overview / seasons text
-        lambda: backfill_approx_coords.main([]),             # county-centroid approx for coordless sites
+        lambda: geocode_coordless.main([]),                  # try real coords for coordless sites (Nominatim)
+        lambda: backfill_approx_coords.main([]),             # county-centroid approx for the rest
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
     ],
     "monthly": [
