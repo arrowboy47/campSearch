@@ -94,30 +94,42 @@ _OPERATOR_AGENCY = [
     ("state park", "California State Parks"),
 ]
 
+# Keyword -> tag. Kept deliberately tight: bare "trail" and bare "ski" were
+# dropped because the site's "Attractions near" blurbs mention trailheads and
+# ski resorts 20+ miles away, which inflated hiking / winter-sports tags.
 _ACTIVITY_KEYWORDS = [
-    ("fish", "fishing"),
-    ("swim", "swimming"),
+    ("fishing", "fishing"),
+    ("swimming", "swimming"), ("swim beach", "swimming"),
     ("wakeboard", "boating"), ("water ski", "boating"), ("waterski", "boating"),
-    ("boat", "boating"), ("sail", "boating"),
-    ("kayak", "paddling"), ("canoe", "paddling"), ("paddl", "paddling"),
-    ("white water", "whitewater"), ("whitewater", "whitewater"), ("rafting", "whitewater"),
-    ("backpack", "backpacking"),
-    ("mountain bik", "mountain biking"),
-    ("bike", "biking"), ("bicycl", "biking"), ("cycling", "biking"),
-    ("hik", "hiking"), ("trail", "hiking"),
-    ("horse", "horseback riding"), ("equestrian", "horseback riding"),
-    ("off-road", "off-roading"), ("off road", "off-roading"), ("ohv", "off-roading"),
-    ("4x4", "off-roading"), (" atv", "off-roading"),
-    ("ski", "winter sports"), ("snowshoe", "winter sports"), ("snowmobil", "winter sports"),
-    ("sledding", "winter sports"), ("winter sport", "winter sports"),
-    ("beach", "beach access"),
-    ("bird watch", "birding"), ("birding", "birding"),
-    ("wildlife", "wildlife viewing"), ("wildflower", "wildlife viewing"),
-    ("rock climb", "rock climbing"), ("bouldering", "rock climbing"),
-    ("stargazing", "stargazing"), ("astronomy", "stargazing"),
-    ("photograph", "photography"),
-    ("hunt", "hunting"),
-    ("picnic", "picnicking"),
+    ("boating", "boating"), ("boat ramp", "boating"), ("boat launch", "boating"),
+    ("sailing", "boating"), ("marina", "boating"),
+    ("kayak", "paddling"), ("canoe", "paddling"), ("paddling", "paddling"),
+    ("stand-up paddle", "paddling"),
+    ("whitewater", "whitewater"), ("white water", "whitewater"),
+    ("white-water rafting", "whitewater"), ("river rafting", "whitewater"),
+    ("backpacking", "backpacking"), ("wilderness permit", "backpacking"),
+    ("mountain biking", "mountain biking"), ("mountain-bike", "mountain biking"),
+    ("bicycling", "biking"), ("bike trail", "biking"), ("road cycling", "biking"),
+    ("hiking", "hiking"), ("day hikes", "hiking"), ("hiking trails", "hiking"),
+    ("nature trail", "hiking"),
+    ("horseback", "horseback riding"), ("equestrian", "horseback riding"),
+    ("horse corral", "horseback riding"),
+    ("off-road", "off-roading"), ("off road vehicle", "off-roading"),
+    ("ohv", "off-roading"), ("4x4", "off-roading"), ("4wd", "off-roading"),
+    ("cross-country ski", "winter sports"), ("cross country ski", "winter sports"),
+    ("snowshoe", "winter sports"), ("snowmobil", "winter sports"),
+    ("sledding", "winter sports"), ("winter camping", "winter sports"),
+    ("snow play", "winter sports"),
+    ("beachcombing", "beach access"), ("sandy beach", "beach access"),
+    ("tidepool", "beach access"), ("tide pool", "beach access"),
+    ("bird watching", "birding"), ("birdwatching", "birding"), ("birding", "birding"),
+    ("wildlife viewing", "wildlife viewing"), ("watch for wildlife", "wildlife viewing"),
+    ("wildflower", "wildlife viewing"),
+    ("rock climbing", "rock climbing"), ("bouldering", "rock climbing"),
+    ("stargazing", "stargazing"), ("dark sky", "stargazing"),
+    ("photography", "photography"),
+    ("hunting", "hunting"),
+    ("picnic area", "picnicking"), ("picnicking", "picnicking"),
 ]
 
 
@@ -363,6 +375,7 @@ def build_indexes(conn):
     by_rec, by_fsurl = {}, {}
     by_name = collections.defaultdict(list)
     by_sorted = collections.defaultdict(list)
+    by_unit = collections.defaultdict(list)   # norm(unit) -> [(cid, name), ...]
     meta = {}  # cid -> (norm_name, unit_key)
 
     cur.execute("""
@@ -385,16 +398,19 @@ def build_indexes(conn):
         sk = sorted_name(name)
         if sk and cid not in by_sorted[sk]:
             by_sorted[sk].append(cid)
+        ukey = norm_name(unit or forest or "")
+        if ukey:
+            by_unit[ukey].append((cid, name))
         meta[cid] = (nk, (unit or forest or "").strip().lower())
     cur.close()
-    return by_rec, by_fsurl, by_name, by_sorted, meta
+    return by_rec, by_fsurl, by_name, by_sorted, by_unit, meta
 
 
 def match_record(rec, indexes, names_by_id):
     """-> (list_of_campsite_ids, method, confidence). The list has >1 id only
     when one real campground is split across several DB rows (ReserveCalifornia
     stores site-range sub-facilities)."""
-    by_rec, by_fsurl, by_name, by_sorted, meta = indexes
+    by_rec, by_fsurl, by_name, by_sorted, by_unit, meta = indexes
     if rec["rec_facility_id"] and rec["rec_facility_id"] in by_rec:
         return [by_rec[rec["rec_facility_id"]]], "rec-id", 100
 
@@ -424,27 +440,58 @@ def match_record(rec, indexes, names_by_id):
             if best[0] >= 88 and best[0] - second[0] >= 6:
                 return [best[1]], "name-fuzzy", best[0]
             return [], "ambiguous", best[0]
+
+    # last chance: the CBC page names a park/forest we know -> fuzzy-match the
+    # campground name against just that unit's campsites. Catches the state-park
+    # sub-camps whose facility name in our DB differs from the page title.
+    ukey = norm_name(rec["unit"] or "")
+    if ukey and ukey in by_unit:
+        cand = by_unit[ukey]
+        scored = sorted(
+            ((fuzz.WRatio(norm_name(rec["name"]), norm_name(nm)), cid) for cid, nm in cand),
+            reverse=True,
+        )
+        if scored and scored[0][0] >= 82:
+            second = scored[1][0] if len(scored) > 1 else 0
+            if scored[0][0] - second >= 5 or scored[0][0] >= 92:
+                return [scored[0][1]], "unit-fuzzy", scored[0][0]
+
     return [], "unmatched", 0
 
 
 # --- writers -----------------------------------------------------------------
 
+# Gap-fill only: COALESCE / NULLIF so nothing we already have is overwritten.
+# `fee` is intentionally NOT enriched — the site's fee prose parses too noisily.
+# `elevation_ft` is a no-op fill (every matched row already has one); the
+# gross-error correction is a separate opt-in UPDATE below.
 ENRICH_CAMPSITE = """
     UPDATE campsites SET
         elevation_ft   = COALESCE(elevation_ft, %(elevation_ft)s),
-        num_sites      = COALESCE(num_sites, %(num_sites)s),
+        num_sites      = COALESCE(NULLIF(num_sites, 0), %(num_sites)s),
         seasons_of_use = COALESCE(NULLIF(seasons_of_use, ''), %(seasons_of_use)s),
         contact_phone  = COALESCE(NULLIF(contact_phone, ''), %(contact_phone)s),
         recreation_facility_id = COALESCE(recreation_facility_id, %(rec_facility_id)s),
         overview       = CASE WHEN overview IS NULL OR length(overview) < 40
                               THEN COALESCE(%(overview)s, overview) ELSE overview END,
-        fee            = CASE WHEN fee IS NULL THEN %(fee)s ELSE fee END,
-        fee_raw        = CASE WHEN fee IS NULL THEN %(fee_raw)s ELSE fee_raw END,
-        fee_min        = CASE WHEN fee IS NULL THEN %(fee_min)s ELSE fee_min END,
-        fee_max        = CASE WHEN fee IS NULL THEN %(fee_max)s ELSE fee_max END,
-        is_free        = CASE WHEN fee IS NULL THEN %(is_free)s ELSE is_free END,
         last_scraped   = now()
     WHERE id = %(id)s
+"""
+
+# Opt-in corrections (--fix-elevation / --fix-water). Elevation only when our
+# stored value is grossly wrong (a DEM-lookup artefact); water only when we have
+# an explicit value that disagrees with the page.
+FIX_ELEVATION = """
+    UPDATE campsites SET elevation_ft = %(elevation_ft)s, last_scraped = now()
+    WHERE id = %(id)s
+      AND elevation_ft IS NOT NULL AND %(elevation_ft)s IS NOT NULL
+      AND abs(elevation_ft - %(elevation_ft)s) >= 2000
+"""
+
+FIX_WATER = """
+    UPDATE amenities SET water = %(water)s
+    WHERE campsite_id = %(id)s
+      AND %(water)s IS NOT NULL AND water IS DISTINCT FROM %(water)s
 """
 
 ENRICH_AMENITIES = """
@@ -467,24 +514,68 @@ INSERT_IMAGE = """
 
 INSERT_CAMPSITE = """
     INSERT INTO campsites
-        (name, seasons_of_use, num_sites, elevation_ft, fee, fee_raw, fee_min,
-         fee_max, is_free, overview, contact_phone, address, site_url,
-         reservation_url, reservation_type, recreation_facility_id, agency_id,
-         source, first_seen, last_scraped)
+        (name, latitude, longitude, seasons_of_use, num_sites, elevation_ft,
+         fee, fee_raw, fee_min, fee_max, is_free, overview, contact_phone,
+         address, site_url, reservation_url, reservation_type,
+         recreation_facility_id, agency_id, source, first_seen, last_scraped)
     VALUES
-        (%(name)s, %(seasons_of_use)s, %(num_sites)s, %(elevation_ft)s, %(fee)s,
-         %(fee_raw)s, %(fee_min)s, %(fee_max)s, %(is_free)s, %(overview)s,
-         %(contact_phone)s, %(address)s, %(source_url)s, %(reservation_url)s,
-         %(reservation_type)s, %(rec_facility_id)s, %(agency_id)s,
-         'californiasbestcamping', now(), now())
+        (%(name)s, %(latitude)s, %(longitude)s, %(seasons_of_use)s, %(num_sites)s,
+         %(elevation_ft)s, %(fee)s, %(fee_raw)s, %(fee_min)s, %(fee_max)s,
+         %(is_free)s, %(overview)s, %(contact_phone)s, %(address)s, %(source_url)s,
+         %(reservation_url)s, %(reservation_type)s, %(rec_facility_id)s,
+         %(agency_id)s, 'californiasbestcamping', now(), now())
     ON CONFLICT (site_url) WHERE site_url IS NOT NULL DO UPDATE SET
+        latitude     = COALESCE(campsites.latitude, EXCLUDED.latitude),
+        longitude    = COALESCE(campsites.longitude, EXCLUDED.longitude),
         last_scraped = now()
     RETURNING id, (xmax = 0) AS inserted
 """
 
+COUNTY_AGENCY = "County / Regional Parks"
+
+
+def ridb_coords(session, fid):
+    """(lat, lon) for a recreation.gov facility id, or (None, None)."""
+    try:
+        import config
+        r = session.get(f"https://ridb.recreation.gov/api/v1/facilities/{fid}",
+                        headers={"apikey": config.ridb_api_key()}, timeout=30)
+        d = r.json()
+        lat, lon = d.get("FacilityLatitude"), d.get("FacilityLongitude")
+        if lat and lon:
+            return float(lat), float(lon)
+    except Exception:  # noqa: BLE001
+        pass
+    return None, None
+
+
+def resolve_coords(session, rec):
+    """Best-effort lat/lon for an add-new row: RIDB facility first, then a
+    geocode of the directions text / name+county."""
+    if rec["rec_facility_id"]:
+        lat, lon = ridb_coords(session, rec["rec_facility_id"])
+        if lat:
+            return lat, lon, "ridb"
+    import geo
+    for q in (rec.get("location_text"),
+              f"{rec['name']}, {rec['county']} County, California" if rec.get("county") else None,
+              f"{rec['name']}, California"):
+        if not q:
+            continue
+        hit = geo.geocode(q)
+        if hit:
+            return hit[0], hit[1], "geocode"
+    return None, None, None
+
 
 def agency_ids(conn):
     cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO agencies (name, level) VALUES (%s, 'local') "
+        "ON CONFLICT (name) DO NOTHING",
+        (COUNTY_AGENCY,),
+    )
+    conn.commit()
     cur.execute("SELECT name, id FROM agencies")
     m = {n: i for n, i in cur.fetchall()}
     cur.close()
@@ -493,13 +584,29 @@ def agency_ids(conn):
 
 # --- runner -----------------------------------------------------------------
 
+_UMBRELLA_RE = re.compile(r"(campgrounds$|\bsp campground\b|state park campground$)", re.I)
+
+
+def is_umbrella(rec):
+    """A park-overview page (lists several campgrounds), not one campground."""
+    for key in ("name", "index_name"):
+        v = (rec.get(key) or "").lower()
+        if v and _UMBRELLA_RE.search(v):
+            return True
+    return "check " in (rec.get("unit") or "").lower()
+
+
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--limit", type=int, help="only the first N index entries")
     p.add_argument("--sleep", type=float, default=0.3)
     p.add_argument("--enrich", action="store_true", help="COALESCE-fill matched campsites")
+    p.add_argument("--fix-elevation", action="store_true",
+                   help="with --enrich: overwrite elevation_ft when ours is >=2000ft off")
+    p.add_argument("--fix-water", action="store_true",
+                   help="with --enrich: overwrite amenities.water when it disagrees with the page")
     p.add_argument("--add-new", action="store_true",
-                   help="insert unmatched pages as source='californiasbestcamping'")
+                   help="insert unmatched (non-umbrella) pages as source='californiasbestcamping'")
     p.add_argument("--out", default=None, help="write every scraped+matched record as JSONL here")
     return p.parse_args(argv)
 
@@ -524,6 +631,7 @@ def main(argv=None):
 
     tally = collections.Counter()
     gaps = collections.Counter()
+    fixes = collections.Counter()
     ambiguous, unmatched = [], []
     out_fh = open(args.out, "w") if args.out else None
 
@@ -539,6 +647,7 @@ def main(argv=None):
                 print(f"  ! {e['url']}: {exc}")
                 continue
             rec = parse_detail(html, e["url"], e["county"], e["region"])
+            rec["index_name"] = e["name"]
             if not rec["name"]:
                 rec["name"] = e["name"]
 
@@ -551,14 +660,22 @@ def main(argv=None):
 
             if method == "ambiguous":
                 ambiguous.append((e["name"], e["region"]))
-            elif not ids:
+            elif not ids and not is_umbrella(rec):
                 unmatched.append((e["name"], e["region"], rec["unit"]))
+            elif not ids:
+                tally["umbrella"] += 1
 
             if ids:
                 if args.enrich and write_conn:
                     cur = write_conn.cursor()
                     for cid in ids:
                         cur.execute(ENRICH_CAMPSITE, {**rec, "id": cid})
+                        if args.fix_elevation and rec["elevation_ft"]:
+                            cur.execute(FIX_ELEVATION, {"id": cid, "elevation_ft": rec["elevation_ft"]})
+                            fixes["elevation"] += cur.rowcount
+                        if args.fix_water and rec["water"] is not None:
+                            cur.execute(FIX_WATER, {"id": cid, "water": rec["water"]})
+                            fixes["water"] += cur.rowcount
                         if any((rec["activities"], rec["water"] is not None,
                                 rec["restrooms"] is not None, rec["toilet_type"])):
                             cur.execute(ENRICH_AMENITIES, {
@@ -577,15 +694,19 @@ def main(argv=None):
                 if rec["activities"]:
                     gaps["activities"] += 1
 
-            elif args.add_new and write_conn and method != "ambiguous":
+            elif args.add_new and write_conn and method == "unmatched" and not is_umbrella(rec):
+                lat, lon, csrc = resolve_coords(session, rec)
                 cur = write_conn.cursor()
                 params = {
                     **rec,
-                    "address": ", ".join(x for x in (rec["location_text"], rec["county"] and f"{rec['county']} County", "CA") if x) or None,
-                    "reservation_type": ("first-come" if rec["reservation_url"] is None
-                                         and "no reservation" in (str(rec).lower())
-                                         else ("reservation" if rec["reservation_url"] else None)),
-                    "agency_id": agmap.get(rec["agency"]),
+                    "latitude": lat, "longitude": lon,
+                    "address": ", ".join(x for x in (
+                        rec["location_text"],
+                        f"{rec['county']} County" if rec["county"] else None, "CA") if x) or None,
+                    "reservation_type": ("reservation" if rec["reservation_url"]
+                                         else ("first-come" if "no reservation" in
+                                               (rec.get("overview") or "").lower() else None)),
+                    "agency_id": agmap.get(rec["agency"]) or agmap.get(COUNTY_AGENCY),
                 }
                 cur.execute(INSERT_CAMPSITE, params)
                 new_id, inserted = cur.fetchone()
@@ -602,6 +723,7 @@ def main(argv=None):
                 cur.close()
                 run.upserted += 1
                 tally["added" if inserted else "add-existing"] += 1
+                tally[f"coords-{csrc or 'none'}"] += 1
 
             if i % 50 == 0:
                 print(f"  {i}/{len(entries)} ...")
@@ -613,12 +735,20 @@ def main(argv=None):
         write_conn.close()
 
     print("\n--- match summary ---")
-    match_methods = ("rec-id", "fs-url", "name-unique", "name-sorted", "name-group", "name-fuzzy")
-    for k in match_methods + ("ambiguous", "unmatched", "added", "add-existing"):
+    match_methods = ("rec-id", "fs-url", "name-unique", "name-sorted", "name-group",
+                     "name-fuzzy", "unit-fuzzy")
+    for k in match_methods + ("ambiguous", "umbrella", "unmatched",
+                              "added", "add-existing",
+                              "coords-ridb", "coords-geocode", "coords-none"):
         if tally[k]:
-            print(f"  {k:14} {tally[k]}")
+            print(f"  {k:16} {tally[k]}")
     matched = sum(tally[k] for k in match_methods)
-    print(f"  {'MATCHED':14} {matched} / {len(entries)} pages")
+    print(f"  {'MATCHED':16} {matched} / {len(entries)} pages")
+
+    if fixes:
+        print("\n--- corrections applied ---")
+        for k, v in fixes.items():
+            print(f"  {k:16} {v}")
 
     if not args.enrich:
         print("\n--- enrichment available on matched rows (run --enrich) ---")
