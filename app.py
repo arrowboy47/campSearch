@@ -136,6 +136,48 @@ app = Flask(__name__)
 
 import config as _config  # noqa: E402
 app.secret_key = _config.secret_key()
+# Cross-site requests never carry the session cookie for form POSTs; combined
+# with the token check below this closes the CSRF hole on the account routes.
+app.config.update(
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_HTTPONLY=True,
+)
+
+import secrets as _secrets  # noqa: E402
+from markupsafe import Markup  # noqa: E402
+
+
+def _csrf_token():
+    """Per-session token, minted on first use."""
+    tok = session.get("_csrf")
+    if not tok:
+        tok = _secrets.token_urlsafe(32)
+        session["_csrf"] = tok
+    return tok
+
+
+@app.context_processor
+def _inject_csrf():
+    # `{{ csrf_input() }}` -> the hidden field every POST form needs.
+    return {
+        "csrf_token": _csrf_token,
+        "csrf_input": lambda: Markup(
+            f'<input type="hidden" name="_csrf" value="{_csrf_token()}">'
+        ),
+    }
+
+
+@app.before_request
+def _csrf_protect():
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return
+    # JSON/beacon API endpoints are unauthenticated and change nothing per-user;
+    # a CSRF token there would just break navigator.sendBeacon.
+    if request.path.startswith("/api/"):
+        return
+    sent = request.form.get("_csrf") or request.headers.get("X-CSRFToken")
+    if not sent or not _secrets.compare_digest(sent, session.get("_csrf", "")):
+        abort(400, "Bad or missing CSRF token — reload the page and try again.")
 
 
 # --- auth plumbing --------------------------------------------------------

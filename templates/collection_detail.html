@@ -30,6 +30,7 @@
 				<h1>{{ collection.name }}</h1>
 				<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form"
 				      onsubmit="return confirm('Delete this collection?');">
+					{{ csrf_input() }}
 					<input type="hidden" name="action" value="delete" />
 					<button type="submit" class="btn btn-secondary btn-sm">Delete collection</button>
 				</form>
@@ -45,6 +46,7 @@
 									<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
 								</h3>
 								<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form">
+									{{ csrf_input() }}
 									<input type="hidden" name="action" value="remove" />
 									<input type="hidden" name="campsite_id" value="{{ camp.id }}" />
 									<button type="submit" class="btn btn-secondary btn-sm">Remove</button>

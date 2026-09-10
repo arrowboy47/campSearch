@@ -29,6 +29,7 @@
 			<div class="account-head">
 				<h1>{{ user.username }}</h1>
 				<form method="POST" action="/logout" class="inline-form">
+					{{ csrf_input() }}
 					<button type="submit" class="btn btn-secondary">Sign out</button>
 				</form>
 			</div>
@@ -36,6 +37,7 @@
 			<section class="detail-section">
 				<h2 class="section-title">Profile</h2>
 				<form method="POST" action="/account" class="stack-form" enctype="multipart/form-data">
+					{{ csrf_input() }}
 					<div class="avatar-field">
 						{% if user.avatar_path %}
 							<img class="avatar" src="{{ url_for('static', filename=user.avatar_path) }}" alt="Your profile picture" />
@@ -73,6 +75,7 @@
 										<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
 									</h3>
 									<form method="POST" action="/campsite/{{ camp.id }}/save" class="inline-form">
+										{{ csrf_input() }}
 										<input type="hidden" name="action" value="unsave" />
 										<input type="hidden" name="next" value="/account" />
 										<button type="submit" class="btn btn-secondary btn-sm">Remove</button>

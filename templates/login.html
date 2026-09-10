@@ -25,6 +25,7 @@
 		{% include "_flash.html" %}
 		<h1>Sign in</h1>
 		<form method="POST" action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" class="stack-form">
+			{{ csrf_input() }}
 			<label>Username<input type="text" name="username" required value="{{ username or '' }}" /></label>
 			<label>Password<input type="password" name="password" required /></label>
 			<button type="submit" class="btn btn-primary">Sign in</button>

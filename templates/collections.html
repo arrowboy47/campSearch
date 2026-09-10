@@ -30,6 +30,7 @@
 			<p class="muted-note">Group campsites into your own lists — a trip shortlist, “backpacking”, “weekend with the dog”, whatever.</p>
 
 			<form method="POST" action="/account/collections" class="stack-form new-collection-form">
+				{{ csrf_input() }}
 				<label>New collection
 					<input type="text" name="name" maxlength="80" placeholder="e.g. Summer 2027" required />
 				</label>

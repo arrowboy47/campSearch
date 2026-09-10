@@ -27,6 +27,7 @@
 		<p class="muted-note">Optional — an account saves campsites and remembers a home location for distance calculations.</p>
 
 		<form method="POST" action="/signup" class="stack-form" enctype="multipart/form-data">
+			{{ csrf_input() }}
 			<div class="form-row">
 				<label>First name<input type="text" name="first_name" value="{{ form.first_name or '' }}" /></label>
 				<label>Last name<input type="text" name="last_name" value="{{ form.last_name or '' }}" /></label>

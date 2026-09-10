@@ -19,6 +19,7 @@
       </div>
       {% if current_user %}
         <form method="POST" action="/logout" class="menu-form">
+        	{{ csrf_input() }}
           <button type="submit" class="menu-link">Sign out</button>
         </form>
       {% endif %}

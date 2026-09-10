@@ -241,6 +241,7 @@
 				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
 				{% if current_user %}
 					<form method="POST" action="/campsite/{{ campsite.id }}/save" class="inline-form">
+						{{ csrf_input() }}
 						<input type="hidden" name="action" value="{{ 'unsave' if saved else 'save' }}" />
 						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
 						<button type="submit" class="btn {{ 'btn-primary' if saved else 'btn-secondary' }}">
@@ -248,6 +249,7 @@
 						</button>
 					</form>
 					<form method="POST" action="/campsite/{{ campsite.id }}/collection" class="inline-form collection-add">
+						{{ csrf_input() }}
 						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
 						<select name="collection_id" class="select" data-collection-select>
 							<option value="">Add to collection…</option>
