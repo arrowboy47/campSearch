@@ -157,10 +157,6 @@ function initMap() {
 
       console.log("Loaded campsite points for map:", points.length);
 
-      const forestColors = {};
-      const colorPalette = ["#166534", "#92400e", "#0369a1", "#15803d", "#7c2d12", "#047857"];
-      let paletteIndex = 0;
-
       const bounds = [];
 
       points.forEach((site) => {
@@ -168,12 +164,7 @@ function initMap() {
         const lon = site.longitude;
         if (lat == null || lon == null) return;
 
-        const forest = site.forest_name || "Other";
-        if (!forestColors[forest]) {
-          forestColors[forest] = colorPalette[paletteIndex % colorPalette.length];
-          paletteIndex += 1;
-        }
-        const color = forestColors[forest];
+        const color = LAND_TYPE_COLORS[site.land_type] || LAND_TYPE_COLORS.other;
 
         const marker = L.circleMarker([lat, lon], {
           radius: 5,
@@ -302,6 +293,24 @@ function initNearby() {
     );
   });
 }
+
+// Land-type -> marker colour, shared by the homepage map and its legend.
+const LAND_TYPE_COLORS = {
+  national_park: "#15803d",
+  national_forest: "#166534",
+  state_park: "#0369a1",
+  blm: "#b45309",
+  local: "#7c3aed",
+  other: "#6b7280",
+};
+const LAND_TYPE_LABELS = {
+  national_park: "National Park",
+  national_forest: "National Forest",
+  state_park: "State Park",
+  blm: "BLM",
+  local: "County / Regional",
+  other: "Other",
+};
 
 const APPROX_TITLE =
   "This campground publishes no exact location. Distance is measured from the " +
