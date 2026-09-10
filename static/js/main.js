@@ -478,6 +478,29 @@ function initPickTracking() {
   });
 }
 
+// Single-marker map on a campsite page (real coordinates only).
+function initSiteMap() {
+  const el = document.getElementById("siteMap");
+  if (!el || typeof L === "undefined") return;
+  const lat = parseFloat(el.dataset.lat);
+  const lon = parseFloat(el.dataset.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+  const map = L.map(el, { scrollWheelZoom: false, attributionControl: true }).setView(
+    [lat, lon],
+    12
+  );
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap",
+  }).addTo(map);
+  L.marker([lat, lon])
+    .addTo(map)
+    .bindPopup(esc(el.dataset.name || "Campsite"));
+  // container starts hidden/zero-size in some layouts; nudge Leaflet to re-measure
+  setTimeout(() => map.invalidateSize(), 0);
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -486,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearHome();
   initReadMore();
   initMap();
+  initSiteMap();
   initDateRange();
   initShare();
   initNearby();

@@ -488,6 +488,25 @@ a:hover {
   height: 300px;
 }
 
+/* Single-pin map on a campsite page */
+.site-map {
+  height: 320px;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background: #e5dfd2;
+  overflow: hidden;
+}
+
+:root[data-theme="dark"] .site-map {
+  background: #020617;
+}
+
+@media (max-width: 640px) {
+  .site-map {
+    height: 240px;
+  }
+}
+
 .results-map-card {
   margin-bottom: 16px;
   padding: 8px;

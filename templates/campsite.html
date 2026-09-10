@@ -4,7 +4,9 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>{{ campsite.name }} · Camp Search</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body class="page">
@@ -120,6 +122,20 @@
 
 			{% if campsite.hero_image %}
 				<img class="detail-hero" src="{{ campsite.hero_image }}" alt="{{ campsite.name }}" loading="lazy" />
+			{% endif %}
+
+			{% if campsite.latitude is not none and campsite.longitude is not none %}
+				<section class="detail-section">
+					<h2 class="section-title">Location</h2>
+					<div id="siteMap" class="site-map"
+					     data-lat="{{ campsite.latitude }}" data-lon="{{ campsite.longitude }}"
+					     data-name="{{ campsite.name }}"></div>
+					<p class="near-hint">
+						{{ '%.5f'|format(campsite.latitude) }}, {{ '%.5f'|format(campsite.longitude) }}
+						· <a class="link-quiet" target="_blank" rel="noopener"
+						     href="https://www.google.com/maps/search/?api=1&query={{ campsite.latitude }},{{ campsite.longitude }}">open in Google Maps</a>
+					</p>
+				</section>
 			{% endif %}
 
 			{% if daily_forecast %}
