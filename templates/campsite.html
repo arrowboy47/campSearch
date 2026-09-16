@@ -4,7 +4,9 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>{{ campsite.name }} · Camp Search</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body class="page">
@@ -82,12 +84,14 @@
 					{% endif %}
 
 					<p class="meta-row detail-drive" id="driveLine" data-campsite-id="{{ campsite.id }}"
-					   {% if drive %}data-has="1"{% endif %}>
+					   {% if drive %}data-has="1"{% endif %}{% if coord_is_approx %} data-approx="1"{% endif %}>
 						<span class="meta-label">Driving</span>
 						<span class="meta-value" id="driveValue">
 							{% if drive %}
 								{{ drive.miles }} mi{% if drive.minutes %} · ~{{ drive.minutes // 60 }}h {{ '%02d' % (drive.minutes % 60) }}m{% endif %}
 								from {{ drive.label }}{% if drive.estimated %} (estimated){% endif %}
+								{% if coord_is_approx %}<span class="approx-tag" tabindex="0"
+									title="This campground publishes no exact location. Distance is measured from the centre of its county, so it can be off by many miles.">approximate</span>{% endif %}
 							{% else %}
 								<a href="#" id="driveAsk" class="link-quiet">use my location</a>
 							{% endif %}
@@ -120,9 +124,27 @@
 				<img class="detail-hero" src="{{ campsite.hero_image }}" alt="{{ campsite.name }}" loading="lazy" />
 			{% endif %}
 
+			{% if campsite.latitude is not none and campsite.longitude is not none %}
+				<section class="detail-section">
+					<h2 class="section-title">Location</h2>
+					<div id="siteMap" class="site-map"
+					     data-lat="{{ campsite.latitude }}" data-lon="{{ campsite.longitude }}"
+					     data-name="{{ campsite.name }}"></div>
+					<p class="near-hint">
+						{{ '%.5f'|format(campsite.latitude) }}, {{ '%.5f'|format(campsite.longitude) }}
+						· <a class="link-quiet" target="_blank" rel="noopener"
+						     href="https://www.google.com/maps/search/?api=1&query={{ campsite.latitude }},{{ campsite.longitude }}">open in Google Maps</a>
+					</p>
+				</section>
+			{% endif %}
+
 			{% if daily_forecast %}
 				<section class="detail-section">
-					<h2 class="section-title">Weather forecast{% if start_date and end_date %} ({{ start_date }} → {{ end_date }}){% endif %}</h2>
+					<h2 class="section-title">Weather forecast{% if dates_explicit %} ({{ start_date }} → {{ end_date }}){% else %} — next 7 days{% endif %}{% if coord_is_approx %}<span class="approx-tag" tabindex="0"
+						title="This campground publishes no exact location. The forecast is for the centre of its county — treat it as a regional guide, not a site-specific forecast.">approximate</span>{% endif %}</h2>
+					{% if coord_is_approx %}
+						<p class="approx-note">No exact coordinates on file — showing the forecast for the surrounding county.</p>
+					{% endif %}
 					<div class="forecast-grid">
 						{% for day in daily_forecast %}
 							<article class="forecast-card">
@@ -208,7 +230,7 @@
 				{% endif %}
 			</section>
 
-			{% set date_qs %}{% if start_date %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
+			{% set date_qs %}{% if dates_explicit %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
 			<div class="detail-actions">
 				{% if campsite.booking_url %}
 					<a href="{{ campsite.booking_url }}" target="_blank" class="btn btn-primary">Reserve a site</a>
@@ -219,6 +241,7 @@
 				<button type="button" class="btn btn-secondary" data-copy-link>Copy link</button>
 				{% if current_user %}
 					<form method="POST" action="/campsite/{{ campsite.id }}/save" class="inline-form">
+						{{ csrf_input() }}
 						<input type="hidden" name="action" value="{{ 'unsave' if saved else 'save' }}" />
 						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
 						<button type="submit" class="btn {{ 'btn-primary' if saved else 'btn-secondary' }}">
@@ -226,6 +249,7 @@
 						</button>
 					</form>
 					<form method="POST" action="/campsite/{{ campsite.id }}/collection" class="inline-form collection-add">
+						{{ csrf_input() }}
 						<input type="hidden" name="next" value="/campsite/{{ campsite.id }}{{ date_qs }}" />
 						<select name="collection_id" class="select" data-collection-select>
 							<option value="">Add to collection…</option>
@@ -236,9 +260,27 @@
 						       data-collection-new hidden />
 						<button type="submit" class="btn btn-secondary">Add</button>
 					</form>
+				{% else %}
+					<button type="button" class="btn btn-secondary" data-auth-gate>☆ Save</button>
+					<button type="button" class="btn btn-secondary" data-auth-gate>Add to collection…</button>
 				{% endif %}
 				<a href="/" class="btn btn-secondary">Back to search</a>
 			</div>
+
+			{% if not current_user %}
+			<div class="auth-gate" id="authGate" hidden>
+				<div class="auth-gate-backdrop" data-auth-gate-close></div>
+				<div class="auth-gate-card" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
+					<button type="button" class="auth-gate-x" data-auth-gate-close aria-label="Close">×</button>
+					<h2 id="authGateTitle" class="auth-gate-title">Sign in to save campsites</h2>
+					<p class="auth-gate-text">An account lets you keep a list of campsites and build trip collections. It's free and you can still search without one.</p>
+					<div class="auth-gate-actions">
+						<a class="btn btn-primary" href="/login?next=/campsite/{{ campsite.id }}{{ date_qs }}">Log in</a>
+						<a class="btn btn-secondary" href="/signup">Create account</a>
+					</div>
+				</div>
+			</div>
+			{% endif %}
 
 			{% if campsite.last_scraped %}
 				<p class="detail-updated">Data last refreshed {{ campsite.last_scraped.strftime('%Y-%m-%d') }}</p>
@@ -249,5 +291,6 @@
 	<footer class="page-footer">
 		<p class="page-footer-text">Always confirm details with the official forest service listing before traveling.</p>
 	</footer>
+	{% include "_bottomnav.html" %}
 </body>
 </html>

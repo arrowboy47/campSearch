@@ -65,6 +65,13 @@
   box-sizing: border-box;
 }
 
+/* The `hidden` attribute must always win, even over class rules that set a
+   `display` (e.g. `.auth-gate { display: flex }`). Without this, an element
+   like the "sign in to save" modal renders on page load despite `hidden`. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -90,6 +97,53 @@ body.page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* room for the fixed bottom nav (+ iOS safe area) */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Fixed primary navigation */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--surface, #fff);
+  border-top: 1px solid var(--border-subtle);
+}
+
+:root:not([data-theme="light"]) .bottom-nav {
+  background: var(--surface, #0f172a);
+}
+:root[data-theme="dark"] .bottom-nav {
+  background: var(--surface, #0f172a);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.bottom-nav-item.is-active {
+  color: var(--accent-strong, #166534);
+  font-weight: 600;
+}
+
+.bottom-nav-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 a {
@@ -488,6 +542,122 @@ a:hover {
   height: 300px;
 }
 
+.visibility-form {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* "Sign in to save" modal (anonymous campsite visitors) */
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.auth-gate-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.auth-gate-card {
+  position: relative;
+  max-width: 380px;
+  width: 100%;
+  background: var(--surface, #fff);
+  color: var(--text, #111);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+:root:not([data-theme="light"]) .auth-gate-card {
+  background: var(--surface, #0f172a);
+  color: var(--text, #e5e7eb);
+}
+:root[data-theme="dark"] .auth-gate-card {
+  background: var(--surface, #0f172a);
+  color: var(--text, #e5e7eb);
+}
+
+.auth-gate-x {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.auth-gate-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.auth-gate-text {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.auth-gate-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Horizontal colour key above the homepage map */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 8px 0 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.map-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* Single-pin map on a campsite page */
+.site-map {
+  height: 320px;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background: #e5dfd2;
+  overflow: hidden;
+}
+
+:root[data-theme="dark"] .site-map {
+  background: #020617;
+}
+
+@media (max-width: 640px) {
+  .site-map {
+    height: 240px;
+  }
+}
+
 .results-map-card {
   margin-bottom: 16px;
   padding: 8px;
@@ -808,6 +978,31 @@ fieldset.filter-group legend {
 
 .badge-muted {
   opacity: 0.75;
+}
+
+/* Marks a distance/weather value derived from a county-level approximate
+   coordinate, not the campground's real location. */
+.approx-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--text-muted);
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.approx-note {
+  margin: 2px 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .chip-row {

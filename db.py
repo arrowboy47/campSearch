@@ -22,6 +22,7 @@ CAMPSITE_SQL = """
     SELECT
         c.id, c.name,
         c.latitude, c.longitude,
+        c.approx_latitude, c.approx_longitude, c.approx_coord_source,
         c.address, c.managing_unit, c.forest_name,
         c.reservation_type, c.reservation_url,
         c.contact_name, c.contact_phone,
@@ -54,28 +55,35 @@ CAMPSITE_SQL = """
 # useful for weather data and anything that needs the campsite site_url: so things like updating site status and when it was last updated
 # returns the full campsites row + agency/amenities/status/reservation + images
 def get_campsite_by_id(campsite_id):
+    # Callers pass this straight from request args; a non-numeric value would
+    # otherwise raise inside execute() and leak the connection.
+    try:
+        campsite_id = int(campsite_id)
+    except (TypeError, ValueError):
+        return None
+
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(CAMPSITE_SQL, (campsite_id,))
+        row = cur.fetchone()
 
-    cur.execute(CAMPSITE_SQL, (campsite_id,))
-    row = cur.fetchone()
-
-    images = []
-    if row:
-        cur.execute(
-            """
-            SELECT image_url, description
-            FROM images
-            WHERE campsite_id = %s
-            ORDER BY id
-            LIMIT 8
-            """,
-            (campsite_id,),
-        )
-        images = [dict(r) for r in cur.fetchall()]
-
-    cur.close()
-    conn.close()
+        images = []
+        if row:
+            cur.execute(
+                """
+                SELECT image_url, description
+                FROM images
+                WHERE campsite_id = %s
+                ORDER BY id
+                LIMIT 8
+                """,
+                (campsite_id,),
+            )
+            images = [dict(r) for r in cur.fetchall()]
+    finally:
+        cur.close()
+        conn.close()
 
     if not row:
         return None
@@ -83,7 +91,8 @@ def get_campsite_by_id(campsite_id):
     site = dict(row)
 
     # Decimals -> float so jsonify and Jinja rounding both behave.
-    for key in ("latitude", "longitude", "fee_min", "fee_max"):
+    for key in ("latitude", "longitude", "approx_latitude", "approx_longitude",
+                "fee_min", "fee_max"):
         if site.get(key) is not None:
             site[key] = float(site[key])
 
@@ -139,6 +148,7 @@ def get_campsites_with_thumbs():
     cur.execute(
         """
         SELECT c.id, c.name, c.forest_name, c.latitude, c.longitude,
+               c.is_free, c.reservation_type,
                COALESCE(c.primary_image_url, img.image_url) AS image_url
         FROM campsites c
         LEFT JOIN LATERAL (
@@ -273,6 +283,11 @@ def record_pick(campsite_id):
     ping can never break navigation.
     """
     try:
+        campsite_id = int(campsite_id)
+    except (TypeError, ValueError):
+        return
+    conn = None
+    try:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(
@@ -282,10 +297,11 @@ def record_pick(campsite_id):
             (campsite_id,),
         )
         conn.commit()
-        cur.close()
-        conn.close()
     except Exception:
         pass
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 # --- users & saved campsites (migration 0014) ------------------------------
@@ -404,12 +420,40 @@ def export_user_data(user_id):
         (user_id,),
     )
     saved = [dict(r) for r in cur.fetchall()]
+    cur.execute(
+        """
+        SELECT col.id, col.name, col.created_at, col.is_public,
+               cc.campsite_id, c.name AS campsite_name, cc.added_at
+        FROM collections col
+        LEFT JOIN collection_campsites cc ON cc.collection_id = col.id
+        LEFT JOIN campsites c ON c.id = cc.campsite_id
+        WHERE col.user_id = %s
+        ORDER BY col.name, cc.added_at;
+        """,
+        (user_id,),
+    )
+    coll_rows = cur.fetchall()
     cur.close()
     conn.close()
+
     out = _shape_user(profile) or {}
     for row in saved:
         row["saved_at"] = row["saved_at"].isoformat() if row.get("saved_at") else None
     out["saved_campsites"] = saved
+
+    collections = {}
+    for r in coll_rows:
+        col = collections.setdefault(r["id"], {
+            "id": r["id"], "name": r["name"], "is_public": r["is_public"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            "campsites": [],
+        })
+        if r["campsite_id"] is not None:
+            col["campsites"].append({
+                "campsite_id": r["campsite_id"], "name": r["campsite_name"],
+                "added_at": r["added_at"].isoformat() if r["added_at"] else None,
+            })
+    out["collections"] = list(collections.values())
     return out
 
 
@@ -511,7 +555,7 @@ def get_collections(user_id):
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(
         """
-        SELECT c.id, c.name, c.created_at,
+        SELECT c.id, c.name, c.created_at, c.is_public,
                count(cc.campsite_id) AS count
         FROM collections c
         LEFT JOIN collection_campsites cc ON cc.collection_id = c.id
@@ -531,13 +575,104 @@ def get_collection(user_id, collection_id):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(
-        "SELECT id, name, created_at FROM collections WHERE id = %s AND user_id = %s;",
+        "SELECT id, name, created_at, is_public FROM collections "
+        "WHERE id = %s AND user_id = %s;",
         (collection_id, user_id),
     )
     row = cur.fetchone()
     cur.close()
     conn.close()
     return dict(row) if row else None
+
+
+def set_collection_public(user_id, collection_id, is_public):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE collections SET is_public = %s WHERE id = %s AND user_id = %s;",
+        (bool(is_public), collection_id, user_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+# --- public /users directory (migration 0021) --------------------------------
+
+def get_public_users():
+    """Users with at least one public collection: username, first name, and how
+    many public collections they have. No email / address ever leaves here."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT u.username, u.first_name, u.avatar_path,
+               count(*) AS public_collections
+        FROM collections c
+        JOIN users u ON u.id = c.user_id
+        WHERE c.is_public
+        GROUP BY u.id, u.username, u.first_name, u.avatar_path
+        ORDER BY lower(u.username);
+        """
+    )
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return rows
+
+
+def get_public_profile(username):
+    """(user dict, [public collections]) for a username, or (None, None).
+
+    The user dict is deliberately thin: username, first_name, avatar_path only.
+    """
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        "SELECT id, username, first_name, avatar_path FROM users WHERE lower(username) = lower(%s);",
+        (username,),
+    )
+    user = cur.fetchone()
+    if not user:
+        cur.close()
+        conn.close()
+        return None, None
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.created_at, count(cc.campsite_id) AS count
+        FROM collections c
+        LEFT JOIN collection_campsites cc ON cc.collection_id = c.id
+        WHERE c.user_id = %s AND c.is_public
+        GROUP BY c.id
+        ORDER BY c.name;
+        """,
+        (user["id"],),
+    )
+    collections = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return {k: user[k] for k in ("username", "first_name", "avatar_path")}, collections
+
+
+def get_public_collection(username, collection_id):
+    """(collection dict, [campsites]) for a public collection, or (None, None)."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT c.id, c.name, c.created_at, u.username AS owner
+        FROM collections c
+        JOIN users u ON u.id = c.user_id
+        WHERE c.id = %s AND c.is_public AND lower(u.username) = lower(%s);
+        """,
+        (collection_id, username),
+    )
+    coll = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not coll:
+        return None, None
+    return dict(coll), get_collection_campsites(collection_id)
 
 
 def delete_collection(user_id, collection_id):

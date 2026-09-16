@@ -2,6 +2,14 @@
 
 const THEME_STORAGE_KEY = "campsearch-theme";
 
+// Escape text before it goes into an innerHTML string. Campsite names are
+// third-party scraped data, so they must never be trusted as markup.
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
 function getSystemTheme() {
   if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
     return "dark";
@@ -149,10 +157,6 @@ function initMap() {
 
       console.log("Loaded campsite points for map:", points.length);
 
-      const forestColors = {};
-      const colorPalette = ["#166534", "#92400e", "#0369a1", "#15803d", "#7c2d12", "#047857"];
-      let paletteIndex = 0;
-
       const bounds = [];
 
       points.forEach((site) => {
@@ -160,12 +164,7 @@ function initMap() {
         const lon = site.longitude;
         if (lat == null || lon == null) return;
 
-        const forest = site.forest_name || "Other";
-        if (!forestColors[forest]) {
-          forestColors[forest] = colorPalette[paletteIndex % colorPalette.length];
-          paletteIndex += 1;
-        }
-        const color = forestColors[forest];
+        const color = LAND_TYPE_COLORS[site.land_type] || LAND_TYPE_COLORS.other;
 
         const marker = L.circleMarker([lat, lon], {
           radius: 5,
@@ -178,8 +177,8 @@ function initMap() {
         // Hover tooltip: small "mini card" with name + link
         marker.bindTooltip(
           `<div class="map-tooltip-card">
-             <div class="map-tooltip-title">${site.name}</div>
-             <a class="map-tooltip-link" href="/campsite/${site.id}">Open campsite</a>
+             <div class="map-tooltip-title">${esc(site.name)}</div>
+             <a class="map-tooltip-link" href="/campsite/${encodeURIComponent(site.id)}">Open campsite</a>
            </div>`,
           {
             direction: "top",
@@ -295,6 +294,28 @@ function initNearby() {
   });
 }
 
+// Land-type -> marker colour, shared by the homepage map and its legend.
+const LAND_TYPE_COLORS = {
+  national_park: "#15803d",
+  national_forest: "#166534",
+  state_park: "#0369a1",
+  blm: "#b45309",
+  local: "#7c3aed",
+  other: "#6b7280",
+};
+const LAND_TYPE_LABELS = {
+  national_park: "National Park",
+  national_forest: "National Forest",
+  state_park: "State Park",
+  blm: "BLM",
+  local: "County / Regional",
+  other: "Other",
+};
+
+const APPROX_TITLE =
+  "This campground publishes no exact location. Distance is measured from the " +
+  "centre of its county, so it can be off by many miles.";
+
 function formatDrive(d) {
   let t = `${d.miles} mi`;
   if (d.minutes) {
@@ -305,6 +326,20 @@ function formatDrive(d) {
   t += ` from ${d.label}`;
   if (d.estimated) t += " (estimated)";
   return t;
+}
+
+// Rebuild the drive line, re-adding the "approximate" tag when the API says the
+// distance came from a county-level coordinate.
+function renderDrive(valueEl, d) {
+  valueEl.textContent = formatDrive(d);
+  if (d.approximate) {
+    const tag = document.createElement("span");
+    tag.className = "approx-tag";
+    tag.tabIndex = 0;
+    tag.title = APPROX_TITLE;
+    tag.textContent = "approximate";
+    valueEl.append(" ", tag);
+  }
 }
 
 function initDrive() {
@@ -322,7 +357,7 @@ function initDrive() {
     fetch(`/api/distance?${qs.toString()}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.available) valueEl.textContent = formatDrive(d);
+        if (d && d.available) renderDrive(valueEl, d);
       })
       .catch(() => {});
   }
@@ -452,6 +487,55 @@ function initPickTracking() {
   });
 }
 
+// Floating "sign in to save" prompt for anonymous visitors.
+function initAuthGate() {
+  const gate = document.getElementById("authGate");
+  if (!gate) return;
+  const open = () => {
+    gate.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+  const close = () => {
+    gate.hidden = true;
+    document.body.style.overflow = "";
+  };
+  document.querySelectorAll("[data-auth-gate]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      open();
+    });
+  });
+  gate.querySelectorAll("[data-auth-gate-close]").forEach((el) =>
+    el.addEventListener("click", close)
+  );
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !gate.hidden) close();
+  });
+}
+
+// Single-marker map on a campsite page (real coordinates only).
+function initSiteMap() {
+  const el = document.getElementById("siteMap");
+  if (!el || typeof L === "undefined") return;
+  const lat = parseFloat(el.dataset.lat);
+  const lon = parseFloat(el.dataset.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+  const map = L.map(el, { scrollWheelZoom: false, attributionControl: true }).setView(
+    [lat, lon],
+    12
+  );
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap",
+  }).addTo(map);
+  L.marker([lat, lon])
+    .addTo(map)
+    .bindPopup(esc(el.dataset.name || "Campsite"));
+  // container starts hidden/zero-size in some layouts; nudge Leaflet to re-measure
+  setTimeout(() => map.invalidateSize(), 0);
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -460,6 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearHome();
   initReadMore();
   initMap();
+  initSiteMap();
+  initAuthGate();
   initDateRange();
   initShare();
   initNearby();

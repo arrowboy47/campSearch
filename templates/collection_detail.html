@@ -30,11 +30,26 @@
 				<h1>{{ collection.name }}</h1>
 				<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form"
 				      onsubmit="return confirm('Delete this collection?');">
+					{{ csrf_input() }}
 					<input type="hidden" name="action" value="delete" />
 					<button type="submit" class="btn btn-secondary btn-sm">Delete collection</button>
 				</form>
 			</div>
 			<p><a href="/account/collections" class="link-quiet">← All collections</a></p>
+
+			<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form visibility-form">
+				{{ csrf_input() }}
+				<input type="hidden" name="action" value="visibility" />
+				<label class="checkbox-label">
+					<input type="checkbox" name="public" {{ 'checked' if collection.is_public }}
+					       onchange="this.form.submit()" />
+					<span>Public — show on the
+						{% if collection.is_public %}<a href="/users/{{ user.username }}/collections/{{ collection.id }}">community page</a>
+						{% else %}community page{% endif %}
+					</span>
+				</label>
+				<noscript><button type="submit" class="btn btn-secondary btn-sm">Update</button></noscript>
+			</form>
 
 			{% if campsites %}
 				<div class="results-grid">
@@ -45,6 +60,7 @@
 									<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
 								</h3>
 								<form method="POST" action="/account/collections/{{ collection.id }}" class="inline-form">
+									{{ csrf_input() }}
 									<input type="hidden" name="action" value="remove" />
 									<input type="hidden" name="campsite_id" value="{{ camp.id }}" />
 									<button type="submit" class="btn btn-secondary btn-sm">Remove</button>
@@ -70,5 +86,6 @@
 	<footer class="page-footer">
 		<p class="page-footer-text">Always confirm details with the official listing before traveling.</p>
 	</footer>
+	{% include "_bottomnav.html" %}
 </body>
 </html>

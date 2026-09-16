@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ profile.first_name or profile.username }} · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main">
+		{% include "_flash.html" %}
+		<section class="results-header">
+			<div class="results-header-inner">
+				<a href="/users" class="link-quiet">← Community</a>
+				<h1 class="results-title">{{ profile.first_name or profile.username }}</h1>
+				<p class="results-subtitle">@{{ profile.username }} · {{ collections | length }} public collection{{ '' if collections | length == 1 else 's' }}</p>
+			</div>
+		</section>
+
+		{% if collections %}
+			<div class="results-grid">
+				{% for c in collections %}
+					<article class="result-card">
+						<header class="result-card-header">
+							<h2 class="result-card-title">
+								<a href="/users/{{ profile.username }}/collections/{{ c.id }}" class="result-card-link">{{ c.name }}</a>
+							</h2>
+							<span class="badge">{{ c.count }} campsite{{ '' if c.count == 1 else 's' }}</span>
+						</header>
+					</article>
+				{% endfor %}
+			</div>
+		{% else %}
+			<div class="empty-state">
+				<h2 class="empty-title">No public collections</h2>
+			</div>
+		{% endif %}
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Only this user's public collections are shown.</p>
+	</footer>
+	{% include "_bottomnav.html" %}
+</body>
+</html>

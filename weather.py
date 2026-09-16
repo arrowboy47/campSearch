@@ -6,7 +6,13 @@ from config import openweather_api_key
 def get_forecast(lat, lon, date):
     """
     Calls OpenWeather One Call API and returns daily forecast data.
+
+    Returns None when there is no location to query (callers that show weather
+    for coordinate-less campsites rely on this instead of a 500).
     """
+    if lat is None or lon is None:
+        return None
+
     url = "https://api.openweathermap.org/data/3.0/onecall/day_summary"
     params = {
         "lat": lat,

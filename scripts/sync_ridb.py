@@ -115,7 +115,9 @@ def facility_campsite_count(session, facility_id):
 UPSERT_CAMPSITE = """
     UPDATE campsites
     SET recreation_facility_id = %(fid)s,
-        reservation_url        = %(url)s,
+        -- url is None when the /campsites count call 429s / times out / returns
+        -- 0; don't let a transient failure wipe a good booking link.
+        reservation_url        = COALESCE(%(url)s, reservation_url),
         num_sites              = COALESCE(%(num)s, num_sites),
         contact_phone          = COALESCE(%(phone)s, contact_phone),
         overview               = COALESCE(%(overview)s, overview),
@@ -129,9 +131,9 @@ UPSERT_RESERVATION = """
     VALUES (%(id)s, %(fid)s, 'recreation_gov', %(url)s, %(reservable)s, %(num)s, now())
     ON CONFLICT (campsite_id) DO UPDATE SET
         facility_id     = EXCLUDED.facility_id,
-        reservation_url = EXCLUDED.reservation_url,
+        reservation_url = COALESCE(EXCLUDED.reservation_url, reservations.reservation_url),
         is_reservable   = EXCLUDED.is_reservable,
-        num_sites       = EXCLUDED.num_sites,
+        num_sites       = COALESCE(EXCLUDED.num_sites, reservations.num_sites),
         last_checked    = now();
 """
 
