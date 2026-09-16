@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ collection.name }} · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main">
+		{% include "_flash.html" %}
+		<section class="results-header">
+			<div class="results-header-inner">
+				<a href="/users/{{ owner }}" class="link-quiet">← @{{ owner }}</a>
+				<h1 class="results-title">{{ collection.name }}</h1>
+				<p class="results-subtitle">{{ campsites | length }} campsite{{ '' if campsites | length == 1 else 's' }}, shared by @{{ collection.owner }}</p>
+			</div>
+		</section>
+
+		{% if campsites %}
+			<div class="results-grid">
+				{% for camp in campsites %}
+					<article class="result-card">
+						<header class="result-card-header">
+							<h2 class="result-card-title">
+								<a href="/campsite/{{ camp.id }}" class="result-card-link">{{ camp.name }}</a>
+							</h2>
+						</header>
+						<div class="result-card-body">
+							{% if camp.forest_name %}
+								<p class="meta-row"><span class="meta-label">Forest</span> <span class="meta-value">{{ camp.forest_name | forest }}</span></p>
+							{% endif %}
+							<div class="badge-row">
+								{% if camp.is_free %}<span class="badge">🆓 Free</span>
+								{% elif camp.fee %}<span class="badge">💵 {{ camp.fee }}</span>{% endif %}
+								{% if camp.reservation_type == 'dispersed' %}<span class="badge">⛺ Dispersed</span>{% endif %}
+								{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
+								{% if camp.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(camp.elevation_ft) }} ft</span>{% endif %}
+							</div>
+						</div>
+					</article>
+				{% endfor %}
+			</div>
+		{% else %}
+			<div class="empty-state"><h2 class="empty-title">This collection is empty</h2></div>
+		{% endif %}
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">A public collection curated by another Camp Search user.</p>
+	</footer>
+	{% include "_bottomnav.html" %}
+</body>
+</html>

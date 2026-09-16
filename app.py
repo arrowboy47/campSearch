@@ -16,6 +16,8 @@ from db import (
     get_saved_campsites,
     create_collection, get_collections, get_collection, delete_collection,
     add_to_collection, remove_from_collection, get_collection_campsites,
+    set_collection_public, get_public_users, get_public_profile,
+    get_public_collection,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -29,6 +31,7 @@ from search import (
 )
 import geo
 import json
+import math
 import re
 import os
 from forests import forest_label
@@ -73,12 +76,36 @@ def _int_arg(name):
         return None
 
 
+def _is_safe_next(nxt):
+    """True only for a same-site relative path. Rejects `//host`, `/\\host` and
+    absolute URLs so `?next=` can't be turned into an open redirect."""
+    return bool(nxt) and nxt.startswith("/") and not nxt.startswith(("//", "/\\"))
+
+
+# A weather forecast is one synchronous OpenWeather call per day. Cap the span a
+# request can ask for so `?start=..&end=..+18mo` can't pin a worker / drain the
+# shared API key.
+MAX_FORECAST_DAYS = 16
+
+
+def _clamp_end_date(start_date, end_date):
+    """end_date, pulled back so the span is at most MAX_FORECAST_DAYS."""
+    if end_date < start_date:
+        return start_date
+    limit = start_date + timedelta(days=MAX_FORECAST_DAYS - 1)
+    return min(end_date, limit)
+
+
 def _float_arg(name):
     raw = request.args.get(name)
     try:
-        return float(raw) if raw not in (None, "") else None
+        val = float(raw) if raw not in (None, "") else None
     except ValueError:
         return None
+    # reject inf / nan: they slip past float() and blow up trig in haversine
+    if val is not None and not math.isfinite(val):
+        return None
+    return val
 
 
 def parse_search_filters(args):
@@ -111,6 +138,48 @@ app = Flask(__name__)
 
 import config as _config  # noqa: E402
 app.secret_key = _config.secret_key()
+# Cross-site requests never carry the session cookie for form POSTs; combined
+# with the token check below this closes the CSRF hole on the account routes.
+app.config.update(
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_HTTPONLY=True,
+)
+
+import secrets as _secrets  # noqa: E402
+from markupsafe import Markup  # noqa: E402
+
+
+def _csrf_token():
+    """Per-session token, minted on first use."""
+    tok = session.get("_csrf")
+    if not tok:
+        tok = _secrets.token_urlsafe(32)
+        session["_csrf"] = tok
+    return tok
+
+
+@app.context_processor
+def _inject_csrf():
+    # `{{ csrf_input() }}` -> the hidden field every POST form needs.
+    return {
+        "csrf_token": _csrf_token,
+        "csrf_input": lambda: Markup(
+            f'<input type="hidden" name="_csrf" value="{_csrf_token()}">'
+        ),
+    }
+
+
+@app.before_request
+def _csrf_protect():
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return
+    # JSON/beacon API endpoints are unauthenticated and change nothing per-user;
+    # a CSRF token there would just break navigator.sendBeacon.
+    if request.path.startswith("/api/"):
+        return
+    sent = request.form.get("_csrf") or request.headers.get("X-CSRFToken")
+    if not sent or not _secrets.compare_digest(sent, session.get("_csrf", "")):
+        abort(400, "Bad or missing CSRF token — reload the page and try again.")
 
 
 # --- auth plumbing --------------------------------------------------------
@@ -235,22 +304,32 @@ def home():
     forests = get_all_forests()
     facets = get_facet_options()
 
-    # "Campsites near you" carousel. Origin = the browser's shared location if
-    # it handed one over via ?lat=&lon=, else the signed-in user's saved home.
+    # Carousels. Origin = the browser's shared location if it handed one over via
+    # ?lat=&lon=, else the signed-in user's saved home.
     origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
-    near = []
+    all_thumbs = get_campsites_with_thumbs()
     if origin:
-        rows = get_campsites_with_thumbs()
-        for r in rows:
-            if r["latitude"] is None or r["longitude"] is None:
-                continue
-            r["distance_miles"] = round(
-                geo.haversine_miles(origin, (r["latitude"], r["longitude"])), 1
-            )
-        rows.sort(key=lambda x: x.get("distance_miles", 9e9))
-        nearest = rows[:40]
-        with_pic = [r for r in nearest if r.get("image_url")]
-        near = (with_pic or nearest)[:12]
+        for r in all_thumbs:
+            if r["latitude"] is not None and r["longitude"] is not None:
+                r["distance_miles"] = round(
+                    geo.haversine_miles(origin, (r["latitude"], r["longitude"])), 1
+                )
+
+    def _pick(rows, n=12, pool=40):
+        """Nearest `n` when we have an origin (photo'd preferred), else the first
+        `n` photo'd rows."""
+        if origin:
+            ranked = sorted(rows, key=lambda x: x.get("distance_miles", 9e9))[:pool]
+            with_pic = [r for r in ranked if r.get("image_url")]
+            return (with_pic or ranked)[:n]
+        return [r for r in rows if r.get("image_url")][:n]
+
+    near = _pick(all_thumbs) if origin else []
+
+    # "Free & dispersed camping" carousel — is_free or a dispersed reservation type.
+    free_rows = [r for r in all_thumbs
+                 if r.get("is_free") or r.get("reservation_type") == "dispersed"]
+    free_dispersed = _pick(free_rows)
 
     # "Suggested for you" — only for a signed-in user with enough saved history.
     suggested = []
@@ -265,6 +344,7 @@ def home():
         near=near,
         near_label="you" if label == "your location" else "home",
         near_prompt=not origin,
+        free_dispersed=free_dispersed,
         suggested=suggested,
     )
 
@@ -310,8 +390,9 @@ def weather():
     if not campsite:
         return jsonify({"error": "Campsite not found"}), 404
 
-    lat = campsite["latitude"]
-    lon = campsite["longitude"]
+    lat, lon, coord_is_approx = geo.effective_coords(campsite)
+    if lat is None:
+        return jsonify({"error": "No location on file for this campsite"}), 422
 
     # Handle and parse start/end dates
     # if no start date is provided, set it to today and end date doesnt matter
@@ -330,6 +411,7 @@ def weather():
             forecast_data.append(forecast)
         else:
             # loop through the dates and get the weather for each day
+            end_date = _clamp_end_date(start_date, end_date)
             days = (end_date - start_date).days + 1
             for i in range(days):
                 current_day = start_date + timedelta(days=i)
@@ -342,6 +424,7 @@ def weather():
         "site_id": site_id,
         "lat": lat,
         "lon": lon,
+        "approximate": coord_is_approx,
         "forecast": forecast_data
     })
 
@@ -400,6 +483,7 @@ def results():
         campsites=enriched,
         start_date=start_str,
         end_date=end_str,
+        forests=get_all_forests(),
         facets=get_facet_options(),
         filters=filters,
         result_count=len(enriched),
@@ -436,21 +520,29 @@ def campsite(campsite_id):
     today = datetime.now().date()
     try:
         start_date = datetime.strptime(start_str, "%Y-%m-%d").date() if start_str else today
-        end_date = datetime.strptime(end_str, "%Y-%m-%d").date() if end_str else start_date
+        # no explicit end -> show a 7-day outlook from the start day
+        if end_str:
+            end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+        else:
+            end_date = start_date + timedelta(days=6)
     except ValueError:
         # Fallback to a single-day forecast if parsing fails.
         start_date = today
         end_date = today
 
-    lat = campsite_data.get("latitude")
-    lon = campsite_data.get("longitude")
+    # Real coordinates for anything precise (map, AllTrails box). A county-level
+    # approx point only backs the rough distance + weather, and only with a
+    # visible "approximate" flag.
+    real_lat = campsite_data.get("latitude")
+    real_lon = campsite_data.get("longitude")
+    lat, lon, coord_is_approx = geo.effective_coords(campsite_data)
 
     # Build an AllTrails explore URL for hikes in the area using
-    # a small bounding box around the campsite coordinates.
+    # a small bounding box around the campsite coordinates. Real coords only.
     alltrails_url = None
-    if lat is not None and lon is not None:
-        lat_f = float(lat)
-        lon_f = float(lon)
+    if real_lat is not None and real_lon is not None:
+        lat_f = float(real_lat)
+        lon_f = float(real_lon)
         offset = 0.01450
         lat1 = lat_f + offset  # top-left latitude
         lng1 = lon_f - offset  # top-left longitude
@@ -466,7 +558,8 @@ def campsite(campsite_id):
     daily_forecast = []
     if lat is not None and lon is not None:
         try:
-            days = (end_date - start_date).days + 1
+            fc_end = _clamp_end_date(start_date, end_date)
+            days = (fc_end - start_date).days + 1
             for i in range(max(days, 1)):
                 current_day = start_date + timedelta(days=i)
                 raw = get_forecast(lat, lon, current_day)
@@ -484,12 +577,13 @@ def campsite(campsite_id):
     # far from home). Computed server-side only when we already have a home on
     # file; otherwise the page's JS offers to use the browser location.
     drive = None
-    if lat is not None and lon is not None and campsite_data.get("latitude") is not None:
+    if lat is not None and lon is not None:
         origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
         if origin:
-            dist = geo.driving_distance(origin, (campsite_data["latitude"], campsite_data["longitude"]))
+            dist = geo.driving_distance(origin, (lat, lon))
             if dist:
                 dist["label"] = label
+                dist["approximate"] = coord_is_approx
                 drive = dist
 
     saved = False
@@ -508,7 +602,10 @@ def campsite(campsite_id):
         user_collections=user_collections,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
+        dates_explicit=bool(start_str or end_str),
         alltrails_url=alltrails_url,
+        coord_is_approx=coord_is_approx,
+        approx_area=campsite_data.get("address"),
     )
 
 def _slugify(text):
@@ -604,11 +701,13 @@ def campsite_trip_sheet(campsite_id):
     end_str = request.args.get("end") or start_str
 
     forecast = []
-    lat, lon = camp.get("latitude"), camp.get("longitude")
+    lat, lon, _approx = geo.effective_coords(camp)
     if start_str and lat is not None and lon is not None:
         try:
             start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            end_date = _clamp_end_date(
+                start_date, datetime.strptime(end_str, "%Y-%m-%d").date()
+            )
             for i in range(max((end_date - start_date).days + 1, 1)):
                 summary = build_weather_summary(
                     get_forecast(lat, lon, start_date + timedelta(days=i))
@@ -706,7 +805,7 @@ def login():
         session.clear()
         session["user_id"] = row["id"]
         nxt = request.args.get("next") or request.form.get("next")
-        return redirect(nxt if nxt and nxt.startswith("/") else url_for("account"))
+        return redirect(nxt if _is_safe_next(nxt) else url_for("account"))
 
     return render_template("login.html", username="")
 
@@ -787,14 +886,14 @@ def toggle_saved(campsite_id):
     else:
         save_campsite(uid, campsite_id)
     nxt = request.form.get("next")
-    return redirect(nxt if nxt and nxt.startswith("/") else url_for("campsite", campsite_id=campsite_id))
+    return redirect(nxt if _is_safe_next(nxt) else url_for("campsite", campsite_id=campsite_id))
 
 
 # --- collections ---------------------------------------------------------
 
 def _safe_next(default):
     nxt = request.form.get("next")
-    return nxt if nxt and nxt.startswith("/") else default
+    return nxt if _is_safe_next(nxt) else default
 
 
 @app.route("/account/collections", methods=["GET", "POST"])
@@ -837,6 +936,11 @@ def collection_detail(collection_id):
             cid = request.form.get("campsite_id", type=int)
             if cid:
                 remove_from_collection(uid, collection_id, cid)
+        if action == "visibility":
+            make_public = request.form.get("public") == "on"
+            set_collection_public(uid, collection_id, make_public)
+            flash("Collection is now public." if make_public
+                  else "Collection is private again.")
         return redirect(url_for("collection_detail", collection_id=collection_id))
 
     return render_template(
@@ -870,6 +974,34 @@ def campsite_add_to_collection(campsite_id):
         flash("Added to collection.")
 
     return redirect(_safe_next(url_for("campsite", campsite_id=campsite_id)))
+
+
+# --- public users / shared collections -----------------------------------
+
+@app.route("/users")
+def users_directory():
+    """Everyone who has published at least one collection."""
+    return render_template("users.html", people=get_public_users())
+
+
+@app.route("/users/<username>")
+def public_profile(username):
+    profile, collections = get_public_profile(username)
+    if not profile:
+        abort(404)
+    return render_template(
+        "public_profile.html", profile=profile, collections=collections
+    )
+
+
+@app.route("/users/<username>/collections/<int:collection_id>")
+def public_collection(username, collection_id):
+    coll, campsites = get_public_collection(username, collection_id)
+    if not coll:
+        abort(404)
+    return render_template(
+        "public_collection.html", collection=coll, campsites=campsites, owner=username
+    )
 
 
 # --- campsites near me ------------------------------------------------------
@@ -925,18 +1057,23 @@ def api_distance():
     """
     cid = _int_arg("campsite_id")
     camp = get_campsite_by_id(cid) if cid else None
-    if not camp or camp.get("latitude") is None:
+    if not camp:
         return jsonify({"error": "unknown campsite"}), 404
+
+    dest_lat, dest_lon, coord_is_approx = geo.effective_coords(camp)
+    if dest_lat is None:
+        return jsonify({"available": False})
 
     origin, label = _effective_origin(_float_arg("lat"), _float_arg("lon"))
     if not origin:
         return jsonify({"available": False})
 
-    dist = geo.driving_distance(origin, (camp["latitude"], camp["longitude"]))
+    dist = geo.driving_distance(origin, (dest_lat, dest_lon))
     if not dist:
         return jsonify({"available": False})
     dist["available"] = True
     dist["label"] = label
+    dist["approximate"] = coord_is_approx
     return jsonify(dist)
 
 

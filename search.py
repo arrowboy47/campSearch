@@ -66,13 +66,17 @@ _BASE_SQL = """
     LEFT JOIN reservations      r  ON c.id = r.campsite_id
     -- weather_forecasts has one row PER DAY (migration 0004), so a plain join
     -- multiplies every campsite by its forecast-day count (~4250 rows for 2440
-    -- campsites) and the row cap then silently drops real matches. Pull just
-    -- the earliest forecast so the join stays 1:1.
+    -- campsites) and the row cap then silently drops real matches. Pull one row
+    -- via LATERAL so the join stays 1:1 -- and prefer today-or-later (old rows
+    -- are never pruned, so ORDER BY date ASC alone would surface a stale past
+    -- day) with a fallback to the most recent stored row.
     LEFT JOIN LATERAL (
         SELECT forecast_json
         FROM weather_forecasts
         WHERE campsite_id = c.id
-        ORDER BY forecast_date NULLS LAST
+        ORDER BY (forecast_date >= CURRENT_DATE) DESC NULLS LAST,
+                 CASE WHEN forecast_date >= CURRENT_DATE THEN forecast_date END ASC,
+                 forecast_date DESC
         LIMIT 1
     ) wf ON TRUE
     WHERE 1 = 1
@@ -330,13 +334,15 @@ def get_campsites_for_map():
     )
     try:
         cur.execute(
-            "SELECT id, name, forest_name, latitude, longitude FROM campsites" + coord_filter
+            "SELECT c.id, c.name, c.forest_name, c.latitude, c.longitude, a.name "
+            "FROM campsites c LEFT JOIN agencies a ON a.id = c.agency_id"
+            + coord_filter.replace("latitude", "c.latitude").replace("longitude", "c.longitude")
         )
         rows = cur.fetchall()
     except Exception:
         conn.rollback()
         cur.execute(
-            "SELECT id, name, managing_unit, latitude, longitude FROM campsites" + coord_filter
+            "SELECT id, name, managing_unit, latitude, longitude, NULL FROM campsites" + coord_filter
         )
         rows = cur.fetchall()
 
@@ -344,7 +350,7 @@ def get_campsites_for_map():
     conn.close()
 
     results = []
-    for site_id, name, region_label, latitude, longitude in rows:
+    for site_id, name, region_label, latitude, longitude, agency_name in rows:
         lat = float(latitude) if latitude is not None else None
         lon = float(longitude) if longitude is not None else None
         if lat != lat or lon != lon:  # NaN slipped through
@@ -356,7 +362,22 @@ def get_campsites_for_map():
                 "forest_name": region_label,
                 "latitude": lat,
                 "longitude": lon,
+                "land_type": _land_type(agency_name),
             }
         )
 
     return results
+
+
+# agency name -> coarse land-type bucket for the map legend
+_LAND_TYPE = {
+    "US Forest Service": "national_forest",
+    "National Park Service": "national_park",
+    "California State Parks": "state_park",
+    "Bureau of Land Management": "blm",
+    "County / Regional Parks": "local",
+}
+
+
+def _land_type(agency_name):
+    return _LAND_TYPE.get(agency_name, "other")

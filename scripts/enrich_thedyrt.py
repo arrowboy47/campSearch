@@ -193,7 +193,10 @@ def main(argv=None):
                 acts, wfeat, toilet, water, restrooms = derive_from_flags(attrs)
                 merged_acts = sorted(set(existing_acts) | set(acts))
                 overview = attrs.get("ai-description") or attrs.get("description") or None
-                elev = attrs.get("elevation")
+                try:
+                    elev = round(float(attrs["elevation"])) if attrs.get("elevation") else None
+                except (TypeError, ValueError):
+                    elev = None  # The Dyrt sometimes sends "1234.5" or junk
                 season = attrs.get("season") or None
                 photos = attrs.get("photo-urls") or []
 
@@ -209,7 +212,7 @@ def main(argv=None):
                 try:
                     work.execute(UPDATE_CAMPSITE, {
                         "id": cid, "overview": overview,
-                        "elev": int(elev) if elev else None, "season": season,
+                        "elev": elev, "season": season,
                     })
                     work.execute(
                         """

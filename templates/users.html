@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Community · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main">
+		{% include "_flash.html" %}
+		<section class="results-header">
+			<div class="results-header-inner">
+				<h1 class="results-title">Community</h1>
+				<p class="results-subtitle">People who've published campsite collections. Make one of yours public from its page.</p>
+			</div>
+		</section>
+
+		{% if people %}
+			<div class="results-grid">
+				{% for p in people %}
+					<article class="result-card">
+						<header class="result-card-header">
+							<h2 class="result-card-title">
+								<a href="/users/{{ p.username }}" class="result-card-link">
+									{{ p.first_name or p.username }}
+								</a>
+							</h2>
+							<span class="badge">{{ p.public_collections }} collection{{ '' if p.public_collections == 1 else 's' }}</span>
+						</header>
+						<div class="result-card-body">
+							<p class="meta-row"><span class="meta-label">User</span> <span class="meta-value">@{{ p.username }}</span></p>
+						</div>
+					</article>
+				{% endfor %}
+			</div>
+		{% else %}
+			<div class="empty-state">
+				<h2 class="empty-title">Nothing shared yet</h2>
+				<p class="empty-body">Be the first — open one of your collections and switch it to public.</p>
+			</div>
+		{% endif %}
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Only collections a user chose to make public are shown here.</p>
+	</footer>
+	{% include "_bottomnav.html" %}
+</body>
+</html>

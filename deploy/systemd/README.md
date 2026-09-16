@@ -8,6 +8,8 @@ the tunnel.
 - `campsearch-refresh-daily.timer`  → 03:20 → `run_all.py daily`  (weather, today)
 - `campsearch-refresh-weekly.timer` → Sun 04:10 → `run_all.py weekly`
   (fs.usda static + open/closed status → RIDB reservations → 7-day weather)
+- `campsearch-refresh-monthly.timer` → 1st of month 04:40 → `run_all.py monthly`
+  (OSM Overpass nearby-trail ingest — ~1 h, big `RandomizedDelaySec`)
 
 ## Install
 
@@ -28,9 +30,11 @@ cp deploy/systemd/campsearch-refresh@.service \
    deploy/systemd/campsearch-refresh-failed@.service \
    deploy/systemd/campsearch-refresh-daily.timer \
    deploy/systemd/campsearch-refresh-weekly.timer \
+   deploy/systemd/campsearch-refresh-monthly.timer \
    ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now campsearch-refresh-daily.timer campsearch-refresh-weekly.timer
+systemctl --user enable --now campsearch-refresh-daily.timer \
+  campsearch-refresh-weekly.timer campsearch-refresh-monthly.timer
 
 # 3. optional: keep timers running when logged out
 loginctl enable-linger "$USER"
