@@ -1,0 +1,50 @@
+# campsearch-app — the Flask app, containerized.
+#
+# Follows the same homelab pattern as campsearch-pg: bound to localhost, never
+# straight onto the LAN. Put Nginx Proxy Manager in front of it to publish.
+#
+# The app joins campsearch-pg's network and reaches Postgres at
+# campsearch-pg:5432 directly, the same way the Airflow scheduler does — no SSH
+# tunnel, so DATABASE_URL here uses the container name, not 127.0.0.1:5434.
+#
+# Deploy: see ./README.md
+
+services:
+  campsearch-app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: campsearch-app:latest
+    container_name: campsearch-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${CAMPSEARCH_DATABASE_URL:?set in .env}
+      OPENWEATHER_API_KEY: ${CAMPSEARCH_OPENWEATHER_API_KEY:?set in .env}
+      RIDB_API_KEY: ${CAMPSEARCH_RIDB_API_KEY:?set in .env}
+      # Flask session signing. config.py has a dev fallback; if this is unset
+      # in production every restart silently logs everyone out.
+      SECRET_KEY: ${CAMPSEARCH_SECRET_KEY:?set in .env}
+      TZ: America/Los_Angeles
+    ports:
+      # localhost only, same rule as the database.
+      - "127.0.0.1:8095:8000"
+    volumes:
+      # Avatar uploads are the app's only writable state and must outlive the
+      # container. Everything else in the image is disposable.
+      - campsearch_uploads:/app/static/uploads
+    networks:
+      - campsearch-pg_default
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  campsearch_uploads:
+
+networks:
+  # Created by deploy/campsearch-pg/docker-compose.yml, which must be up first.
+  campsearch-pg_default:
+    external: true

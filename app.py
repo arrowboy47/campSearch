@@ -9,6 +9,7 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import (
+    get_connection,
     get_campsite_by_id, get_trails_for_campsite,
     get_campsites_with_thumbs, record_pick, get_suggested_campsites,
     create_user, get_user, get_user_for_login, update_user_profile,
@@ -289,6 +290,28 @@ def build_weather_summary(forecast):
         "precip_in": precip,
         "sky": sky,
     }
+
+
+@app.route("/healthz")
+def healthz():
+    """Liveness + readiness for the container healthcheck and Uptime Kuma.
+
+    Deliberately touches the database: a process that is up but cannot reach
+    Postgres serves 500s on every real page, and a health check that only
+    proves the port is open would call that healthy.
+    """
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        cur.close()
+        conn.close()
+    except Exception as exc:  # noqa: BLE001
+        # The type name is enough to tell a connection refusal from an auth
+        # failure; the detail could carry the DSN, so it stays out.
+        return jsonify({"status": "error", "database": type(exc).__name__}), 503
+    return jsonify({"status": "ok", "database": "ok"})
 
 
 # routes tell the app what to do when a user goes to a certain url
