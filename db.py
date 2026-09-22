@@ -76,7 +76,7 @@ def get_campsite_by_id(campsite_id):
                 FROM images
                 WHERE campsite_id = %s
                 ORDER BY id
-                LIMIT 8
+                LIMIT 30
                 """,
                 (campsite_id,),
             )
