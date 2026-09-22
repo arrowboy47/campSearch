@@ -115,10 +115,10 @@ def main(argv=None):
             if stopped_early:
                 print(f"  stopped after {calls} calls (--max-calls)")
 
-    # TODO(2026-09): open/closed status has no real source yet. When one exists
-    # (forest alerts feed / recreation.gov), upsert into status_updates here on
-    # ON CONFLICT (campsite_id). Do NOT write a hardcoded is_open like the old
-    # dynamic.py did.
+    # Open/closed status is NOT written here. It lives in refresh_status.py,
+    # which derives it from recreation.gov's month-availability endpoint and
+    # abstains whenever the evidence is ambiguous. Nothing in this job should
+    # ever write a hardcoded is_open the way the old dynamic.py did.
 
 
 if __name__ == "__main__":

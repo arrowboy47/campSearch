@@ -31,6 +31,7 @@ on top.
 | **ReserveCalifornia** | Undocumented JSON (UseDirect/Tyler) | CA State Park campgrounds and bookable units |
 | **The Dyrt** | Undocumented JSON:API | Dispersed / free camping — the gap the official sources miss |
 | **OpenWeather** | REST API (key) | Per-site, per-day forecasts |
+| **recreation.gov availability** | Public JSON (keyless) | Open/closed status for reservable campgrounds |
 | **OpenStreetMap (Overpass)** | Public API | Nearby hiking trails |
 
 Plus derived passes with no external source: text normalisation, elevation and
@@ -61,7 +62,7 @@ scrape_fs_usda --all
                  └─ scrape_thedyrt ──────────→ enrich_thedyrt ────┤
                                                                   ▼
   backfill_elevation → derive_attributes → clean_text → geocode_coordless
-                                     → backfill_approx_coords → refresh_dynamic
+              → backfill_approx_coords → refresh_status → refresh_dynamic
 ```
 
 `catchup=False` throughout: these jobs scrape *current* state, so replaying a
@@ -84,6 +85,13 @@ The parts that took the most work are the ones that stop bad data reaching the U
 - **Accumulate, don't overwrite.** `derive_attributes` UNIONs activities and
   COALESCEs amenity flags so it layers onto structured data from other sources
   instead of clobbering it.
+- **Inferred status abstains rather than guesses.** Open/closed for
+  recreation.gov campgrounds is derived from the booking calendar's own
+  availability feed, and the rule returns "unknown" for every ambiguous case —
+  `Not Reservable` means both "first-come" and "shut for the season", so it is
+  only read as a closure for a facility that takes reservations at all. The
+  reasoning is stored per row in `status_updates.status_detail`, so a wrong
+  flag can be traced without re-running the job.
 - **Approximate data is labelled as such.** Campsites with no usable coordinates
   get a county-centroid fallback used only for rough distance and weather, always
   flagged in the UI, never rendered as a map pin.
