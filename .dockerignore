@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.env
+*.local
+tests
+data/*.csv
+data/*.dump
+static/uploads
+deploy
+dags
+notes
