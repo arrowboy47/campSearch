@@ -78,10 +78,30 @@ RESTROOM_NO = re.compile(r"\bno (restroom|toilet)s?\b", re.I)
 
 
 def infer_amenities(blurb):
+    """(water, restrooms) as True / False / None-for-unknown.
+
+    Negatives are tested FIRST and this order is load-bearing: every negative
+    phrase contains its own positive as a substring -- "no potable water"
+    contains "potable water", "non-potable" contains "potable", "no restrooms"
+    contains "restroom". Checking the positive first therefore never reaches
+    the negative branch, and a campground that says it has no drinking water
+    gets water = True and lands in the "has water" facet.
+    """
     if not blurb:
         return None, None
-    water = True if WATER_YES.search(blurb) else (False if WATER_NO.search(blurb) else None)
-    restr = True if RESTROOM_YES.search(blurb) else (False if RESTROOM_NO.search(blurb) else None)
+    if WATER_NO.search(blurb):
+        water = False
+    elif WATER_YES.search(blurb):
+        water = True
+    else:
+        water = None
+
+    if RESTROOM_NO.search(blurb):
+        restr = False
+    elif RESTROOM_YES.search(blurb):
+        restr = True
+    else:
+        restr = None
     return water, restr
 
 
