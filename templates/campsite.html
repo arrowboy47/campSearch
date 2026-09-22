@@ -120,8 +120,60 @@
 				{% endif %}
 			</header>
 
-			{% if campsite.hero_image %}
-				<img class="detail-hero" src="{{ campsite.hero_image }}" alt="{{ campsite.name }}" loading="lazy" />
+			{% set photos = campsite.images or [] %}
+			{% if photos %}
+				{# Mosaic: first photo leads, the next four fill the grid beside it.
+				   With fewer than five the grid collapses via :only-child /
+				   :nth-child rules rather than a second template branch. #}
+				<figure class="photo-mosaic" data-photo-count="{{ photos|length }}">
+					{% for photo in photos[:5] %}
+						<button type="button" class="photo-tile"
+						        data-lightbox-open="{{ loop.index0 }}"
+						        aria-label="Open photo {{ loop.index }} of {{ photos|length }}">
+							<img src="{{ photo.image_url }}"
+							     alt="{{ photo.description or campsite.name }}"
+							     loading="{{ 'eager' if loop.first else 'lazy' }}" />
+						</button>
+					{% endfor %}
+					{% if photos|length > 1 %}
+						<button type="button" class="photo-all" data-lightbox-open="0">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+							     stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<rect x="3" y="3" width="7" height="7" rx="1" />
+								<rect x="14" y="3" width="7" height="7" rx="1" />
+								<rect x="3" y="14" width="7" height="7" rx="1" />
+								<rect x="14" y="14" width="7" height="7" rx="1" />
+							</svg>
+							Show all {{ photos|length }} photos
+						</button>
+					{% endif %}
+				</figure>
+
+				<div class="lightbox" id="photoLightbox" hidden
+				     role="dialog" aria-modal="true" aria-label="{{ campsite.name }} photos">
+					<div class="lightbox-backdrop" data-lightbox-close></div>
+					<div class="lightbox-body">
+						<button type="button" class="lightbox-close" data-lightbox-close
+						        aria-label="Close photos">&times;</button>
+						<button type="button" class="lightbox-nav lightbox-prev"
+						        data-lightbox-step="-1" aria-label="Previous photo">&#8249;</button>
+						<figure class="lightbox-figure">
+							<img id="lightboxImage" src="" alt="" />
+							<figcaption class="lightbox-caption">
+								<span id="lightboxCaption"></span>
+								<span class="lightbox-count" id="lightboxCount"></span>
+							</figcaption>
+						</figure>
+						<button type="button" class="lightbox-nav lightbox-next"
+						        data-lightbox-step="1" aria-label="Next photo">&#8250;</button>
+					</div>
+					<script type="application/json" id="photoData">
+						{{ photos|tojson }}
+					</script>
+				</div>
+			{% elif campsite.hero_image %}
+				<img class="detail-hero" src="{{ campsite.hero_image }}"
+				     alt="{{ campsite.name }}" loading="lazy" />
 			{% endif %}
 
 			{% if campsite.latitude is not none and campsite.longitude is not none %}

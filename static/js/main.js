@@ -536,6 +536,85 @@ function initSiteMap() {
   setTimeout(() => map.invalidateSize(), 0);
 }
 
+// Campsite photo lightbox.
+//
+// The photo list is embedded as JSON by the template rather than read back off
+// the tiles: the mosaic only renders the first five, and "show all" has to be
+// able to reach every one of them.
+function initPhotoLightbox() {
+  const box = document.getElementById("photoLightbox");
+  const data = document.getElementById("photoData");
+  if (!box || !data) return;
+
+  let photos = [];
+  try {
+    photos = JSON.parse(data.textContent) || [];
+  } catch (err) {
+    return;
+  }
+  if (!photos.length) return;
+
+  const img = document.getElementById("lightboxImage");
+  const caption = document.getElementById("lightboxCaption");
+  const count = document.getElementById("lightboxCount");
+  let index = 0;
+  let lastFocused = null;
+
+  const show = (i) => {
+    // wrap in both directions so the arrows never dead-end
+    index = (i + photos.length) % photos.length;
+    const photo = photos[index];
+    img.src = photo.image_url;
+    img.alt = photo.description || "";
+    caption.textContent = photo.description || "";
+    count.textContent = `${index + 1} / ${photos.length}`;
+  };
+
+  const open = (i) => {
+    lastFocused = document.activeElement;
+    show(i);
+    box.hidden = false;
+    document.body.style.overflow = "hidden";
+    box.querySelector(".lightbox-close").focus();
+  };
+
+  const close = () => {
+    box.hidden = true;
+    document.body.style.overflow = "";
+    // send focus back where it came from, or the tile list is unreachable
+    // by keyboard after closing
+    if (lastFocused) lastFocused.focus();
+  };
+
+  document.querySelectorAll("[data-lightbox-open]").forEach((el) => {
+    el.addEventListener("click", () => open(parseInt(el.dataset.lightboxOpen, 10) || 0));
+  });
+
+  box.querySelectorAll("[data-lightbox-close]").forEach((el) =>
+    el.addEventListener("click", close)
+  );
+
+  box.querySelectorAll("[data-lightbox-step]").forEach((el) =>
+    el.addEventListener("click", () => show(index + parseInt(el.dataset.lightboxStep, 10)))
+  );
+
+  document.addEventListener("keydown", (e) => {
+    if (box.hidden) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") show(index - 1);
+    else if (e.key === "ArrowRight") show(index + 1);
+  });
+
+  // Hide a photo whose URL 404s rather than showing a broken-image icon:
+  // recreation.gov rotates its CDN paths and the scrape can go stale.
+  document.querySelectorAll(".photo-tile img").forEach((tile) => {
+    tile.addEventListener("error", () => {
+      const btn = tile.closest(".photo-tile");
+      if (btn) btn.hidden = true;
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -546,6 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initMap();
   initSiteMap();
   initAuthGate();
+  initPhotoLightbox();
   initDateRange();
   initShare();
   initNearby();
