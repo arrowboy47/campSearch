@@ -17,6 +17,7 @@ pass (the daily one keeps it fresh).
 import sys
 
 import refresh_dynamic
+import refresh_status
 import sync_ridb
 import scrape_fs_usda
 import ingest_ridb_orgs
@@ -51,6 +52,7 @@ JOBS = {
         lambda: clean_text.main([]),                         # normalize fee / overview / seasons text
         lambda: geocode_coordless.main([]),                  # try real coords for coordless sites (Nominatim)
         lambda: backfill_approx_coords.main([]),             # county-centroid approx for the rest
+        lambda: refresh_status.main([]),                     # open/closed from recreation.gov availability
         lambda: refresh_dynamic.main(["--days", "3", "--max-calls", "1200", "--sleep", "0.3"]),
     ],
     "monthly": [

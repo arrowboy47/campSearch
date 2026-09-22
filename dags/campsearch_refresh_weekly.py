@@ -19,6 +19,9 @@ real behavioural improvement in this port, not just a translation.
                                                         backfill_approx_coords
                                                                       │
                                                                       ▼
+                                                             refresh_status
+                                                                      │
+                                                                      ▼
                                                              refresh_dynamic
 
 Ordering constraints that are real and must not be "optimised" away:
@@ -39,6 +42,8 @@ Ordering constraints that are real and must not be "optimised" away:
     coordinate first; only fall back to a county centroid for what is left.
     Reversing them would stamp approximate coords over sites that could have
     had real ones.
+  * refresh_status after ingest_ridb_orgs — it only has something to ask about
+    once every campsite that is going to get a recreation_facility_id has one.
   * refresh_dynamic last — new campsites need a forecast.
 
 max_active_tasks=3 caps the fan-out. These all write to one Postgres and the
@@ -98,6 +103,9 @@ with DAG(
     backfill_approx_coords = campsearch_task(
         "backfill_approx_coords", "backfill_approx_coords.py", timeout_minutes=30
     )
+    refresh_status = campsearch_task(
+        "refresh_status", "refresh_status.py", timeout_minutes=180
+    )
     refresh_dynamic = campsearch_task(
         "refresh_dynamic",
         "refresh_dynamic.py",
@@ -113,4 +121,5 @@ with DAG(
 
     [parks_ca, enrich_thedyrt] >> backfill_elevation
     backfill_elevation >> derive_attributes >> clean_text
-    clean_text >> geocode_coordless >> backfill_approx_coords >> refresh_dynamic
+    clean_text >> geocode_coordless >> backfill_approx_coords
+    backfill_approx_coords >> refresh_status >> refresh_dynamic
