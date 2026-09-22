@@ -1,0 +1,5 @@
+# Test-only dependencies. The app and the scrape jobs need nothing from here.
+#   uv pip install -r requirements-dev.txt   (or pip)
+#   python -m pytest
+-r requirements.txt
+pytest>=8.0
