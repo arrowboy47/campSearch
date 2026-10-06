@@ -54,6 +54,38 @@ Verify: `python -m pytest tests/test_search_filters.py tests/test_search_endtoen
 Done when: requesting `water=true` returns both confirmed-water and
 unknown-water sites, with the unknown ones marked, and tests assert it.
 
+## Task 02b: Surface attribute confidence in the UI
+
+The consequence of Task 02. Admitting NULL rows means a filtered result set
+now mixes confirmed matches with unknowns, and today they look identical. The
+`reservable` filter returns 2421 of 2630 rows, so without a visible
+distinction the filter reads as broken rather than honest.
+
+Every row already carries `unknown_attrs` from Task 02. Render it: a small
+muted chip on any result card and campsite page where a *requested* attribute
+is unknown, worded for the attribute ("cost unknown", "water unknown",
+"reservations unknown"). Never show a chip for an attribute the user did not
+filter on. Confirmed matches get no chip at all, so the absence of a chip is
+itself the signal and the common case stays visually quiet.
+
+Also add a one-line count above the results ("1649 results, 912 with unknown
+cost") when any row in the set carries an unknown for a requested attribute.
+
+Shared partial, used by both `templates/results.html` and the campsite page.
+Styling follows the existing chip pattern already used for land type and
+reservation type. Must work in light and dark themes and at the 640 and 820
+breakpoints.
+
+Deliberately NOT in this task: the ranking penalty for unknowns. That lands in
+Phase 2 with `RankingConfig`, so the weight lives with every other tunable
+instead of becoming another magic constant.
+
+Verify: `python -m pytest tests/test_unknown_attr_ui.py -q`
+Done when: a filtered search mixing confirmed and unknown rows renders chips
+only on the unknown ones and only for requested attributes, the count line
+appears only when unknowns exist, and no chip renders for an unfiltered
+attribute.
+
 ## Task 03: Backfill fee data for ridb and reserve_california (P0)
 
 New `scripts/backfill_fees.py`. For the 838 sites where `is_free` and
