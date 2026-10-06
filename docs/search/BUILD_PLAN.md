@@ -213,6 +213,16 @@ Name the specific mutations, require the suite to fail under each, and require
 the source file to be restored afterwards. "The tests pass" only proves the
 tests run; it says nothing about whether they constrain anything.
 
+**Always run mutation tests with `PYTHONDONTWRITEBYTECODE=1`, or clear
+`__pycache__` between runs.** Python validates cached bytecode by source mtime
+and size. A mutation like `fuzzthresh=62` to `fuzzthresh=30` changes neither,
+so if the restore lands in the same second the mutated run compiled, the
+interpreter keeps serving bytecode built from the mutated source. This
+actually happened on 2026-10-06: it made a clean checkout appear to fail, and
+it silently invalidated a whole round of mutation results. Assert the mutated
+value is really live (read it back with `inspect.signature`) rather than
+trusting that editing the file was enough.
+
 ## Later phases (not yet tasked)
 
 **Phase 2, retrieval.** pgvector migration and embedding job; `rank_bm25`
