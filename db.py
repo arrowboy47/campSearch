@@ -740,3 +740,42 @@ def get_collection_campsites(collection_id):
     cur.close()
     conn.close()
     return rows
+
+
+# --- anonymous identity (migration 0023) ------------------------------------
+
+def merge_anon_events(user_id, anon_id):
+    """Merge anonymous event history to a newly signed-in user (best-effort).
+
+    When an anonymous visitor signs up or logs in, transfer all their
+    behavioral history from anon_id to user_id. The AND user_id IS NULL guard
+    ensures we never reassign rows that already belong to someone.
+
+    This is best-effort: if it fails (network, concurrent conflict), the
+    login/signup must still succeed. Call this after creating or verifying
+    the user account.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE user_events
+            SET user_id = %s, anon_id = NULL
+            WHERE anon_id = %s AND user_id IS NULL
+            """,
+            (user_id, anon_id),
+        )
+        conn.commit()
+    except Exception:
+        # Swallowed like record_pick, so a failed merge never fails a login.
+        # Losing some anonymous history is survivable; losing the login is not.
+        pass
+    finally:
+        # The close has to be in finally. Closing only on the happy path leaks
+        # a connection on every failure, and enough leaks exhaust the server's
+        # connection limit, which takes the whole app down. That is a far worse
+        # outcome than the lost history this swallow is protecting against.
+        if conn is not None:
+            conn.close()
