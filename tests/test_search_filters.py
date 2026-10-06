@@ -22,6 +22,7 @@ from search import (
     _popularity_bonus,
     _row_to_dict,
     normalize,
+    unknown_attrs_for,
 )
 
 
@@ -52,16 +53,16 @@ class TestNoFilters:
 class TestBooleanFacets:
     def test_is_open(self):
         frag, params = where(is_open=True)
-        assert "su.is_open = TRUE" in frag
+        assert "(su.is_open = TRUE OR su.is_open IS NULL)" in frag
         assert params == []
 
     def test_water(self):
         frag, _ = where(water=True)
-        assert "am.water = TRUE" in frag
+        assert "(am.water = TRUE OR am.water IS NULL)" in frag
 
     def test_reservable(self):
         frag, _ = where(reservable=True)
-        assert "r.is_reservable = TRUE" in frag
+        assert "(r.is_reservable = TRUE OR r.is_reservable IS NULL)" in frag
 
 
 class TestForest:
@@ -85,14 +86,14 @@ class TestToilet:
     @pytest.mark.parametrize("kind", ["flush", "vault"])
     def test_specific_type_binds_the_value(self, kind):
         frag, params = where(toilet=kind)
-        assert "am.toilet_type = %s" in frag
+        assert "(am.toilet_type = %s OR am.toilet_type IS NULL)" in frag
         assert params == [kind]
 
     def test_any_excludes_none_as_well_as_null(self):
-        # 'none' is a real stored value meaning "no toilet", so IS NOT NULL
-        # alone would hand back sites that have no toilet at all.
+        # 'none' is a real stored value meaning "no toilet", so the clause
+        # must exclude it but include NULL.
         frag, params = where(toilet="any")
-        assert "am.toilet_type IS NOT NULL" in frag
+        assert "am.toilet_type IS NULL" in frag
         assert "<> 'none'" in frag
         assert params == []
 
@@ -105,15 +106,15 @@ class TestToilet:
 class TestFee:
     def test_free_only(self):
         frag, params = where(free_only=True)
-        assert "c.is_free = TRUE" in frag
+        assert "(c.is_free = TRUE OR c.is_free IS NULL)" in frag
         assert params == []
 
     def test_fee_max_keeps_free_sites_in_range(self):
         # a free site has fee_min NULL in places, and "under $20" plainly
-        # includes $0 -- dropping the is_free arm hides every free campsite
-        # from a price-capped search.
+        # includes $0. NULL fee_min sites are also included to avoid hiding
+        # campsites with unknown pricing.
         frag, params = where(fee_max=20)
-        assert "c.is_free = TRUE OR c.fee_min <= %s" in frag
+        assert "c.is_free = TRUE OR c.fee_min <= %s OR (c.is_free IS NULL AND c.fee_min IS NULL)" in frag
         assert params == [20]
 
     def test_free_only_wins_over_fee_max(self):
@@ -294,3 +295,140 @@ class TestLandType:
         # 189 dispersed rows have no agency at all
         assert _land_type(None) == "other"
         assert _land_type("Some New Agency") == "other"
+
+
+class TestThreeStateSemanticsSQL:
+    """Verify that all boolean-presence filters emit SQL that admits NULL."""
+
+    def test_is_open_clause_admits_null(self):
+        frag, _ = where(is_open=True)
+        assert "IS NULL" in frag
+        assert "su.is_open = TRUE OR su.is_open IS NULL" in frag
+
+    def test_water_clause_admits_null(self):
+        frag, _ = where(water=True)
+        assert "IS NULL" in frag
+        assert "am.water = TRUE OR am.water IS NULL" in frag
+
+    def test_reservable_clause_admits_null(self):
+        frag, _ = where(reservable=True)
+        assert "IS NULL" in frag
+        assert "r.is_reservable = TRUE OR r.is_reservable IS NULL" in frag
+
+    def test_free_only_clause_admits_null(self):
+        frag, _ = where(free_only=True)
+        assert "IS NULL" in frag
+        assert "c.is_free = TRUE OR c.is_free IS NULL" in frag
+
+    def test_toilet_flush_clause_admits_null(self):
+        frag, _ = where(toilet="flush")
+        assert "IS NULL" in frag
+        assert "am.toilet_type = %s OR am.toilet_type IS NULL" in frag
+
+    def test_toilet_vault_clause_admits_null(self):
+        frag, _ = where(toilet="vault")
+        assert "IS NULL" in frag
+        assert "am.toilet_type = %s OR am.toilet_type IS NULL" in frag
+
+    def test_toilet_any_clause_admits_null(self):
+        frag, _ = where(toilet="any")
+        assert "IS NULL" in frag
+        assert "am.toilet_type IS NULL OR am.toilet_type <> 'none'" in frag
+
+    def test_fee_max_clause_admits_null(self):
+        frag, _ = where(fee_max=20)
+        assert "IS NULL" in frag
+        assert "c.is_free IS NULL AND c.fee_min IS NULL" in frag
+
+    def test_untouched_filters_are_unchanged(self):
+        """Filters that should NOT be modified remain byte-identical."""
+        frag, params = where(
+            terrain=["alpine", "valley"],
+            water_feature=["lake"],
+            activities=["hiking"],
+            elev_min=5000,
+            elev_max=9000,
+            forest="Inyo",
+            camping_type="developed",
+        )
+        # These should have their original clauses
+        assert "c.terrain = ANY(%s)" in frag
+        assert "am.water_feature = ANY(%s)" in frag
+        assert "am.activities && %s" in frag
+        assert "c.elevation_ft >= %s" in frag
+        assert "c.elevation_ft <= %s" in frag
+        assert "LOWER(c.forest_name) LIKE %s" in frag
+        assert "IS DISTINCT FROM 'dispersed'" in frag
+
+
+class TestUnknownAttrsFor:
+    """Test the unknown_attrs_for function that identifies unknown attributes."""
+
+    def test_unknown_water_when_has_water_is_null(self):
+        row = {"has_water": None, "is_open": True}
+        result = unknown_attrs_for(row, {"water": True})
+        assert "has_water" in result
+
+    def test_no_unknown_when_has_water_is_true(self):
+        row = {"has_water": True, "is_open": True}
+        result = unknown_attrs_for(row, {"water": True})
+        assert result == []
+
+    def test_no_unknown_when_has_water_is_false(self):
+        row = {"has_water": False, "is_open": True}
+        result = unknown_attrs_for(row, {"water": True})
+        assert result == []
+
+    def test_no_unknown_when_filter_not_requested(self):
+        row = {"has_water": None, "is_open": True}
+        result = unknown_attrs_for(row, {})
+        assert result == []
+
+    def test_unknown_is_open_when_null(self):
+        row = {"is_open": None}
+        result = unknown_attrs_for(row, {"is_open": True})
+        assert "is_open" in result
+
+    def test_unknown_toilet_type_when_null(self):
+        row = {"toilet_type": None}
+        result = unknown_attrs_for(row, {"toilet": "flush"})
+        assert "toilet_type" in result
+
+    def test_unknown_is_free_when_null(self):
+        row = {"is_free": None}
+        result = unknown_attrs_for(row, {"free_only": True})
+        assert "is_free" in result
+
+    def test_unknown_is_reservable_when_null(self):
+        row = {"is_reservable": None}
+        result = unknown_attrs_for(row, {"reservable": True})
+        assert "is_reservable" in result
+
+    def test_fee_max_with_both_unknowns(self):
+        row = {"is_free": None, "fee_min": None}
+        result = unknown_attrs_for(row, {"fee_max": 20})
+        assert "is_free" in result
+        assert "fee_min" in result
+
+    def test_fee_max_with_one_unknown(self):
+        row = {"is_free": False, "fee_min": None}
+        result = unknown_attrs_for(row, {"fee_max": 20})
+        assert "fee_min" in result
+        assert "is_free" not in result
+
+    def test_multiple_requested_filters(self):
+        row = {"has_water": None, "is_open": None, "is_reservable": True}
+        result = unknown_attrs_for(row, {"water": True, "is_open": True, "reservable": True})
+        assert "has_water" in result
+        assert "is_open" in result
+        assert "is_reservable" not in result
+
+    def test_result_is_sorted(self):
+        row = {"is_reservable": None, "has_water": None, "is_open": None}
+        result = unknown_attrs_for(row, {"water": True, "is_open": True, "reservable": True})
+        assert result == sorted(result)
+
+    def test_no_duplicates_in_result(self):
+        row = {"is_free": None, "fee_min": None}
+        result = unknown_attrs_for(row, {"fee_max": 20})
+        assert len(result) == len(set(result))
