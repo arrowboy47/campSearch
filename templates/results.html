@@ -63,9 +63,10 @@
 			{% endif %}
 
 			{% if campsites %}
+				<script type="application/json" id="searchData">{{ {"query": query} | tojson }}</script>
 				<div class="results-grid">
 					{% for camp in campsites %}
-						<article class="result-card">
+						<article class="result-card" data-position="{{ loop.index }}" data-campsite-id="{{ camp.id }}">
 							<header class="result-card-header">
 								<h2 class="result-card-title">
 									<a
