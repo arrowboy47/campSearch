@@ -19,10 +19,13 @@ from db import (
     add_to_collection, remove_from_collection, get_collection_campsites,
     set_collection_public, get_public_users, get_public_profile,
     get_public_collection,
+    merge_anon_events,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
 from functools import wraps
+from uuid import uuid4
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from search import (
     get_campsite_by_name,
     search_campsites,
@@ -168,6 +171,108 @@ def _inject_csrf():
             f'<input type="hidden" name="_csrf" value="{_csrf_token()}">'
         ),
     }
+
+
+# --- anonymous identity (migration 0023) -----------------------------------
+
+ANON_COOKIE_DAYS = 30
+
+
+def _get_anon_serializer():
+    """Create a signer for the anonymous identity cookie using the Flask secret key."""
+    return URLSafeTimedSerializer(_config.secret_key())
+
+
+def _set_anon_cookie(response, anon_id):
+    """Set the cs_anon cookie on the response with signed value and proper flags."""
+    serializer = _get_anon_serializer()
+    signed_value = serializer.dumps(str(anon_id))
+
+    max_age = ANON_COOKIE_DAYS * 24 * 3600  # Convert days to seconds
+    secure = request.is_secure or request.environ.get("wsgi.url_scheme") == "https"
+
+    response.set_cookie(
+        "cs_anon",
+        signed_value,
+        max_age=max_age,
+        httponly=True,
+        samesite="Lax",
+        secure=secure,
+    )
+
+
+def _get_anon_id_from_cookie():
+    """Read and validate the cs_anon cookie. Returns UUID or None.
+
+    If the cookie is present but invalid (tampered, expired, malformed),
+    returns None so a fresh one will be minted.
+    """
+    cookie_val = request.cookies.get("cs_anon")
+    if not cookie_val:
+        return None
+
+    serializer = _get_anon_serializer()
+    try:
+        anon_id_str = serializer.loads(cookie_val)
+        # Validate it is a valid UUID
+        from uuid import UUID
+        UUID(anon_id_str)
+        return anon_id_str
+    except (BadSignature, SignatureExpired, ValueError):
+        # Tampered, expired, or invalid UUID format
+        return None
+
+
+def current_actor():
+    """Return (user_id, anon_id) for the current request.
+
+    Signed-in user: (user_id, None)
+    Anonymous visitor: (None, anon_id)
+    """
+    uid = session.get("user_id")
+    if uid:
+        return uid, None
+
+    # For anonymous visitors, get or create an anon_id
+    anon_id = _get_anon_id_from_cookie()
+    return None, anon_id
+
+
+@app.before_request
+def _anon_identity():
+    """Ensure an anonymous visitor has a signed identity cookie.
+
+    This runs on every request except static assets. If the visitor does not
+    have a valid cs_anon cookie, mint one and schedule it to be set on the
+    response. If they have one, refresh its expiry.
+
+    Static assets (images, CSS, JS) bypass this by virtue of Flask's static
+    file handler not going through before_request for them.
+    """
+    # Check if this might be a static file (skip setting anon for those)
+    if request.path.startswith("/static/"):
+        return
+
+    uid = session.get("user_id")
+    if uid:
+        # Signed in, no anon cookie needed
+        return
+
+    anon_id = _get_anon_id_from_cookie()
+    if not anon_id:
+        # Need to mint a fresh one
+        anon_id = str(uuid4())
+
+    # Store in g so after_request can pick it up
+    g.anon_id = anon_id
+
+
+@app.after_request
+def _set_anon_cookie_response(response):
+    """Set or refresh the anon cookie on the response if needed."""
+    if hasattr(g, "anon_id"):
+        _set_anon_cookie(response, g.anon_id)
+    return response
 
 
 @app.before_request
@@ -805,10 +910,19 @@ def signup():
         except ValueError as exc:
             flash(str(exc) + " (Account created without a picture.)")
 
+        # Merge any anonymous event history to the new account
+        anon_id = _get_anon_id_from_cookie()
+        if anon_id:
+            merge_anon_events(user["id"], anon_id)
+
         session.clear()
         session["user_id"] = user["id"]
         flash("Account created.")
-        return redirect(url_for("account"))
+
+        # Clear the anon cookie now that we have an account
+        response = redirect(url_for("account"))
+        response.delete_cookie("cs_anon")
+        return response
 
     return render_template("signup.html", form={})
 
@@ -825,10 +939,20 @@ def login():
         if not row or not check_password_hash(row["password_hash"], password):
             flash("Wrong username or password.")
             return render_template("login.html", username=username)
+
+        # Merge any anonymous event history to the account
+        anon_id = _get_anon_id_from_cookie()
+        if anon_id:
+            merge_anon_events(row["id"], anon_id)
+
         session.clear()
         session["user_id"] = row["id"]
         nxt = request.args.get("next") or request.form.get("next")
-        return redirect(nxt if _is_safe_next(nxt) else url_for("account"))
+
+        # Clear the anon cookie now that we have an account
+        response = redirect(nxt if _is_safe_next(nxt) else url_for("account"))
+        response.delete_cookie("cs_anon")
+        return response
 
     return render_template("login.html", username="")
 
