@@ -47,6 +47,10 @@
 					{{ result_count }} campsite{{ '' if result_count == 1 else 's' }}
 					{% if query %}for <span class="pill pill-soft">"{{ query }}"</span>{% endif %}
 				</p>
+				{% set unknown_count = campsites | selectattr('unknown_attrs') | list | length %}
+				{% if unknown_count %}
+					<p class="results-unknown-hint">{{ unknown_count }} of these have an attribute we could not confirm, shown on the card.</p>
+				{% endif %}
 				<a href="/" class="link-quiet">← New search</a>
 			</div>
 
@@ -93,6 +97,8 @@
 									{% if camp.terrain %}<span class="badge">⛰️ {{ camp.terrain|capitalize }}</span>{% endif %}
 									{% if camp.elevation_ft %}<span class="badge">📐 {{ '{:,}'.format(camp.elevation_ft) }} ft</span>{% endif %}
 								</div>
+
+								{% with unknown_attrs = camp.unknown_attrs %}{% include "_unknown_attrs.html" %}{% endwith %}
 
 								{% if camp.activities %}
 									<div class="chip-row">
