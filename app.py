@@ -20,6 +20,7 @@ from db import (
     set_collection_public, get_public_users, get_public_profile,
     get_public_collection,
     merge_anon_events,
+    log_event,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -238,6 +239,19 @@ def current_actor():
     return None, anon_id
 
 
+def get_session_id():
+    """Return a per-browser-session UUID, minted on first use.
+
+    Stored in Flask session so it resets when the browser session ends,
+    distinguishing new visits from continued browsing.
+    """
+    sess_id = session.get("_session_id")
+    if not sess_id:
+        sess_id = str(uuid4())
+        session["_session_id"] = sess_id
+    return sess_id
+
+
 @app.before_request
 def _anon_identity():
     """Ensure an anonymous visitor has a signed identity cookie.
@@ -279,9 +293,28 @@ def _set_anon_cookie_response(response):
 def _csrf_protect():
     if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
         return
-    # JSON/beacon API endpoints are unauthenticated and change nothing per-user;
-    # a CSRF token there would just break navigator.sendBeacon.
+    # Beacon endpoints under /api/ cannot carry a CSRF token, because
+    # navigator.sendBeacon cannot set request headers. They are guarded by
+    # origin instead.
+    #
+    # The blanket exemption that used to live here was justified by these
+    # endpoints being "unauthenticated and changing nothing per-user". That
+    # stopped being true once /api/events began attributing behaviour to the
+    # signed-in user: any site a user visited could POST fabricated events into
+    # their account, poisoning both their personalisation and the aggregate
+    # signals the ranking model is trained on. /api/campsite/<id>/pick has the
+    # same shape, where forged picks inflate a campsite's search ranking.
+    #
+    # A browser always sends Origin on a cross-origin POST, so rejecting a
+    # mismatched Origin blocks the cross-site case without breaking sendBeacon.
+    # An absent Origin is allowed: same-origin requests from older browsers and
+    # non-browser clients omit it, and those are not the attack being stopped.
     if request.path.startswith("/api/"):
+        origin = request.headers.get("Origin")
+        if origin:
+            from urllib.parse import urlparse
+            if urlparse(origin).netloc != request.host:
+                abort(403, "Cross-origin request rejected.")
         return
     sent = request.form.get("_csrf") or request.headers.get("X-CSRFToken")
     if not sent or not _secrets.compare_digest(sent, session.get("_csrf", "")):
@@ -496,6 +529,69 @@ def campsite_pick(campsite_id):
     return "", 204
 
 
+@app.route("/api/events", methods=["POST"])
+def api_events():
+    """Log a batch of user behavior events from the browser.
+
+    Fired by navigator.sendBeacon for impressions and clicks. Accepts up to
+    100 events per request; excess is silently dropped. The server decides
+    user_id, anon_id, and session_id; accepting these from the client is a
+    security violation (it could forge history into someone else's account).
+
+    Only forgivable event types are accepted here. Server-generated types like
+    'search_performed' are rejected to prevent forgery.
+
+    Returns 204 (No Content) regardless of success or failure. Logging errors
+    are swallowed so this endpoint never breaks a page load.
+    """
+    from db import ALLOWED_EVENT_TYPES
+
+    # Browser-allowed event types (server-generated types are excluded)
+    BROWSER_ALLOWED = frozenset({
+        'result_impression',
+        'result_clicked',
+        'campsite_viewed',
+        'search_feedback',
+    })
+
+    try:
+        data = request.get_json() or {}
+    except Exception:
+        return "", 204
+
+    events = data.get("events") or []
+    if not isinstance(events, list):
+        return "", 204
+
+    # Cap batch size to prevent abuse
+    events = events[:100]
+
+    user_id, anon_id = current_actor()
+    session_id = get_session_id()
+
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+
+        event_type = event.get("event_type")
+        if event_type not in BROWSER_ALLOWED:
+            continue
+
+        # Extract fields from request; server fills in user/anon/session_id
+        log_event(
+            event_type=event_type,
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=session_id,
+            campsite_id=event.get("campsite_id"),
+            position=event.get("position"),
+            query_text=event.get("query_text"),
+            meta=event.get("meta"),
+        )
+
+    return "", 204
+
+
 @app.route("/api/weather")
 def weather():
     """
@@ -604,6 +700,23 @@ def results():
         camp["forecast_json"] = raw_forecast
         camp["weather_summary"] = build_weather_summary(raw_forecast)
         enriched.append(camp)
+
+    # Log the search event (best-effort; don't break page on logging failure)
+    try:
+        result_ids = [camp["id"] for camp in enriched]
+        user_id, anon_id = current_actor()
+        log_event(
+            event_type="search_performed",
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=get_session_id(),
+            query_text=query or None,
+            filters=filters,
+            result_ids=result_ids,
+            meta={"result_count": len(enriched)},
+        )
+    except Exception:
+        pass
 
     return render_template(
         "results.html",
@@ -719,6 +832,19 @@ def campsite(campsite_id):
     if current_user():
         saved = is_campsite_saved(session["user_id"], campsite_id)
         user_collections = get_collections(session["user_id"])
+
+    # Log the campsite view event (best-effort; don't break page on logging failure)
+    try:
+        user_id, anon_id = current_actor()
+        log_event(
+            event_type="campsite_viewed",
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=get_session_id(),
+            campsite_id=campsite_id,
+        )
+    except Exception:
+        pass
 
     return render_template(
         "campsite.html",
