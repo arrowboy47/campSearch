@@ -112,7 +112,7 @@ and the table accepts an insert with a null `user_id`.
 
 ## Task 05: Anonymous identity cookie
 
-Signed `anon_id` cookie (UUID), 90-day lifetime, set on first request that
+Signed `anon_id` cookie (UUID), 30-day lifetime, set on first request that
 lacks one. On signup or login, rewrite that visitor's `user_events.anon_id`
 rows to the new `user_id` and clear the cookie. Reuse the existing Flask
 session signing key from `config.py`.
