@@ -21,6 +21,7 @@ from db import (
     get_public_collection,
     merge_anon_events,
     log_event,
+    create_review, get_review_by_user_and_campsite, count_reviews_today,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -40,6 +41,8 @@ import math
 import re
 import os
 from forests import forest_label
+import psycopg2
+from content_filter import has_blocked_content
 
 # Profile-picture uploads land under static/ so Flask can serve them directly.
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads", "avatars")
@@ -829,9 +832,11 @@ def campsite(campsite_id):
 
     saved = False
     user_collections = []
+    existing_review = None
     if current_user():
         saved = is_campsite_saved(session["user_id"], campsite_id)
         user_collections = get_collections(session["user_id"])
+        existing_review = get_review_by_user_and_campsite(session["user_id"], campsite_id)
 
     # Log the campsite view event (best-effort; don't break page on logging failure)
     try:
@@ -854,6 +859,7 @@ def campsite(campsite_id):
         drive=drive,
         saved=saved,
         user_collections=user_collections,
+        existing_review=existing_review,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         dates_explicit=bool(start_str or end_str),
@@ -1247,6 +1253,96 @@ def campsite_add_to_collection(campsite_id):
         flash("Added to collection.")
 
     return redirect(_safe_next(url_for("campsite", campsite_id=campsite_id)))
+
+
+@app.route("/campsite/<int:campsite_id>/review", methods=["POST"])
+@login_required
+def submit_review(campsite_id):
+    """Submit a review for a campsite.
+
+    Form parameters:
+        verdict: 'up' or 'down' (required)
+        body: Review text (optional)
+        visited: '1' if user visited (boolean as string, defaults to true)
+        attribute_<name>: Reported attribute value (e.g., attribute_water='true')
+    """
+    # Verify campsite exists
+    if not get_campsite_by_id(campsite_id):
+        abort(404)
+
+    user_id = current_user()["id"]
+
+    # Parse verdict
+    verdict_str = request.form.get("verdict", "").lower()
+    if verdict_str == "up":
+        verdict = True
+    elif verdict_str == "down":
+        verdict = False
+    else:
+        flash("Verdict must be 'up' or 'down'.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse body
+    body = (request.form.get("body") or "").strip()
+
+    # Filter content
+    if has_blocked_content(body):
+        flash("Your review contains language we don't accept. Please revise and try again.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse visited flag
+    visited = request.form.get("visited", "1") != "0"
+
+    # Rate limit: 3 reviews per day
+    count = count_reviews_today(user_id)
+    if count >= 3:
+        flash("You've submitted 3 reviews today. Come back tomorrow.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse and validate attribute reports
+    allowed_attributes = {"water", "toilet_type", "is_free", "fee_min", "is_reservable", "is_open"}
+    attribute_reports = []
+    for key in request.form.keys():
+        if key.startswith("attribute_"):
+            attr_name = key[10:]  # Remove "attribute_" prefix
+            if attr_name not in allowed_attributes:
+                flash(f"Invalid attribute: {attr_name}")
+                return redirect(url_for("campsite", campsite_id=campsite_id))
+            claimed_value = request.form.get(key)
+            if claimed_value:
+                attribute_reports.append({
+                    "attribute": attr_name,
+                    "claimed_value": claimed_value,
+                })
+
+    # Create the review
+    try:
+        review_id = create_review(
+            user_id=user_id,
+            campsite_id=campsite_id,
+            verdict=verdict,
+            body=body,
+            visited=visited,
+            attribute_reports=attribute_reports,
+        )
+        flash("Review submitted!")
+
+        # Log the event (best-effort)
+        try:
+            log_event(
+                event_type="review_submitted",
+                user_id=user_id,
+                campsite_id=campsite_id,
+            )
+        except Exception:
+            pass
+
+    except psycopg2.IntegrityError:
+        flash("You've already reviewed this campsite.")
+    except psycopg2.DatabaseError as e:
+        flash("Error submitting review. Please check your input.")
+
+    return redirect(url_for("campsite", campsite_id=campsite_id))
 
 
 # --- public users / shared collections -----------------------------------

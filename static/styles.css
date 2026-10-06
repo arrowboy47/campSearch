@@ -2045,3 +2045,223 @@ fieldset.filter-group legend {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* Review form and modal */
+
+.review-form-intro {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.review-form-intro p {
+  margin: 0;
+  flex: 1;
+}
+
+.review-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.review-verdict {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.verdict-up {
+  color: #16a34a;
+}
+
+.verdict-down {
+  color: #dc2626;
+}
+
+.review-body {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.review-meta {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.review-status-removed {
+  font-style: italic;
+}
+
+/* Review form modal */
+
+.review-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-card {
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.modal-x:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.modal-title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.form-legend {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.verdict-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.verdict-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
+}
+
+.verdict-label input[type="radio"] {
+  cursor: pointer;
+}
+
+.verdict-label:hover {
+  background: var(--bg-tertiary);
+}
+
+.verdict-label input[type="radio"]:checked + .verdict-label-text {
+  font-weight: 600;
+}
+
+.verdict-label-text {
+  user-select: none;
+}
+
+.form-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  background: var(--bg);
+}
+
+.form-note {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+}
+
+.form-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.checkbox-label {
+  user-select: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 16px;
+}
