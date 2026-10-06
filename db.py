@@ -967,3 +967,99 @@ def count_reviews_today(user_id):
     finally:
         if conn:
             conn.close()
+
+
+def create_review_photo(review_id, path):
+    """Create a pending review photo.
+
+    Args:
+        review_id: The review this photo belongs to.
+        path: The file path to the photo.
+
+    Returns:
+        The photo ID.
+
+    Raises:
+        psycopg2.DatabaseError: On database errors.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO review_photos (review_id, path, status)
+            VALUES (%s, %s, 'pending')
+            RETURNING id
+            """,
+            (review_id, path),
+        )
+        photo_id = cur.fetchone()[0]
+        conn.commit()
+        return photo_id
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_photos(review_id):
+    """Fetch all photos for a review, sorted by creation date.
+
+    Args:
+        review_id: The review ID.
+
+    Returns:
+        List of dicts with keys (id, path, status, created_at).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status, created_at
+            FROM review_photos
+            WHERE review_id = %s
+            ORDER BY created_at ASC
+            """,
+            (review_id,),
+        )
+        return cur.fetchall() or []
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_review_photos(review_id):
+    """Count how many photos are attached to a review (any status).
+
+    Args:
+        review_id: The review ID.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM review_photos
+            WHERE review_id = %s
+            """,
+            (review_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()

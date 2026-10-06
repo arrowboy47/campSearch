@@ -24,6 +24,9 @@ factest.json
 # User uploads (profile pictures, etc.)
 static/uploads/
 
+# Review photos, kept out of static/ so Flask cannot serve them unchecked
+var/
+
 # Editor / OS
 .DS_Store
 *.swp

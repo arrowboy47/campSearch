@@ -42,7 +42,7 @@
       <button type="button" class="modal-x" data-review-close aria-label="Close">×</button>
       <h2 id="reviewTitle" class="modal-title">Review {{ campsite.name }}</h2>
 
-      <form method="POST" action="/campsite/{{ campsite.id }}/review" class="review-form">
+      <form method="POST" action="/campsite/{{ campsite.id }}/review" class="review-form" enctype="multipart/form-data">
         {{ csrf_input() }}
 
         <fieldset class="form-group">
@@ -63,6 +63,12 @@
           <label for="reviewBody" class="form-label">Tell us more (optional)</label>
           <textarea id="reviewBody" name="body" class="form-textarea" placeholder="What stood out? Any tips for future campers?" maxlength="1000"></textarea>
           <span class="form-note">1000 characters max</span>
+        </fieldset>
+
+        <fieldset class="form-group">
+          <label for="reviewPhotos" class="form-label">Add photos (optional, up to 4)</label>
+          <input type="file" id="reviewPhotos" name="photos" multiple accept="image/jpeg,image/png,image/webp" />
+          <span class="form-note">Photos are reviewed before publishing. Max 5 MB each.</span>
         </fieldset>
 
         <fieldset class="form-group">

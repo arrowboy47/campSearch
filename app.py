@@ -22,6 +22,7 @@ from db import (
     merge_anon_events,
     log_event,
     create_review, get_review_by_user_and_campsite, count_reviews_today,
+    create_review_photo, get_review_photos, count_review_photos,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -43,11 +44,33 @@ import os
 from forests import forest_label
 import psycopg2
 from content_filter import has_blocked_content
+from io import BytesIO
+
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    Image = None
+    ImageOps = None
 
 # Profile-picture uploads land under static/ so Flask can serve them directly.
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads", "avatars")
 AVATAR_EXT = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif"}
 MAX_AVATAR_BYTES = 3 * 1024 * 1024
+
+# Review photos are stored pending approval, then moved or served conditionally.
+# We store them outside static/ and serve via a view that checks status, so
+# pending photos cannot be accessed by direct URL.
+# Review photos live OUTSIDE static/ on purpose. Flask serves static/
+# wholesale, so a file placed there is fetchable at its own URL no matter what
+# any page links to, which would hand out pending photos that no moderator has
+# approved yet. A uuid filename makes that hard to guess but guessing is not
+# the threat model: a leaked, logged or shared URL is. Everything here is
+# served through serve_review_photo, which checks status first.
+REVIEW_PHOTOS_DIR = os.path.join(os.path.dirname(__file__), "var", "review_photos")
+REVIEW_PHOTO_EXTS = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
+MAX_REVIEW_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB per file
+MAX_PHOTOS_PER_REVIEW = 4
+THUMBNAIL_SIZE = (200, 200)
 
 
 def save_avatar(file_storage, user_id):
@@ -74,6 +97,131 @@ def save_avatar(file_storage, user_id):
             os.remove(p)
     file_storage.save(os.path.join(AVATAR_DIR, f"{user_id}.{ext}"))
     return f"uploads/avatars/{user_id}.{ext}"
+
+
+def _validate_and_strip_image(file_bytes):
+    """Validate that bytes are a real image and strip all EXIF data.
+
+    Args:
+        file_bytes: Raw file bytes (BytesIO or similar).
+
+    Returns:
+        (img_bytes, ext) where img_bytes is the cleaned image data without EXIF,
+        and ext is the detected format (png, jpg, webp).
+
+    Raises:
+        ValueError: If the file is not a valid image format (JPEG, PNG, WebP),
+                    or if Pillow is not available.
+    """
+    if not Image or not ImageOps:
+        raise ValueError("Image processing not available. Install Pillow.")
+
+    file_bytes.seek(0)
+    try:
+        img = Image.open(file_bytes)
+
+        # Check that the decoded format is one we accept.
+        # This rejects SVG, PHP files renamed to .jpg, etc.
+        img_format = img.format
+        if img_format not in ("JPEG", "PNG", "WEBP"):
+            raise ValueError(f"Image format {img_format} is not accepted. Only JPEG, PNG, and WebP are allowed.")
+
+        # Determine the output extension.
+        ext_map = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+        ext = ext_map[img_format]
+
+        # Apply EXIF orientation before stripping, so portrait photos stay upright
+        # after the EXIF tag is removed.
+        img = ImageOps.exif_transpose(img)
+
+        # Decode and re-encode to strip all metadata, including EXIF/GPS.
+        # This creates a fresh image object with no metadata.
+        rgb_img = img.convert("RGB") if img.mode in ("RGBA", "LA", "P") else img
+        output = BytesIO()
+        rgb_img.save(output, format=img_format, optimize=False)
+        output.seek(0)
+
+        return output, ext
+
+    except Image.UnidentifiedImageError:
+        raise ValueError("File is not a valid image.")
+    except Exception as e:
+        raise ValueError(f"Error processing image: {str(e)}")
+
+
+def _create_thumbnail(img_bytes, ext):
+    """Create a thumbnail from image bytes.
+
+    Args:
+        img_bytes: BytesIO with the main image.
+        ext: Image format (png, jpg, webp).
+
+    Returns:
+        BytesIO with the thumbnail, ready to save.
+    """
+    if not Image:
+        raise ValueError("Image processing not available. Install Pillow.")
+
+    img_bytes.seek(0)
+    img = Image.open(img_bytes)
+    img.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+    thumb_out = BytesIO()
+    # Convert ext (jpg, png, webp) to PIL format (JPEG, PNG, WEBP)
+    fmt_map = {"jpg": "JPEG", "png": "PNG", "webp": "WEBP"}
+    pil_format = fmt_map.get(ext, ext.upper())
+    img.save(thumb_out, format=pil_format, optimize=False)
+    thumb_out.seek(0)
+    return thumb_out
+
+
+def save_review_photo(file_storage):
+    """Validate and persist a review photo with EXIF stripped.
+
+    Args:
+        file_storage: A Flask FileStorage object from request.files.
+
+    Returns:
+        (main_path, thumb_path, ext) where main_path and thumb_path are relative
+        paths for storage in the database, and ext is the image format.
+
+    Raises:
+        ValueError: On file size, format, or processing errors.
+    """
+    if not file_storage or not file_storage.filename:
+        return None
+
+    # Check size before decoding.
+    file_storage.stream.seek(0, os.SEEK_END)
+    size = file_storage.stream.tell()
+    file_storage.stream.seek(0)
+    if size > MAX_REVIEW_PHOTO_BYTES:
+        raise ValueError(f"Photo must be under 5 MB (was {size / 1024 / 1024:.1f} MB).")
+
+    # Validate and strip EXIF.
+    cleaned_bytes, ext = _validate_and_strip_image(file_storage.stream)
+
+    # Generate server-generated filename to prevent path traversal and overwrites.
+    photo_id = str(uuid4())
+    filename = f"{photo_id}.{ext}"
+
+    # Create thumbnail.
+    thumb = _create_thumbnail(cleaned_bytes, ext)
+
+    # Write files to disk.
+    os.makedirs(REVIEW_PHOTOS_DIR, exist_ok=True)
+    main_path = os.path.join(REVIEW_PHOTOS_DIR, filename)
+    thumb_path = os.path.join(REVIEW_PHOTOS_DIR, f"{photo_id}_thumb.{ext}")
+
+    cleaned_bytes.seek(0)
+    with open(main_path, "wb") as f:
+        f.write(cleaned_bytes.getvalue())
+
+    with open(thumb_path, "wb") as f:
+        f.write(thumb.getvalue())
+
+    # Return relative paths for storage in the database.
+    # We store the full path so it works even if the upload directory location changes.
+    return (main_path, thumb_path, ext)
 
 
 def _int_arg(name):
@@ -1327,6 +1475,32 @@ def submit_review(campsite_id):
         )
         flash("Review submitted!")
 
+        # Process uploaded photos (if any).
+        # Store up to MAX_PHOTOS_PER_REVIEW photos. Failures on individual photos
+        # do not roll back the review.
+        photo_errors = []
+        photo_count = 0
+        for photo_file in request.files.getlist("photos"):
+            if not photo_file or not photo_file.filename:
+                continue
+
+            if photo_count >= MAX_PHOTOS_PER_REVIEW:
+                photo_errors.append("Only 4 photos per review are allowed.")
+                break
+
+            try:
+                main_path, thumb_path, ext = save_review_photo(photo_file)
+                create_review_photo(review_id, main_path)
+                photo_count += 1
+            except ValueError as e:
+                photo_errors.append(f"Photo error: {str(e)}")
+            except Exception as e:
+                photo_errors.append(f"Photo upload failed: {str(e)}")
+
+        if photo_errors:
+            for error in photo_errors:
+                flash(error, "warning")
+
         # Log the event (best-effort)
         try:
             log_event(
@@ -1343,6 +1517,57 @@ def submit_review(campsite_id):
         flash("Error submitting review. Please check your input.")
 
     return redirect(url_for("campsite", campsite_id=campsite_id))
+
+
+# --- review photos -------------------------------------------------------
+
+@app.route("/api/review_photos/<int:photo_id>")
+def serve_review_photo(photo_id):
+    """Serve a review photo if it is approved.
+
+    Pending and rejected photos are not served to anyone, including the
+    reviewer, ensuring privacy and preventing direct URL access to unapproved
+    content.
+    """
+    from db import RealDictCursor
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status
+            FROM review_photos
+            WHERE id = %s
+            """,
+            (photo_id,),
+        )
+        photo = cur.fetchone()
+    finally:
+        if conn:
+            conn.close()
+
+    if not photo:
+        abort(404)
+
+    # Only serve approved photos.
+    if photo["status"] != "approved":
+        abort(403)
+
+    # Serve the file if it exists.
+    if not os.path.exists(photo["path"]):
+        abort(404)
+
+    with open(photo["path"], "rb") as f:
+        data = f.read()
+
+    # Infer content type from file extension.
+    ext = photo["path"].split(".")[-1].lower()
+    content_type_map = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+    content_type = content_type_map.get(ext, "application/octet-stream")
+
+    return Response(data, mimetype=content_type)
 
 
 # --- public users / shared collections -----------------------------------
