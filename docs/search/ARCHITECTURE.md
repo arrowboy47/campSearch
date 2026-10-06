@@ -108,7 +108,7 @@ principle already used elsewhere in this stack.
 ```
 id            bigserial
 user_id       int null        -- null for anonymous
-anon_id       uuid null       -- cookie, 90 days, merged on signup
+anon_id       uuid null       -- cookie, 30 days, merged on signup
 session_id    uuid
 event_type    text            -- see below
 campsite_id   int null
