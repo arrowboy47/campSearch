@@ -33,9 +33,14 @@ fixture, no live DB. Cover: no-query alphabetical path, the forest-substring
 branch (`search.py:228`), the `fuzzthresh` drop, popularity tie-breaking, and
 multi-filter interaction through `_build_where`.
 
-Verify: `python -m pytest tests/test_search_endtoend.py -q`
-Done when: the current pipeline's observable behavior is pinned by tests that
-would fail if any branch changed.
+Verify: the suite must pass unmutated AND fail under each of these
+mutations applied one at a time (restore with `git checkout -- search.py`
+after each):
+`s/fuzzthresh=62/fuzzthresh=30/`,
+`s/_POPULARITY_CAP = 8.0/_POPULARITY_CAP = 800.0/`,
+`s/len(forest_hits) > name_substr/len(forest_hits) >= name_substr/`,
+`s/if len(nq) >= 4:/if len(nq) >= 2:/`
+Done when: baseline exits 0 and all four mutations exit 1.
 
 ## Task 02: Fix NULL-as-false in filters (P0)
 
@@ -197,6 +202,16 @@ Done when: the full suite passes with no DB or network, and the vault reflects
 what shipped.
 
 ---
+
+## A note on verifying test tasks
+
+The first attempt at Task 01 passed `pytest -q` while failing to detect four
+of the five behaviors it claimed to pin. Mutation testing caught it.
+
+**For any task whose deliverable is tests, `Verify:` must be mutation based.**
+Name the specific mutations, require the suite to fail under each, and require
+the source file to be restored afterwards. "The tests pass" only proves the
+tests run; it says nothing about whether they constrain anything.
 
 ## Later phases (not yet tasked)
 
