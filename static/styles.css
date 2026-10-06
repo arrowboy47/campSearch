@@ -2012,3 +2012,36 @@ fieldset.filter-group legend {
     height: 40px;
   }
 }
+
+/* Unknown attribute chips (quiet styling for uncertainty) */
+.unknown-attrs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.unknown-attr-chip {
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(107, 114, 128, 0.08);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+:root[data-theme="dark"] .unknown-attr-chip {
+  background: rgba(107, 114, 128, 0.18);
+  color: #9ca3af;
+  border-color: rgba(51, 65, 85, 0.9);
+}
+
+.results-unknown-hint {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
