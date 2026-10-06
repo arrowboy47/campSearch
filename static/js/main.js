@@ -472,16 +472,128 @@ function initReadMore() {
 // popular campsites can float up in search scoring (migration 0017). Fire and
 // forget — sendBeacon survives the page unload, and a failure changes nothing.
 
+// Track whether impressions have been sent for this page render to prevent
+// double-counting on re-render, bfcache restore, or init called twice.
+let _impressions_sent = false;
+
+function _sendBeaconJSON(url, payload) {
+  // Build a Blob with application/json type for sendBeacon.
+  // sendBeacon cannot set headers, so we must use a Blob with the right type.
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(url, blob);
+  } else {
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
+function initImpressionTracking() {
+  // Send result impressions on page load. One batch per page render,
+  // not one per card. Guard against double-sending on re-render or bfcache.
+  if (_impressions_sent) return;
+
+  // Also guard on pageshow with persisted flag (bfcache restore).
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && _impressions_sent) {
+      // Page was restored from bfcache and we already sent impressions.
+      return;
+    }
+  });
+
+  const searchData = document.getElementById("searchData");
+  let query = "";
+  if (searchData) {
+    try {
+      const data = JSON.parse(searchData.textContent || "{}");
+      query = data.query || "";
+    } catch (e) {
+      // Ignore parse errors.
+    }
+  }
+
+  const cards = document.querySelectorAll("[data-position][data-campsite-id]");
+  if (!cards.length) {
+    _impressions_sent = true;
+    return;
+  }
+
+  // Collect impression events (max 100).
+  const events = [];
+  for (let i = 0; i < Math.min(cards.length, 100); i++) {
+    const card = cards[i];
+    const position = card.getAttribute("data-position");
+    const campsite_id = card.getAttribute("data-campsite-id");
+
+    if (!position || !campsite_id) continue;
+
+    events.push({
+      event_type: "result_impression",
+      campsite_id: parseInt(campsite_id, 10),
+      position: parseInt(position, 10),
+      query_text: query,
+    });
+  }
+
+  if (events.length > 0) {
+    try {
+      _sendBeaconJSON("/api/events", { events });
+    } catch (e) {
+      // Swallow any errors; tracking failure must not break the page.
+    }
+  }
+
+  _impressions_sent = true;
+}
+
 function initPickTracking() {
   document.querySelectorAll("[data-pick]").forEach((link) => {
     link.addEventListener("click", () => {
       const id = link.getAttribute("data-pick");
       if (!id) return;
-      const url = `/api/campsite/${id}/pick`;
+
+      // Fire the existing pick beacon.
+      const pickUrl = `/api/campsite/${id}/pick`;
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
+        navigator.sendBeacon(pickUrl);
       } else {
-        fetch(url, { method: "POST", keepalive: true }).catch(() => {});
+        fetch(pickUrl, { method: "POST", keepalive: true }).catch(() => {});
+      }
+
+      // Additionally, send a result_clicked event with position and query.
+      const searchData = document.getElementById("searchData");
+      let query = "";
+      if (searchData) {
+        try {
+          const data = JSON.parse(searchData.textContent || "{}");
+          query = data.query || "";
+        } catch (e) {
+          // Ignore parse errors.
+        }
+      }
+
+      // Find the card containing this link to get its position.
+      const card = link.closest("[data-position][data-campsite-id]");
+      if (card) {
+        const position = card.getAttribute("data-position");
+        const campsite_id = card.getAttribute("data-campsite-id");
+
+        if (position && campsite_id) {
+          try {
+            const event = {
+              event_type: "result_clicked",
+              campsite_id: parseInt(campsite_id, 10),
+              position: parseInt(position, 10),
+              query_text: query,
+            };
+            _sendBeaconJSON("/api/events", { events: [event] });
+          } catch (e) {
+            // Swallow any errors; tracking failure must not break navigation.
+          }
+        }
       }
     });
   });
@@ -631,5 +743,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearby();
   initDrive();
   initCollectionAdd();
+  initImpressionTracking();
   initPickTracking();
 });

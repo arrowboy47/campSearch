@@ -15,6 +15,38 @@ from unittest.mock import patch, MagicMock, Mock, call
 import psycopg2
 
 import app as app_module
+
+
+@pytest.fixture(autouse=True)
+def no_db(monkeypatch):
+    """Stub every database call the page routes make.
+
+    This suite's whole value is that it runs with no database and no network.
+    Three tests here patched only the one lookup they cared about and reached
+    real Postgres through the others, so they passed only while an SSH tunnel
+    happened to be open and failed with "connection refused" the moment it was
+    not. Routing every route test through this fixture keeps that from
+    recurring: a newly added database call shows up as a clear failure here
+    rather than as a silent dependency on someone's tunnel.
+    """
+    import app as A
+    stubs = {
+        "get_campsite_by_id": {"id": 42, "name": "Test",
+                               "latitude": 0, "longitude": 0},
+        "get_trails_for_campsite": [],
+        "get_forecast": None,
+        "is_campsite_saved": False,
+        "get_collections": [],
+        "search_campsites": [],
+        "get_facet_options": {},
+        "get_all_forests": [],
+    }
+    for name, value in stubs.items():
+        if hasattr(A, name):
+            monkeypatch.setattr(A, name, (lambda v: (lambda *a, **k: v))(value))
+    return stubs
+
+
 import db as db_module
 
 
@@ -303,22 +335,33 @@ class TestRouteLoggingDoesNotBreakPage:
                     assert resp.status_code == 200
 
     def test_campsite_page_works_even_if_logging_fails(self):
-        """The /campsite page renders even if log_event raises."""
-        with app_module.app.test_client() as client:
-            with patch("app.get_campsite_by_id") as mock_get:
-                with patch("app.log_event") as mock_log:
-                    mock_get.return_value = {
-                        "id": 42,
-                        "name": "Test",
-                        "latitude": 0,
-                        "longitude": 0,
-                    }
-                    # Make log_event raise
-                    mock_log.side_effect = Exception("logging failed")
+        """The /campsite page renders even if log_event raises.
 
-                    # Should still return 200
-                    resp = client.get("/campsite/42")
-                    assert resp.status_code == 200
+        Every database call the route makes is patched, not just the campsite
+        lookup. This suite is meant to run with no database and no network;
+        an earlier version of this test patched only get_campsite_by_id and so
+        reached for the real Postgres through get_trails_for_campsite, which
+        meant it passed only while an SSH tunnel happened to be open and
+        failed with "connection refused" the moment it was not.
+        """
+        with app_module.app.test_client() as client, \
+                patch("app.get_campsite_by_id") as mock_get, \
+                patch("app.get_trails_for_campsite", return_value=[]), \
+                patch("app.get_forecast", return_value=None), \
+                patch("app.is_campsite_saved", return_value=False), \
+                patch("app.get_collections", return_value=[]), \
+                patch("app.log_event") as mock_log:
+            mock_get.return_value = {
+                "id": 42,
+                "name": "Test",
+                "latitude": 0,
+                "longitude": 0,
+            }
+            mock_log.side_effect = Exception("logging failed")
+
+            resp = client.get("/campsite/42")
+            assert resp.status_code == 200, (
+                "a logging failure must not break the page")
 
 
 class TestApiEventsEndpoint:
