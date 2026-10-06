@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 
 from config import database_url
 
@@ -295,6 +295,78 @@ def record_pick(campsite_id):
             "SET pick_count = pick_count + 1, last_picked_at = now() "
             "WHERE id = %s",
             (campsite_id,),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+# --- event logging (migration 0023) -----------------------------------------
+
+ALLOWED_EVENT_TYPES = frozenset({
+    'search_performed',
+    'result_impression',
+    'result_clicked',
+    'campsite_viewed',
+    'saved',
+    'unsaved',
+    'collection_added',
+    'review_submitted',
+    'search_feedback',
+})
+
+
+def log_event(event_type, user_id=None, anon_id=None, session_id=None,
+              campsite_id=None, position=None, query_text=None, filters=None,
+              result_ids=None, meta=None):
+    """Log a user behavior event to the user_events table (migration 0023).
+
+    Best-effort: any database failure is silently swallowed so event logging
+    can never break a page load. The connection is always closed, even on
+    failure, to prevent connection leaks.
+
+    Args:
+        event_type: Required. One of ALLOWED_EVENT_TYPES.
+        user_id: Optional. The authenticated user's ID.
+        anon_id: Optional. The anonymous visitor's UUID (from cookie).
+        session_id: Optional. The browser session UUID.
+        campsite_id: Optional. The campsite ID (for campsite-related events).
+        position: Optional. 1-based rank in result list (for impression/click).
+        query_text: Optional. The search query string.
+        filters: Optional. Dict of parsed facet filters (converted to jsonb).
+        result_ids: Optional. List of campsite IDs returned (converted to int[]).
+        meta: Optional. Dict of additional metadata (converted to jsonb).
+    """
+    if event_type not in ALLOWED_EVENT_TYPES:
+        return
+
+    if meta is None:
+        meta = {}
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO user_events "
+            "(user_id, anon_id, session_id, event_type, campsite_id, "
+            "position, query_text, filters, result_ids, meta) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                user_id,
+                anon_id,
+                session_id,
+                event_type,
+                campsite_id,
+                position,
+                query_text,
+                Json(filters) if filters else None,
+                result_ids,
+                Json(meta),
+            ),
         )
         conn.commit()
     except Exception:
