@@ -743,6 +743,37 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearby();
   initDrive();
   initCollectionAdd();
+  initReviewModal();
   initImpressionTracking();
   initPickTracking();
 });
+
+// Review form modal -------------------------------------------------------
+
+function initReviewModal() {
+  const modal = document.getElementById("reviewModal");
+  if (!modal) return;
+
+  const openButtons = document.querySelectorAll('[data-review-open]');
+  const closeButtons = document.querySelectorAll('[data-review-close]');
+
+  const showModal = () => modal.hidden = false;
+  const hideModal = () => modal.hidden = true;
+
+  openButtons.forEach(btn => btn.addEventListener('click', showModal));
+  closeButtons.forEach(btn => btn.addEventListener('click', hideModal));
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal.querySelector('.modal-backdrop')) {
+      hideModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) {
+      hideModal();
+    }
+  });
+}

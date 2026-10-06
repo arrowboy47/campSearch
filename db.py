@@ -851,3 +851,119 @@ def merge_anon_events(user_id, anon_id):
         # outcome than the lost history this swallow is protecting against.
         if conn is not None:
             conn.close()
+
+
+# --- reviews (migration 0024) -----------------------------------------------
+
+def create_review(user_id, campsite_id, verdict, body, visited, attribute_reports):
+    """Create a review and its attribute reports in one transaction.
+
+    Args:
+        user_id: The authenticated user's ID.
+        campsite_id: The campsite being reviewed.
+        verdict: Boolean (True = thumbs up, False = thumbs down).
+        body: Optional text of the review.
+        visited: Boolean whether the user claims to have visited.
+        attribute_reports: List of dicts with keys: attribute, claimed_value.
+                          Each attribute must be one of the allowed six.
+
+    Raises:
+        psycopg2.IntegrityError: On UNIQUE constraint violation (user already
+                                 reviewed this campsite).
+        psycopg2.DatabaseError: On attribute name validation failure or other
+                                database errors.
+
+    Returns:
+        The review ID.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Insert the review.
+        cur.execute(
+            """
+            INSERT INTO reviews (user_id, campsite_id, verdict, body, visited, status)
+            VALUES (%s, %s, %s, %s, %s, 'published')
+            RETURNING id
+            """,
+            (user_id, campsite_id, verdict, body, visited),
+        )
+        review_id = cur.fetchone()[0]
+
+        # Insert attribute reports if any.
+        if attribute_reports:
+            for report in attribute_reports:
+                cur.execute(
+                    """
+                    INSERT INTO review_attribute_reports
+                        (review_id, campsite_id, attribute, claimed_value)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (review_id, campsite_id, report["attribute"], report.get("claimed_value")),
+                )
+
+        conn.commit()
+        return review_id
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_by_user_and_campsite(user_id, campsite_id):
+    """Fetch a user's review of a campsite, if one exists.
+
+    Returns:
+        A dict with keys (id, verdict, body, visited, status, created_at, updated_at),
+        or None if no review exists.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, verdict, body, visited, status, created_at, updated_at
+            FROM reviews
+            WHERE user_id = %s AND campsite_id = %s
+            """,
+            (user_id, campsite_id),
+        )
+        return cur.fetchone()
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_reviews_today(user_id):
+    """Count how many reviews the user has submitted today.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM reviews
+            WHERE user_id = %s
+            AND created_at >= now()::date
+            """,
+            (user_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()

@@ -282,6 +282,8 @@
 				{% endif %}
 			</section>
 
+			{% include "_review_form.html" %}
+
 			{% set date_qs %}{% if dates_explicit %}?start={{ start_date }}&end={{ end_date }}{% endif %}{% endset %}
 			<div class="detail-actions">
 				{% if campsite.booking_url %}

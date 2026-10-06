@@ -1,0 +1,90 @@
+{# Review submission form for a campsite. Included in campsite.html.
+   Expects: campsite (dict), current_user (dict or None), existing_review (dict or None)
+   The form includes CSRF token and uses the standard modal pattern. #}
+
+{% if existing_review %}
+  <section class="detail-section">
+    <h2 class="section-title">Your review</h2>
+    <div class="review-card">
+      <div class="review-verdict">
+        {% if existing_review.verdict %}
+          <span class="verdict-up">👍 Thumbs up</span>
+        {% else %}
+          <span class="verdict-down">👎 Thumbs down</span>
+        {% endif %}
+      </div>
+      {% if existing_review.body %}
+        <p class="review-body">{{ existing_review.body }}</p>
+      {% endif %}
+      <p class="review-meta">
+        Posted {{ existing_review.created_at.strftime('%b %d, %Y') }}
+        {% if existing_review.status == 'removed' %}
+          <span class="review-status-removed">(removed)</span>
+        {% endif %}
+      </p>
+    </div>
+  </section>
+
+{% elif current_user %}
+  <section class="detail-section">
+    <h2 class="section-title">Share your experience</h2>
+    <div class="review-form-intro">
+      <p>Have you visited {{ campsite.name }}? Help others by sharing your thoughts.</p>
+      <button type="button" class="btn btn-secondary" data-review-open>
+        Write a review
+      </button>
+    </div>
+  </section>
+
+  <div class="review-modal" id="reviewModal" hidden>
+    <div class="modal-backdrop" data-review-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+      <button type="button" class="modal-x" data-review-close aria-label="Close">×</button>
+      <h2 id="reviewTitle" class="modal-title">Review {{ campsite.name }}</h2>
+
+      <form method="POST" action="/campsite/{{ campsite.id }}/review" class="review-form">
+        {{ csrf_input() }}
+
+        <fieldset class="form-group">
+          <legend class="form-legend">How was it?</legend>
+          <div class="verdict-controls">
+            <label class="verdict-label">
+              <input type="radio" name="verdict" value="up" required />
+              <span class="verdict-label-text">👍 Thumbs up</span>
+            </label>
+            <label class="verdict-label">
+              <input type="radio" name="verdict" value="down" required />
+              <span class="verdict-label-text">👎 Thumbs down</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-group">
+          <label for="reviewBody" class="form-label">Tell us more (optional)</label>
+          <textarea id="reviewBody" name="body" class="form-textarea" placeholder="What stood out? Any tips for future campers?" maxlength="1000"></textarea>
+          <span class="form-note">1000 characters max</span>
+        </fieldset>
+
+        <fieldset class="form-group">
+          <label class="form-checkbox">
+            <input type="checkbox" name="visited" value="1" checked />
+            <span class="checkbox-label">I have visited this campsite</span>
+          </label>
+        </fieldset>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-review-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit review</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% else %}
+  <section class="detail-section">
+    <h2 class="section-title">Share your experience</h2>
+    <button type="button" class="btn btn-secondary" data-auth-gate>
+      Write a review
+    </button>
+  </section>
+{% endif %}
