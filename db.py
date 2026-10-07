@@ -1178,3 +1178,256 @@ def get_review_verdict_counts(campsite_id):
     finally:
         if conn:
             conn.close()
+
+
+# --- admin/moderation (migration 0025) ----------------------------------------
+
+
+def get_pending_photos():
+    """Get all review photos awaiting approval.
+
+    Returns:
+        A list of dicts with keys: id, review_id, path, created_at, review_user,
+        campsite_id, campsite_name.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                rp.id,
+                rp.review_id,
+                rp.path,
+                rp.created_at,
+                u.username AS review_user,
+                r.campsite_id,
+                c.name AS campsite_name
+            FROM review_photos rp
+            JOIN reviews r ON r.id = rp.review_id
+            JOIN users u ON u.id = r.user_id
+            JOIN campsites c ON c.id = r.campsite_id
+            WHERE rp.status = 'pending'
+            ORDER BY rp.created_at ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_open_reports():
+    """Get all open content reports.
+
+    Returns:
+        A list of dicts with keys: id, reporter_user, target_type, target_id,
+        reason, created_at, review_body (if review), campsite_name, campsite_id.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                cr.id,
+                COALESCE(u.username, 'Anonymous') AS reporter_user,
+                cr.target_type,
+                cr.target_id,
+                cr.reason,
+                cr.created_at,
+                r.body AS review_body,
+                r.campsite_id,
+                c.name AS campsite_name
+            FROM content_reports cr
+            LEFT JOIN users u ON u.id = cr.reporter_id
+            LEFT JOIN reviews r ON cr.target_type = 'review' AND cr.target_id = r.id
+            LEFT JOIN campsites c ON c.id = r.campsite_id
+            WHERE cr.status = 'open'
+            ORDER BY cr.created_at ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_attribute_report_groups():
+    """Get attribute reports grouped by campsite and attribute with counts.
+
+    Returns:
+        A list of dicts with keys: campsite_id, campsite_name, attribute,
+        claimed_value, report_count.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                c.id AS campsite_id,
+                c.name AS campsite_name,
+                rar.attribute,
+                rar.claimed_value,
+                COUNT(*) AS report_count
+            FROM review_attribute_reports rar
+            JOIN campsites c ON c.id = rar.campsite_id
+            GROUP BY c.id, c.name, rar.attribute, rar.claimed_value
+            ORDER BY report_count DESC, c.name ASC, rar.attribute ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_photo_status(photo_id, status, admin_id):
+    """Set a review photo's status and record the moderation action.
+
+    Args:
+        photo_id: The review photo ID.
+        status: One of 'approved' or 'rejected'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('approved', 'rejected'):
+        raise ValueError("Status must be 'approved' or 'rejected'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update photo status.
+        cur.execute(
+            "UPDATE review_photos SET status = %s WHERE id = %s",
+            (status, photo_id),
+        )
+
+        # Record the action (action is either 'approve' or 'reject').
+        action = 'approve' if status == 'approved' else 'reject'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review_photo', %s)
+            """,
+            (admin_id, action, photo_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_review_status(review_id, status, admin_id):
+    """Set a review's status and record the moderation action.
+
+    Args:
+        review_id: The review ID.
+        status: One of 'published' or 'removed'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('published', 'removed'):
+        raise ValueError("Status must be 'published' or 'removed'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update review status.
+        cur.execute(
+            "UPDATE reviews SET status = %s WHERE id = %s",
+            (status, review_id),
+        )
+
+        # Record the action (action is either 'restore' or 'remove').
+        action = 'restore' if status == 'published' else 'remove'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review', %s)
+            """,
+            (admin_id, action, review_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_report_status(report_id, status, admin_id):
+    """Set a content report's status and record the moderation action.
+
+    Args:
+        report_id: The content report ID.
+        status: One of 'actioned' or 'dismissed'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('actioned', 'dismissed'):
+        raise ValueError("Status must be 'actioned' or 'dismissed'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update report status.
+        cur.execute(
+            "UPDATE content_reports SET status = %s WHERE id = %s",
+            (status, report_id),
+        )
+
+        # Record the action (action is either 'action' or 'dismiss').
+        action = 'dismiss' if status == 'dismissed' else 'action'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review', %s)
+            """,
+            (admin_id, action, report_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()

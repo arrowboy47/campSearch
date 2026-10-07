@@ -25,6 +25,8 @@ from db import (
     create_review_photo, get_review_photos, count_review_photos,
     get_reviews_for_campsite, count_reviews_for_campsite,
     get_review_verdict_counts,
+    get_pending_photos, get_open_reports, get_attribute_report_groups,
+    set_photo_status, set_review_status, set_report_status,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -502,6 +504,17 @@ def login_required(view):
         if not current_user():
             flash("Sign in to do that.")
             return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    """Protect a route to admins only. Non-admins get 404, not 403."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        user = current_user()
+        if not user or not user.get("is_admin"):
+            abort(404)
         return view(*args, **kwargs)
     return wrapped
 
@@ -1684,6 +1697,143 @@ def api_distance():
     dist["label"] = label
     dist["approximate"] = coord_is_approx
     return jsonify(dist)
+
+
+# --- admin/moderation (migration 0025) ----------------------------------------
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    """Admin moderation queue dashboard."""
+    pending_photos = get_pending_photos()
+    open_reports = get_open_reports()
+    attribute_report_groups = get_attribute_report_groups()
+
+    return render_template(
+        "admin.html",
+        pending_photos=pending_photos,
+        open_reports=open_reports,
+        attribute_report_groups=attribute_report_groups,
+    )
+
+
+@app.route("/admin/photo/<int:photo_id>/approve", methods=["POST"])
+@admin_required
+def admin_approve_photo(photo_id):
+    """Approve a pending review photo."""
+    user = current_user()
+    try:
+        set_photo_status(photo_id, "approved", user["id"])
+        flash("Photo approved.")
+    except Exception as e:
+        flash(f"Error approving photo: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/photo/<int:photo_id>/reject", methods=["POST"])
+@admin_required
+def admin_reject_photo(photo_id):
+    """Reject a pending review photo."""
+    user = current_user()
+    try:
+        set_photo_status(photo_id, "rejected", user["id"])
+        flash("Photo rejected.")
+    except Exception as e:
+        flash(f"Error rejecting photo: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/review/<int:review_id>/remove", methods=["POST"])
+@admin_required
+def admin_remove_review(review_id):
+    """Remove a published review."""
+    user = current_user()
+    try:
+        set_review_status(review_id, "removed", user["id"])
+        flash("Review removed.")
+    except Exception as e:
+        flash(f"Error removing review: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/review/<int:review_id>/restore", methods=["POST"])
+@admin_required
+def admin_restore_review(review_id):
+    """Restore a removed review."""
+    user = current_user()
+    try:
+        set_review_status(review_id, "published", user["id"])
+        flash("Review restored.")
+    except Exception as e:
+        flash(f"Error restoring review: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/report/<int:report_id>/dismiss", methods=["POST"])
+@admin_required
+def admin_dismiss_report(report_id):
+    """Dismiss a content report."""
+    user = current_user()
+    try:
+        set_report_status(report_id, "dismissed", user["id"])
+        flash("Report dismissed.")
+    except Exception as e:
+        flash(f"Error dismissing report: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/report/<int:report_id>/action", methods=["POST"])
+@admin_required
+def admin_action_report(report_id):
+    """Mark a content report as actioned."""
+    user = current_user()
+    try:
+        set_report_status(report_id, "actioned", user["id"])
+        flash("Report marked as actioned.")
+    except Exception as e:
+        flash(f"Error actioning report: {e}")
+    return redirect("/admin")
+
+
+@app.route("/api/review_photos/<int:photo_id>/admin")
+@admin_required
+def serve_review_photo_admin(photo_id):
+    """Serve a review photo to an admin for review, regardless of status.
+
+    This allows admins to review pending photos before approval. The public
+    /api/review_photos/ endpoint still only serves approved photos.
+    """
+    from db import RealDictCursor
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status
+            FROM review_photos
+            WHERE id = %s
+            """,
+            (photo_id,),
+        )
+        photo = cur.fetchone()
+    finally:
+        if conn:
+            conn.close()
+
+    if not photo:
+        abort(404)
+
+    # Serve the file if it exists.
+    if not os.path.exists(photo["path"]):
+        abort(404)
+
+    with open(photo["path"], "rb") as f:
+        data = f.read()
+
+    return Response(data, mimetype="image/jpeg")
 
 
 # lets see what next

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Admin Moderation · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+	<style>
+		.admin-queue {
+			display: flex;
+			flex-direction: column;
+			gap: 2rem;
+		}
+
+		.queue-section {
+			border: 1px solid var(--border-subtle);
+			border-radius: var(--radius-md);
+			padding: 1.5rem;
+			background: var(--surface);
+		}
+
+		.queue-section h2 {
+			margin: 0 0 1.5rem 0;
+			font-size: 1.25rem;
+		}
+
+		.queue-items {
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.queue-item {
+			border: 1px solid var(--border-subtle);
+			border-radius: var(--radius-md);
+			padding: 1rem;
+			background: var(--surface-soft);
+		}
+
+		.queue-item-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			gap: 1rem;
+			margin-bottom: 1rem;
+		}
+
+		.queue-item-title {
+			font-weight: 600;
+			margin: 0;
+		}
+
+		.queue-item-meta {
+			font-size: 0.875rem;
+			color: var(--text-muted);
+			margin: 0 0 0.5rem 0;
+		}
+
+		.queue-item-body {
+			color: var(--text);
+			margin: 1rem 0;
+			line-height: 1.5;
+			word-break: break-word;
+		}
+
+		.queue-item-actions {
+			display: flex;
+			gap: 0.5rem;
+			margin-top: 1rem;
+		}
+
+		.photo-preview-container {
+			margin: 1rem 0;
+			max-width: 300px;
+		}
+
+		.photo-preview {
+			width: 100%;
+			max-height: 300px;
+			border-radius: var(--radius-md);
+			object-fit: contain;
+		}
+
+		.empty-queue {
+			color: var(--text-muted);
+			font-style: italic;
+			padding: 2rem 1rem;
+			text-align: center;
+		}
+
+		.attribute-group {
+			margin-bottom: 1.5rem;
+		}
+
+		.attribute-group-title {
+			font-weight: 600;
+			margin-bottom: 0.5rem;
+		}
+
+		.attribute-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0.75rem;
+			background: var(--surface);
+			border-radius: var(--radius-md);
+			margin-bottom: 0.5rem;
+		}
+
+		.attribute-value {
+			color: var(--text-soft);
+			font-size: 0.875rem;
+		}
+
+		.badge-count {
+			background: var(--accent);
+			color: #fff;
+			padding: 0.25rem 0.75rem;
+			border-radius: var(--radius-pill);
+			font-size: 0.875rem;
+			font-weight: 600;
+		}
+
+		.btn-form {
+			display: inline;
+		}
+
+		.report-target-link {
+			color: var(--accent);
+			text-decoration: none;
+		}
+
+		.report-target-link:hover {
+			text-decoration: underline;
+		}
+
+		@media (max-width: 820px) {
+			.admin-queue {
+				gap: 1.5rem;
+			}
+
+			.queue-section {
+				padding: 1rem;
+			}
+
+			.queue-item-actions {
+				flex-wrap: wrap;
+			}
+		}
+
+		@media (max-width: 640px) {
+			.queue-item-header {
+				flex-direction: column;
+			}
+
+			.queue-item-actions {
+				flex-direction: column;
+				width: 100%;
+			}
+
+			.queue-item-actions form,
+			.queue-item-actions button {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main account-layout">
+		<div class="account-body" style="width: 100%;">
+			{% include "_flash.html" %}
+
+			<div class="account-head">
+				<h1>Admin Moderation Queue</h1>
+			</div>
+
+			<div class="admin-queue">
+				<!-- Pending Photos Section -->
+				<section class="queue-section">
+					<h2>Pending Photos ({{ pending_photos | length }})</h2>
+					{% if pending_photos %}
+						<div class="queue-items">
+							{% for photo in pending_photos %}
+								<article class="queue-item">
+									<div class="queue-item-header">
+										<div>
+											<p class="queue-item-title">{{ photo.campsite_name }}</p>
+											<p class="queue-item-meta">
+												By {{ photo.review_user }} on {{ photo.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+											</p>
+										</div>
+									</div>
+									<div class="photo-preview-container">
+										<img
+											class="photo-preview"
+											src="{{ url_for('serve_review_photo_admin', photo_id=photo.id) }}"
+											alt="Pending review photo"
+										/>
+									</div>
+									<div class="queue-item-actions">
+										<form class="btn-form" method="POST" action="/admin/photo/{{ photo.id }}/approve">
+											{{ csrf_input() }}
+											<button type="submit" class="btn btn-primary">Approve</button>
+										</form>
+										<form class="btn-form" method="POST" action="/admin/photo/{{ photo.id }}/reject">
+											{{ csrf_input() }}
+											<button type="submit" class="btn btn-secondary">Reject</button>
+										</form>
+									</div>
+								</article>
+							{% endfor %}
+						</div>
+					{% else %}
+						<div class="empty-queue">No pending photos</div>
+					{% endif %}
+				</section>
+
+				<!-- Open Content Reports Section -->
+				<section class="queue-section">
+					<h2>Open Content Reports ({{ open_reports | length }})</h2>
+					{% if open_reports %}
+						<div class="queue-items">
+							{% for report in open_reports %}
+								<article class="queue-item">
+									<div class="queue-item-header">
+										<div style="flex: 1;">
+											<p class="queue-item-title">
+												Report #{{ report.id }}: {{ report.target_type }}
+											</p>
+											<p class="queue-item-meta">
+												Reported by {{ report.reporter_user }} on {{ report.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+											</p>
+											<p class="queue-item-meta">Reason: {{ report.reason or '(none given)' }}</p>
+										</div>
+									</div>
+
+									{% if report.target_type == 'review' and report.review_body %}
+										<div class="queue-item-body">
+											<strong>Review text:</strong>
+											<blockquote>{{ report.review_body }}</blockquote>
+										</div>
+										<p>
+											<a href="/campsite/{{ report.campsite_id }}" class="report-target-link">
+												View campsite ({{ report.campsite_name }})
+											</a>
+										</p>
+									{% elif report.target_type == 'review_photo' %}
+										<p>
+											<a href="/campsite/{{ report.campsite_id }}" class="report-target-link">
+												View campsite ({{ report.campsite_name }})
+											</a>
+										</p>
+									{% endif %}
+
+									<div class="queue-item-actions">
+										<form class="btn-form" method="POST" action="/admin/report/{{ report.id }}/action">
+											{{ csrf_input() }}
+											<button type="submit" class="btn btn-primary">Mark Actioned</button>
+										</form>
+										<form class="btn-form" method="POST" action="/admin/report/{{ report.id }}/dismiss">
+											{{ csrf_input() }}
+											<button type="submit" class="btn btn-secondary">Dismiss</button>
+										</form>
+									</div>
+								</article>
+							{% endfor %}
+						</div>
+					{% else %}
+						<div class="empty-queue">No open reports</div>
+					{% endif %}
+				</section>
+
+				<!-- Attribute Reports Section (Display Only) -->
+				<section class="queue-section">
+					<h2>Attribute Reports by Campsite (Display Only)</h2>
+					<p class="queue-item-meta">Applying these reports is handled by a scheduled job, not manually.</p>
+					{% if attribute_report_groups %}
+						<div class="queue-items">
+							{% set current_campsite = None %}
+							{% for group in attribute_report_groups %}
+								{% if group.campsite_name != current_campsite %}
+									{% if current_campsite is not none %}
+										</div>
+									{% endif %}
+									{% set current_campsite = group.campsite_name %}
+									<div class="attribute-group">
+										<p class="attribute-group-title">
+											<a href="/campsite/{{ group.campsite_id }}" class="report-target-link">{{ group.campsite_name }}</a>
+										</p>
+										<div>
+								{% endif %}
+								<div class="attribute-item">
+									<div>
+										<strong>{{ group.attribute }}</strong>
+										{% if group.claimed_value %}
+											<p class="attribute-value">Claimed value: {{ group.claimed_value }}</p>
+										{% endif %}
+									</div>
+									<span class="badge-count">{{ group.report_count }}</span>
+								</div>
+							{% endfor %}
+							{% if current_campsite is not none %}
+										</div>
+									</div>
+							{% endif %}
+						</div>
+					{% else %}
+						<div class="empty-queue">No attribute reports</div>
+					{% endif %}
+				</section>
+			</div>
+		</div>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Always confirm details with the official listing before traveling.</p>
+	</footer>
+	{% include "_bottomnav.html" %}
+</body>
+</html>
