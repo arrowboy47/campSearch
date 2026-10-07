@@ -284,10 +284,9 @@
 					{% endif %}
 				</section>
 
-				<!-- Attribute Reports Section (Display Only) -->
+				<!-- Attribute Reports Section (Actionable) -->
 				<section class="queue-section">
-					<h2>Attribute Reports by Campsite (Display Only)</h2>
-					<p class="queue-item-meta">Applying these reports is handled by a scheduled job, not manually.</p>
+					<h2>Attribute Reports by Campsite</h2>
 					{% if attribute_report_groups %}
 						<div class="queue-items">
 							{% set current_campsite = None %}
@@ -304,13 +303,35 @@
 										<div>
 								{% endif %}
 								<div class="attribute-item">
-									<div>
+									<div style="flex: 1;">
 										<strong>{{ group.attribute }}</strong>
-										{% if group.claimed_value %}
-											<p class="attribute-value">Claimed value: {{ group.claimed_value }}</p>
+										<p class="attribute-value">
+											Claimed value: {{ group.claimed_value or '(null)' }}
+										</p>
+										<p class="attribute-value">
+											Users agreeing: {{ group.agreeing_users }} / {{ group.total_users }}
+											({{ group.agreement_percent }}%)
+										</p>
+										{% if group.meets_threshold %}
+											<p class="attribute-value" style="color: var(--accent); font-weight: 600;">
+												Meets threshold for auto-apply
+											</p>
 										{% endif %}
 									</div>
-									<span class="badge-count">{{ group.report_count }}</span>
+									<div class="queue-item-actions" style="flex-direction: column;">
+										<form class="btn-form" method="POST" action="/admin/attribute/apply">
+											{{ csrf_input() }}
+											<input type="hidden" name="campsite_id" value="{{ group.campsite_id }}">
+											<input type="hidden" name="attribute" value="{{ group.attribute }}">
+											<input type="hidden" name="claimed_value" value="{{ group.claimed_value }}">
+											<button type="submit" class="btn btn-primary">Apply</button>
+										</form>
+										<form class="btn-form" method="POST" action="/admin/attribute/dismiss">
+											{{ csrf_input() }}
+											<input type="hidden" name="campsite_id" value="{{ group.campsite_id }}">
+											<button type="submit" class="btn btn-secondary">Dismiss</button>
+										</form>
+									</div>
 								</div>
 							{% endfor %}
 							{% if current_campsite is not none %}

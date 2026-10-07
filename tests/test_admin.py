@@ -42,6 +42,11 @@ def no_db(monkeypatch):
         "get_pending_photos": [],
         "get_open_reports": [],
         "get_attribute_report_groups": [],
+        # Task 13 replaced the display-only attribute section with a scored
+        # one, so /admin now calls evaluate_attribute_reports. Any database
+        # call a route gains has to be stubbed here or this file reaches real
+        # Postgres and passes only while a tunnel happens to be open.
+        "evaluate_attribute_reports": [],
     }
     for name, value in stubs.items():
         if hasattr(A, name):
