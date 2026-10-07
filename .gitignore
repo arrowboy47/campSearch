@@ -6,6 +6,9 @@ __pycache__/
 venv/
 .uv/
 
+# Editor and assistant tooling, per-developer
+.continue/
+
 # Env / secrets
 .env
 *.local
