@@ -378,9 +378,13 @@ def log_event(event_type, user_id=None, anon_id=None, session_id=None,
 
 # --- users & saved campsites (migration 0014) ------------------------------
 
+# is_admin belongs here. admin_required reads current_user()["is_admin"], and
+# current_user() is built from this list, so leaving it out makes every admin
+# route 404 for real admins while any test that mocks current_user still
+# passes. That is exactly how it shipped broken the first time.
 _USER_COLS = (
     "id, username, first_name, last_name, email, "
-    "home_address, home_lat, home_lon, avatar_path, created_at"
+    "home_address, home_lat, home_lon, avatar_path, created_at, is_admin"
 )
 
 

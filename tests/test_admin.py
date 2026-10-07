@@ -244,3 +244,39 @@ class TestPhotoPendingNotPublic:
             mock_open.return_value.__enter__.return_value.read.return_value = b"fake image"
             response = client.get("/api/review_photos/1/admin")
             assert response.status_code == 200
+
+
+class TestAdminFlagSurvivesTheRealUserQuery:
+    """is_admin must come back from the query current_user() actually uses.
+
+    admin_required reads current_user()["is_admin"], and current_user() is
+    built by db.get_user, which selects an explicit column list. is_admin was
+    missing from that list, so the flag was always None and every admin route
+    404'd for real admins. Every test passed anyway, because they all mocked
+    current_user to return a dict that already had the key, which is the one
+    thing that cannot fail in production.
+
+    These assert on the column list and the shaping, so the bug cannot return
+    without a mock being involved.
+    """
+
+    def test_user_column_list_includes_is_admin(self):
+        import db
+        assert "is_admin" in db._USER_COLS, (
+            "is_admin is missing from _USER_COLS, so current_user() will never "
+            "carry it and admin_required will 404 for genuine admins")
+
+    def test_shape_user_preserves_is_admin(self):
+        import db
+        shaped = db._shape_user({"id": 1, "username": "a", "is_admin": True})
+        assert shaped["is_admin"] is True, (
+            "_shape_user dropped is_admin on the way out")
+
+    def test_admin_required_reads_the_key_get_user_provides(self):
+        """Guard against the decorator and the query drifting apart."""
+        import db, inspect, app as A
+        src = inspect.getsource(A.admin_required)
+        assert "is_admin" in src
+        shaped = db._shape_user({"id": 1, "username": "a", "is_admin": False})
+        assert "is_admin" in shaped, (
+            "the decorator looks for is_admin but the user dict has no such key")
