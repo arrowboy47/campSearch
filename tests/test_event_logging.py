@@ -48,6 +48,10 @@ def no_db(monkeypatch):
         "get_review_verdict_counts": {"up": 0, "down": 0},
         "get_review_photos": [],
         "get_review_by_user_and_campsite": None,
+        # Task 12 added admin routes that call these functions
+        "get_pending_photos": [],
+        "get_open_reports": [],
+        "get_attribute_report_groups": [],
     }
     for name, value in stubs.items():
         if hasattr(A, name):
