@@ -1063,3 +1063,118 @@ def count_review_photos(review_id):
     finally:
         if conn:
             conn.close()
+
+
+def get_reviews_for_campsite(campsite_id, limit=20, offset=0):
+    """Fetch published reviews for a campsite, newest first, with author info and approved photos.
+
+    Args:
+        campsite_id: The campsite ID.
+        limit: Number of reviews to return (default 20).
+        offset: Pagination offset (default 0).
+
+    Returns:
+        List of dicts with keys: id, verdict, body, created_at, author_username,
+        author_first_name, author_avatar_path, approved_photos (list of photo dicts).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Fetch reviews with author info
+        cur.execute(
+            """
+            SELECT
+                r.id, r.verdict, r.body, r.created_at,
+                u.username AS author_username,
+                u.first_name AS author_first_name,
+                u.avatar_path AS author_avatar_path
+            FROM reviews r
+            JOIN users u ON u.id = r.user_id
+            WHERE r.campsite_id = %s AND r.status = 'published'
+            ORDER BY r.created_at DESC
+            LIMIT %s
+            OFFSET %s
+            """,
+            (campsite_id, limit, offset),
+        )
+        reviews = [dict(r) for r in cur.fetchall()]
+
+        # Fetch approved photos for each review
+        for review in reviews:
+            cur.execute(
+                """
+                SELECT id, path, created_at
+                FROM review_photos
+                WHERE review_id = %s AND status = 'approved'
+                ORDER BY created_at ASC
+                """,
+                (review["id"],),
+            )
+            review["approved_photos"] = [dict(r) for r in cur.fetchall()]
+
+        return reviews
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_reviews_for_campsite(campsite_id):
+    """Count published reviews for a campsite.
+
+    Args:
+        campsite_id: The campsite ID.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM reviews
+            WHERE campsite_id = %s AND status = 'published'
+            """,
+            (campsite_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_verdict_counts(campsite_id):
+    """Get the count of thumbs up and thumbs down for published reviews.
+
+    Args:
+        campsite_id: The campsite ID.
+
+    Returns:
+        A dict with keys 'up' and 'down' containing counts.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                COALESCE(SUM(CASE WHEN verdict = TRUE THEN 1 ELSE 0 END), 0) AS up,
+                COALESCE(SUM(CASE WHEN verdict = FALSE THEN 1 ELSE 0 END), 0) AS down
+            FROM reviews
+            WHERE campsite_id = %s AND status = 'published'
+            """,
+            (campsite_id,),
+        )
+        row = cur.fetchone()
+        return {"up": row[0], "down": row[1]}
+
+    finally:
+        if conn:
+            conn.close()
