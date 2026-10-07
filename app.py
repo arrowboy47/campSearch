@@ -23,6 +23,8 @@ from db import (
     log_event,
     create_review, get_review_by_user_and_campsite, count_reviews_today,
     create_review_photo, get_review_photos, count_review_photos,
+    get_reviews_for_campsite, count_reviews_for_campsite,
+    get_review_verdict_counts,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -965,6 +967,15 @@ def campsite(campsite_id):
     # constructed alltrails_url is the fallback "explore" link in that case).
     trails = get_trails_for_campsite(campsite_id)
 
+    # Reviews for this campsite, paginated at 20 per page.
+    page = request.args.get("review_page", 1, type=int)
+    if page < 1:
+        page = 1
+    offset = (page - 1) * 20
+    reviews = get_reviews_for_campsite(campsite_id, limit=20, offset=offset)
+    reviews_total_count = count_reviews_for_campsite(campsite_id)
+    review_verdict_counts = get_review_verdict_counts(campsite_id)
+
     # Driving distance from the user's home (or device location if given and
     # far from home). Computed server-side only when we already have a home on
     # file; otherwise the page's JS offers to use the browser location.
@@ -1008,6 +1019,10 @@ def campsite(campsite_id):
         saved=saved,
         user_collections=user_collections,
         existing_review=existing_review,
+        reviews=reviews,
+        reviews_total_count=reviews_total_count,
+        review_verdict_counts=review_verdict_counts,
+        reviews_page=page,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         dates_explicit=bool(start_str or end_str),

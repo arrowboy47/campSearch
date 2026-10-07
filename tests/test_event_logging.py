@@ -40,6 +40,14 @@ def no_db(monkeypatch):
         "search_campsites": [],
         "get_facet_options": {},
         "get_all_forests": [],
+        # Task 11 added review rendering to the campsite route. Every call it
+        # makes has to be stubbed here or this file reaches real Postgres
+        # again, which is the exact failure this fixture exists to prevent.
+        "get_reviews_for_campsite": [],
+        "count_reviews_for_campsite": 0,
+        "get_review_verdict_counts": {"up": 0, "down": 0},
+        "get_review_photos": [],
+        "get_review_by_user_and_campsite": None,
     }
     for name, value in stubs.items():
         if hasattr(A, name):

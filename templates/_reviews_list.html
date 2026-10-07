@@ -1,0 +1,91 @@
+{# Reviews section for a campsite. Included in campsite.html.
+   Expects: reviews (list), reviews_total_count (int), review_verdict_counts (dict with 'up' and 'down'),
+            campsite (dict), reviews_page (int), current_user (dict or None)
+
+   Shows:
+   - Verdict summary (thumbs up vs thumbs down)
+   - List of published reviews, paginated at 20 per page
+   - For each review: author name/avatar, verdict, body, date, approved photos
+   - Pagination controls
+#}
+
+{% if reviews_total_count > 0 %}
+  <section class="detail-section">
+    <h2 class="section-title">Visitor reviews</h2>
+
+    {# Verdict summary #}
+    {% set up_count = review_verdict_counts.up %}
+    {% set down_count = review_verdict_counts.down %}
+    {% set total_count = up_count + down_count %}
+
+    {% if total_count > 0 %}
+      <div class="reviews-summary">
+        {% if up_count > 0 and down_count == 0 %}
+          <p class="summary-text">All {{ total_count }} {{ 'visitor' if total_count == 1 else 'visitors' }} recommend this site.</p>
+        {% elif down_count > 0 and up_count == 0 %}
+          <p class="summary-text">No visitors recommend this site.</p>
+        {% elif up_count > 0 %}
+          <p class="summary-text">{{ up_count }} of {{ total_count }} {{ 'visitor' if total_count == 1 else 'visitors' }} recommend this site.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {# Reviews list #}
+    {% if reviews %}
+      <div class="reviews-list">
+        {% for review in reviews %}
+          <article class="review-card-published">
+            <div class="review-header">
+              <div class="review-author">
+                {% if review.author_avatar_path %}
+                  <img class="review-avatar" src="{{ url_for('static', filename=review.author_avatar_path) }}" alt="" />
+                {% endif %}
+                <div class="review-author-info">
+                  <p class="review-author-name">{{ review.author_first_name or review.author_username }}</p>
+                  <p class="review-date">{{ review.created_at.strftime('%b %d, %Y') }}</p>
+                </div>
+              </div>
+              <div class="review-verdict-badge">
+                {% if review.verdict %}
+                  <span class="verdict-up">👍</span>
+                {% else %}
+                  <span class="verdict-down">👎</span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if review.body %}
+              <p class="review-body">{{ review.body }}</p>
+            {% endif %}
+
+            {# Display approved photos #}
+            {% if review.approved_photos %}
+              <div class="review-photos-grid">
+                {% for photo in review.approved_photos %}
+                  <img class="review-photo" src="{{ url_for('serve_review_photo', photo_id=photo.id) }}" alt="Review photo" loading="lazy" />
+                {% endfor %}
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+
+      {# Pagination #}
+      {% if reviews_total_count > 20 %}
+        <div class="reviews-pagination">
+          {% if reviews_page > 1 %}
+            <a href="?review_page={{ reviews_page - 1 }}" class="btn btn-secondary">Previous reviews</a>
+          {% endif %}
+
+          <span class="pagination-info">
+            Showing {{ (reviews_page - 1) * 20 + 1 }}-{{ [reviews_page * 20, reviews_total_count]|min }} of {{ reviews_total_count }}
+          </span>
+
+          {% if reviews_page * 20 < reviews_total_count %}
+            <a href="?review_page={{ reviews_page + 1 }}" class="btn btn-secondary">More reviews</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endif %}
