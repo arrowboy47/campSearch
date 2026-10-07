@@ -1276,6 +1276,100 @@ fieldset.filter-group legend {
   color: var(--accent-strong);
 }
 
+/* Search feedback controls ------------------------------------------------ */
+
+.search-feedback-prompt {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+}
+
+.search-feedback-text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.search-feedback-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.search-feedback-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-feedback-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.search-feedback-btn.voted {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+/* Per-result feedback buttons */
+
+.result-card-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.result-card-title-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-card-feedback {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.result-feedback-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.result-feedback-btn:hover {
+  opacity: 1;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.result-feedback-btn.voted {
+  opacity: 1;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Responsive ----------------------------------------------------------- */
 
 @media (max-width: 640px) {

@@ -54,6 +54,16 @@
 				<a href="/" class="link-quiet">← New search</a>
 			</div>
 
+			{% if campsites %}
+				<div class="search-feedback-prompt">
+					<p class="search-feedback-text">Did you find what you were looking for?</p>
+					<div class="search-feedback-buttons">
+						<button type="button" class="search-feedback-btn" data-feedback-vote="yes" aria-label="Yes, I found what I was looking for">Yes</button>
+						<button type="button" class="search-feedback-btn" data-feedback-vote="no" aria-label="No, I did not find what I was looking for">No</button>
+					</div>
+				</div>
+			{% endif %}
+
 			{% set mapped = campsites | selectattr('latitude') | list %}
 			{% if mapped %}
 				<div class="map-card results-map-card">
@@ -68,19 +78,27 @@
 					{% for camp in campsites %}
 						<article class="result-card" data-position="{{ loop.index }}" data-campsite-id="{{ camp.id }}">
 							<header class="result-card-header">
-								<h2 class="result-card-title">
-									<a
-									  href="/campsite/{{ camp.id }}{% if start_date or end_date %}?{% endif %}{% if start_date %}start={{ start_date }}{% endif %}{% if start_date and end_date %}&{% endif %}{% if end_date %}end={{ end_date }}{% endif %}"
-									  class="result-card-link"
-									  data-pick="{{ camp.id }}"
-									>{{ camp.name }}</a>
-								</h2>
+								<div class="result-card-header-top">
+									<div class="result-card-title-wrapper">
+										<h2 class="result-card-title">
+											<a
+											  href="/campsite/{{ camp.id }}{% if start_date or end_date %}?{% endif %}{% if start_date %}start={{ start_date }}{% endif %}{% if start_date and end_date %}&{% endif %}{% if end_date %}end={{ end_date }}{% endif %}"
+											  class="result-card-link"
+											  data-pick="{{ camp.id }}"
+											>{{ camp.name }}</a>
+										</h2>
 
-								{% if camp.is_open is not none %}
-									<span class="status-chip {% if camp.is_open %}status-open{% else %}status-closed{% endif %}">
-										{% if camp.is_open %}Open{% else %}Closed{% endif %}
-									</span>
-								{% endif %}
+										{% if camp.is_open is not none %}
+											<span class="status-chip {% if camp.is_open %}status-open{% else %}status-closed{% endif %}">
+												{% if camp.is_open %}Open{% else %}Closed{% endif %}
+											</span>
+										{% endif %}
+									</div>
+									<div class="result-card-feedback">
+										<button type="button" class="result-feedback-btn result-feedback-helpful" data-feedback-result="{{ loop.index }}" aria-label="Mark as helpful">👍</button>
+										<button type="button" class="result-feedback-btn result-feedback-unhelpful" data-feedback-result="{{ loop.index }}" aria-label="Mark as not helpful">👎</button>
+									</div>
+								</div>
 							</header>
 
 							<div class="result-card-body">
