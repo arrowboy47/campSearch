@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 
 from config import database_url
 
@@ -304,11 +304,87 @@ def record_pick(campsite_id):
             conn.close()
 
 
+# --- event logging (migration 0023) -----------------------------------------
+
+ALLOWED_EVENT_TYPES = frozenset({
+    'search_performed',
+    'result_impression',
+    'result_clicked',
+    'campsite_viewed',
+    'saved',
+    'unsaved',
+    'collection_added',
+    'review_submitted',
+    'search_feedback',
+})
+
+
+def log_event(event_type, user_id=None, anon_id=None, session_id=None,
+              campsite_id=None, position=None, query_text=None, filters=None,
+              result_ids=None, meta=None):
+    """Log a user behavior event to the user_events table (migration 0023).
+
+    Best-effort: any database failure is silently swallowed so event logging
+    can never break a page load. The connection is always closed, even on
+    failure, to prevent connection leaks.
+
+    Args:
+        event_type: Required. One of ALLOWED_EVENT_TYPES.
+        user_id: Optional. The authenticated user's ID.
+        anon_id: Optional. The anonymous visitor's UUID (from cookie).
+        session_id: Optional. The browser session UUID.
+        campsite_id: Optional. The campsite ID (for campsite-related events).
+        position: Optional. 1-based rank in result list (for impression/click).
+        query_text: Optional. The search query string.
+        filters: Optional. Dict of parsed facet filters (converted to jsonb).
+        result_ids: Optional. List of campsite IDs returned (converted to int[]).
+        meta: Optional. Dict of additional metadata (converted to jsonb).
+    """
+    if event_type not in ALLOWED_EVENT_TYPES:
+        return
+
+    if meta is None:
+        meta = {}
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO user_events "
+            "(user_id, anon_id, session_id, event_type, campsite_id, "
+            "position, query_text, filters, result_ids, meta) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (
+                user_id,
+                anon_id,
+                session_id,
+                event_type,
+                campsite_id,
+                position,
+                query_text,
+                Json(filters) if filters else None,
+                result_ids,
+                Json(meta),
+            ),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        if conn is not None:
+            conn.close()
+
+
 # --- users & saved campsites (migration 0014) ------------------------------
 
+# is_admin belongs here. admin_required reads current_user()["is_admin"], and
+# current_user() is built from this list, so leaving it out makes every admin
+# route 404 for real admins while any test that mocks current_user still
+# passes. That is exactly how it shipped broken the first time.
 _USER_COLS = (
     "id, username, first_name, last_name, email, "
-    "home_address, home_lat, home_lon, avatar_path, created_at"
+    "home_address, home_lat, home_lon, avatar_path, created_at, is_admin"
 )
 
 
@@ -740,3 +816,856 @@ def get_collection_campsites(collection_id):
     cur.close()
     conn.close()
     return rows
+
+
+# --- anonymous identity (migration 0023) ------------------------------------
+
+def merge_anon_events(user_id, anon_id):
+    """Merge anonymous event history to a newly signed-in user (best-effort).
+
+    When an anonymous visitor signs up or logs in, transfer all their
+    behavioral history from anon_id to user_id. The AND user_id IS NULL guard
+    ensures we never reassign rows that already belong to someone.
+
+    This is best-effort: if it fails (network, concurrent conflict), the
+    login/signup must still succeed. Call this after creating or verifying
+    the user account.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE user_events
+            SET user_id = %s, anon_id = NULL
+            WHERE anon_id = %s AND user_id IS NULL
+            """,
+            (user_id, anon_id),
+        )
+        conn.commit()
+    except Exception:
+        # Swallowed like record_pick, so a failed merge never fails a login.
+        # Losing some anonymous history is survivable; losing the login is not.
+        pass
+    finally:
+        # The close has to be in finally. Closing only on the happy path leaks
+        # a connection on every failure, and enough leaks exhaust the server's
+        # connection limit, which takes the whole app down. That is a far worse
+        # outcome than the lost history this swallow is protecting against.
+        if conn is not None:
+            conn.close()
+
+
+# --- reviews (migration 0024) -----------------------------------------------
+
+def create_review(user_id, campsite_id, verdict, body, visited, attribute_reports):
+    """Create a review and its attribute reports in one transaction.
+
+    Args:
+        user_id: The authenticated user's ID.
+        campsite_id: The campsite being reviewed.
+        verdict: Boolean (True = thumbs up, False = thumbs down).
+        body: Optional text of the review.
+        visited: Boolean whether the user claims to have visited.
+        attribute_reports: List of dicts with keys: attribute, claimed_value.
+                          Each attribute must be one of the allowed six.
+
+    Raises:
+        psycopg2.IntegrityError: On UNIQUE constraint violation (user already
+                                 reviewed this campsite).
+        psycopg2.DatabaseError: On attribute name validation failure or other
+                                database errors.
+
+    Returns:
+        The review ID.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Insert the review.
+        cur.execute(
+            """
+            INSERT INTO reviews (user_id, campsite_id, verdict, body, visited, status)
+            VALUES (%s, %s, %s, %s, %s, 'published')
+            RETURNING id
+            """,
+            (user_id, campsite_id, verdict, body, visited),
+        )
+        review_id = cur.fetchone()[0]
+
+        # Insert attribute reports if any.
+        if attribute_reports:
+            for report in attribute_reports:
+                cur.execute(
+                    """
+                    INSERT INTO review_attribute_reports
+                        (review_id, campsite_id, attribute, claimed_value)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (review_id, campsite_id, report["attribute"], report.get("claimed_value")),
+                )
+
+        conn.commit()
+        return review_id
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_by_user_and_campsite(user_id, campsite_id):
+    """Fetch a user's review of a campsite, if one exists.
+
+    Returns:
+        A dict with keys (id, verdict, body, visited, status, created_at, updated_at),
+        or None if no review exists.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, verdict, body, visited, status, created_at, updated_at
+            FROM reviews
+            WHERE user_id = %s AND campsite_id = %s
+            """,
+            (user_id, campsite_id),
+        )
+        return cur.fetchone()
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_reviews_today(user_id):
+    """Count how many reviews the user has submitted today.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM reviews
+            WHERE user_id = %s
+            AND created_at >= now()::date
+            """,
+            (user_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def create_review_photo(review_id, path):
+    """Create a pending review photo.
+
+    Args:
+        review_id: The review this photo belongs to.
+        path: The file path to the photo.
+
+    Returns:
+        The photo ID.
+
+    Raises:
+        psycopg2.DatabaseError: On database errors.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO review_photos (review_id, path, status)
+            VALUES (%s, %s, 'pending')
+            RETURNING id
+            """,
+            (review_id, path),
+        )
+        photo_id = cur.fetchone()[0]
+        conn.commit()
+        return photo_id
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_photos(review_id):
+    """Fetch all photos for a review, sorted by creation date.
+
+    Args:
+        review_id: The review ID.
+
+    Returns:
+        List of dicts with keys (id, path, status, created_at).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status, created_at
+            FROM review_photos
+            WHERE review_id = %s
+            ORDER BY created_at ASC
+            """,
+            (review_id,),
+        )
+        return cur.fetchall() or []
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_review_photos(review_id):
+    """Count how many photos are attached to a review (any status).
+
+    Args:
+        review_id: The review ID.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM review_photos
+            WHERE review_id = %s
+            """,
+            (review_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_reviews_for_campsite(campsite_id, limit=20, offset=0):
+    """Fetch published reviews for a campsite, newest first, with author info and approved photos.
+
+    Args:
+        campsite_id: The campsite ID.
+        limit: Number of reviews to return (default 20).
+        offset: Pagination offset (default 0).
+
+    Returns:
+        List of dicts with keys: id, verdict, body, created_at, author_username,
+        author_first_name, author_avatar_path, approved_photos (list of photo dicts).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Fetch reviews with author info
+        cur.execute(
+            """
+            SELECT
+                r.id, r.verdict, r.body, r.created_at,
+                u.username AS author_username,
+                u.first_name AS author_first_name,
+                u.avatar_path AS author_avatar_path
+            FROM reviews r
+            JOIN users u ON u.id = r.user_id
+            WHERE r.campsite_id = %s AND r.status = 'published'
+            ORDER BY r.created_at DESC
+            LIMIT %s
+            OFFSET %s
+            """,
+            (campsite_id, limit, offset),
+        )
+        reviews = [dict(r) for r in cur.fetchall()]
+
+        # Fetch approved photos for each review
+        for review in reviews:
+            cur.execute(
+                """
+                SELECT id, path, created_at
+                FROM review_photos
+                WHERE review_id = %s AND status = 'approved'
+                ORDER BY created_at ASC
+                """,
+                (review["id"],),
+            )
+            review["approved_photos"] = [dict(r) for r in cur.fetchall()]
+
+        return reviews
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def count_reviews_for_campsite(campsite_id):
+    """Count published reviews for a campsite.
+
+    Args:
+        campsite_id: The campsite ID.
+
+    Returns:
+        The count as an integer.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM reviews
+            WHERE campsite_id = %s AND status = 'published'
+            """,
+            (campsite_id,),
+        )
+        return cur.fetchone()[0]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_review_verdict_counts(campsite_id):
+    """Get the count of thumbs up and thumbs down for published reviews.
+
+    Args:
+        campsite_id: The campsite ID.
+
+    Returns:
+        A dict with keys 'up' and 'down' containing counts.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                COALESCE(SUM(CASE WHEN verdict = TRUE THEN 1 ELSE 0 END), 0) AS up,
+                COALESCE(SUM(CASE WHEN verdict = FALSE THEN 1 ELSE 0 END), 0) AS down
+            FROM reviews
+            WHERE campsite_id = %s AND status = 'published'
+            """,
+            (campsite_id,),
+        )
+        row = cur.fetchone()
+        return {"up": row[0], "down": row[1]}
+
+    finally:
+        if conn:
+            conn.close()
+
+
+# --- admin/moderation (migration 0025) ----------------------------------------
+
+
+def get_pending_photos():
+    """Get all review photos awaiting approval.
+
+    Returns:
+        A list of dicts with keys: id, review_id, path, created_at, review_user,
+        campsite_id, campsite_name.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                rp.id,
+                rp.review_id,
+                rp.path,
+                rp.created_at,
+                u.username AS review_user,
+                r.campsite_id,
+                c.name AS campsite_name
+            FROM review_photos rp
+            JOIN reviews r ON r.id = rp.review_id
+            JOIN users u ON u.id = r.user_id
+            JOIN campsites c ON c.id = r.campsite_id
+            WHERE rp.status = 'pending'
+            ORDER BY rp.created_at ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_open_reports():
+    """Get all open content reports.
+
+    Returns:
+        A list of dicts with keys: id, reporter_user, target_type, target_id,
+        reason, created_at, review_body (if review), campsite_name, campsite_id.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                cr.id,
+                COALESCE(u.username, 'Anonymous') AS reporter_user,
+                cr.target_type,
+                cr.target_id,
+                cr.reason,
+                cr.created_at,
+                r.body AS review_body,
+                r.campsite_id,
+                c.name AS campsite_name
+            FROM content_reports cr
+            LEFT JOIN users u ON u.id = cr.reporter_id
+            LEFT JOIN reviews r ON cr.target_type = 'review' AND cr.target_id = r.id
+            LEFT JOIN campsites c ON c.id = r.campsite_id
+            WHERE cr.status = 'open'
+            ORDER BY cr.created_at ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_attribute_report_groups():
+    """Get attribute reports grouped by campsite and attribute with counts.
+
+    Returns:
+        A list of dicts with keys: campsite_id, campsite_name, attribute,
+        claimed_value, report_count.
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT
+                c.id AS campsite_id,
+                c.name AS campsite_name,
+                rar.attribute,
+                rar.claimed_value,
+                COUNT(*) AS report_count
+            FROM review_attribute_reports rar
+            JOIN campsites c ON c.id = rar.campsite_id
+            GROUP BY c.id, c.name, rar.attribute, rar.claimed_value
+            ORDER BY report_count DESC, c.name ASC, rar.attribute ASC
+            """,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_photo_status(photo_id, status, admin_id):
+    """Set a review photo's status and record the moderation action.
+
+    Args:
+        photo_id: The review photo ID.
+        status: One of 'approved' or 'rejected'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('approved', 'rejected'):
+        raise ValueError("Status must be 'approved' or 'rejected'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update photo status.
+        cur.execute(
+            "UPDATE review_photos SET status = %s WHERE id = %s",
+            (status, photo_id),
+        )
+
+        # Record the action (action is either 'approve' or 'reject').
+        action = 'approve' if status == 'approved' else 'reject'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review_photo', %s)
+            """,
+            (admin_id, action, photo_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_review_status(review_id, status, admin_id):
+    """Set a review's status and record the moderation action.
+
+    Args:
+        review_id: The review ID.
+        status: One of 'published' or 'removed'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('published', 'removed'):
+        raise ValueError("Status must be 'published' or 'removed'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update review status.
+        cur.execute(
+            "UPDATE reviews SET status = %s WHERE id = %s",
+            (status, review_id),
+        )
+
+        # Record the action (action is either 'restore' or 'remove').
+        action = 'restore' if status == 'published' else 'remove'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review', %s)
+            """,
+            (admin_id, action, review_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def set_report_status(report_id, status, admin_id):
+    """Set a content report's status and record the moderation action.
+
+    Args:
+        report_id: The content report ID.
+        status: One of 'actioned' or 'dismissed'.
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If status is invalid.
+        psycopg2.DatabaseError: On database errors.
+    """
+    if status not in ('actioned', 'dismissed'):
+        raise ValueError("Status must be 'actioned' or 'dismissed'.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update report status.
+        cur.execute(
+            "UPDATE content_reports SET status = %s WHERE id = %s",
+            (status, report_id),
+        )
+
+        # Record the action (action is either 'action' or 'dismiss').
+        action = 'dismiss' if status == 'dismissed' else 'action'
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, %s, 'review', %s)
+            """,
+            (admin_id, action, report_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()
+
+
+# Attribute correction thresholds: auto-apply only when at least N distinct
+# users agree (and agreement >= X%). Both gates must pass independently.
+ATTRIBUTE_THRESHOLD_MIN_USERS = 3
+ATTRIBUTE_THRESHOLD_MIN_PERCENT = 75
+
+
+def evaluate_attribute_reports():
+    """Evaluate attribute reports to determine which meet approval thresholds.
+
+    Counts distinct users per (campsite, attribute, claimed_value) group and
+    calculates whether each group meets the approval thresholds (distinct user
+    count >= ATTRIBUTE_THRESHOLD_MIN_USERS AND agreement percentage >=
+    ATTRIBUTE_THRESHOLD_MIN_PERCENT).
+
+    Returns:
+        A list of dicts with keys: campsite_id, campsite_name, attribute,
+        claimed_value, agreeing_users (distinct count), total_users (distinct
+        users who reported this campsite + attribute), agreement_percent,
+        meets_threshold (boolean).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # For each (campsite, attribute, claimed_value) group, count distinct
+        # users who reported that exact value, and count all distinct users who
+        # reported anything for that (campsite, attribute) pair.
+        cur.execute(
+            """
+            WITH group_stats AS (
+                SELECT
+                    campsite_id,
+                    attribute,
+                    claimed_value,
+                    COUNT(DISTINCT review_id) AS report_count,
+                    COUNT(DISTINCT COALESCE((
+                        SELECT user_id FROM reviews r WHERE r.id = rar.review_id
+                    ), -1)) AS agreeing_users
+                FROM review_attribute_reports rar
+                GROUP BY campsite_id, attribute, claimed_value
+            ),
+            campsite_attribute_stats AS (
+                SELECT
+                    rar.campsite_id,
+                    rar.attribute,
+                    COUNT(DISTINCT COALESCE((
+                        SELECT user_id FROM reviews r WHERE r.id = rar.review_id
+                    ), -1)) AS total_users_for_pair
+                FROM review_attribute_reports rar
+                GROUP BY rar.campsite_id, rar.attribute
+            )
+            SELECT
+                gs.campsite_id,
+                c.name AS campsite_name,
+                gs.attribute,
+                gs.claimed_value,
+                gs.agreeing_users,
+                cas.total_users_for_pair AS total_users,
+                ROUND(100.0 * gs.agreeing_users / NULLIF(cas.total_users_for_pair, 0)) AS agreement_percent,
+                (gs.agreeing_users >= %s AND
+                 100.0 * gs.agreeing_users / NULLIF(cas.total_users_for_pair, 0) >= %s) AS meets_threshold
+            FROM group_stats gs
+            JOIN campsite_attribute_stats cas ON
+                cas.campsite_id = gs.campsite_id AND
+                cas.attribute = gs.attribute
+            JOIN campsites c ON c.id = gs.campsite_id
+            ORDER BY gs.campsite_id, gs.attribute, gs.claimed_value
+            """,
+            (ATTRIBUTE_THRESHOLD_MIN_USERS, ATTRIBUTE_THRESHOLD_MIN_PERCENT),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def apply_attribute_correction(campsite_id, attribute, claimed_value, admin_id):
+    """Apply a user-reported attribute correction to a campsite.
+
+    Writes the claimed value to the correct column on the correct table, and
+    records the action in an audit row, both within one atomic transaction.
+
+    Attributes and their target columns:
+      - water -> amenities.water_feature (TEXT)
+      - toilet_type -> amenities.toilet_type (TEXT)
+      - is_free -> campsites.is_free (BOOLEAN)
+      - fee_min -> campsites.fee_min (NUMERIC)
+      - is_reservable -> reservations.is_reservable (BOOLEAN)
+      - is_open -> status_updates.is_open (BOOLEAN)
+
+    Args:
+        campsite_id: The campsite ID.
+        attribute: One of the six allowed attributes.
+        claimed_value: The value to apply (will be coerced to the column type).
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If attribute is not allowed or claimed_value has the wrong type.
+        psycopg2.DatabaseError: On database errors.
+    """
+    allowed_attributes = ('water', 'toilet_type', 'is_free', 'fee_min',
+                         'is_reservable', 'is_open')
+    if attribute not in allowed_attributes:
+        raise ValueError(f"Attribute '{attribute}' is not allowed.")
+
+    # Type coercion and validation by attribute.
+    if attribute == 'water':
+        # amenities.water is a BOOLEAN meaning "has drinking water". It is NOT
+        # amenities.water_feature, which is the lake/creek/river TEXT facet.
+        # Writing a water report into water_feature both fails to fix the
+        # boolean and pollutes the facet the search filter reads.
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str) and claimed_value.lower() in (
+                'true', '1', 'yes'):
+            coerced_value = True
+        elif isinstance(claimed_value, str) and claimed_value.lower() in (
+                'false', '0', 'no'):
+            coerced_value = False
+        else:
+            raise ValueError(
+                "water must be a boolean, got '%s'." % (claimed_value,))
+    elif attribute == 'toilet_type':
+        # TEXT column, constrained to known values in the app
+        allowed_types = ('flush', 'vault', 'none')
+        if claimed_value not in allowed_types:
+            raise ValueError(f"toilet_type must be one of {allowed_types}.")
+        coerced_value = claimed_value
+    elif attribute == 'is_free':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_free must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_free must be a boolean, got {type(claimed_value).__name__}.")
+    elif attribute == 'fee_min':
+        # NUMERIC(8, 2) column
+        try:
+            coerced_value = float(claimed_value)
+        except (ValueError, TypeError):
+            raise ValueError(f"fee_min must be numeric, got '{claimed_value}'.")
+    elif attribute == 'is_reservable':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_reservable must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_reservable must be a boolean, got {type(claimed_value).__name__}.")
+    elif attribute == 'is_open':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_open must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_open must be a boolean, got {type(claimed_value).__name__}.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update the appropriate column based on attribute.
+        if attribute == 'water':
+            cur.execute(
+                "UPDATE amenities SET water = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'toilet_type':
+            cur.execute(
+                "UPDATE amenities SET toilet_type = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_free':
+            cur.execute(
+                "UPDATE campsites SET is_free = %s WHERE id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'fee_min':
+            cur.execute(
+                "UPDATE campsites SET fee_min = %s WHERE id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_reservable':
+            cur.execute(
+                "UPDATE reservations SET is_reservable = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_open':
+            cur.execute(
+                "UPDATE status_updates SET is_open = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+
+        # Record the approval action.
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, 'approve', 'attribute_report', %s)
+            """,
+            (admin_id, campsite_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()

@@ -111,30 +111,30 @@ def _build_where(filters):
     f = filters
 
     if f.get("is_open"):
-        clauses.append("su.is_open = TRUE")
+        clauses.append("(su.is_open = TRUE OR su.is_open IS NULL)")
 
     if f.get("forest"):
         clauses.append("LOWER(c.forest_name) LIKE %s")
         params.append(f"%{f['forest'].strip().lower()}%")
 
     if f.get("water"):
-        clauses.append("am.water = TRUE")
+        clauses.append("(am.water = TRUE OR am.water IS NULL)")
 
     toilet = f.get("toilet")
     if toilet in ("flush", "vault"):
-        clauses.append("am.toilet_type = %s")
+        clauses.append("(am.toilet_type = %s OR am.toilet_type IS NULL)")
         params.append(toilet)
     elif toilet == "any":
-        clauses.append("(am.toilet_type IS NOT NULL AND am.toilet_type <> 'none')")
+        clauses.append("(am.toilet_type IS NULL OR am.toilet_type <> 'none')")
 
     if f.get("free_only"):
-        clauses.append("c.is_free = TRUE")
+        clauses.append("(c.is_free = TRUE OR c.is_free IS NULL)")
     elif f.get("fee_max") is not None:
-        clauses.append("(c.is_free = TRUE OR c.fee_min <= %s)")
+        clauses.append("(c.is_free = TRUE OR c.fee_min <= %s OR (c.is_free IS NULL AND c.fee_min IS NULL))")
         params.append(f["fee_max"])
 
     if f.get("reservable"):
-        clauses.append("r.is_reservable = TRUE")
+        clauses.append("(r.is_reservable = TRUE OR r.is_reservable IS NULL)")
 
     camping = f.get("camping_type")
     if camping == "dispersed":
@@ -164,6 +164,43 @@ def _build_where(filters):
 
     frag = ("".join(f" AND {c}" for c in clauses))
     return frag, params
+
+
+def unknown_attrs_for(row, filters):
+    """Which REQUESTED attributes are unknown (NULL) for this row.
+
+    Returns a sorted list of attribute names, checking only attributes that
+    the caller actually filtered on. Maps filter key to row key name.
+    """
+    # Map filter keys to row keys
+    filter_to_row_key = {
+        "is_open": "is_open",
+        "water": "has_water",
+        "toilet": "toilet_type",
+        "free_only": "is_free",
+        "fee_max": None,  # Special case: check both is_free and fee_min
+        "reservable": "is_reservable",
+    }
+
+    unknown = []
+
+    for filter_key in filters:
+        if filter_key not in filter_to_row_key:
+            # Not a boolean-presence filter, skip
+            continue
+
+        if filter_key == "fee_max":
+            # Special case: check both is_free and fee_min
+            if row.get("is_free") is None:
+                unknown.append("is_free")
+            if row.get("fee_min") is None:
+                unknown.append("fee_min")
+        else:
+            row_key = filter_to_row_key[filter_key]
+            if row_key and row.get(row_key) is None:
+                unknown.append(row_key)
+
+    return sorted(list(set(unknown)))
 
 
 def _fetch_filtered(filters, hard_limit=5000):
@@ -213,6 +250,10 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
     rows = _fetch_filtered(filters)
     if not rows:
         return []
+
+    # Attach unknown_attrs to all rows
+    for row in rows:
+        row["unknown_attrs"] = unknown_attrs_for(row, filters)
 
     def _by_forest_then_name(items):
         items.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))

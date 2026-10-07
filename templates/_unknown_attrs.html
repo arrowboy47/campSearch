@@ -1,0 +1,30 @@
+{# Render small chips for attributes that are unknown (NULL) for a campsite,
+   but were requested in the filter. Shown only when unknown_attrs is non-empty. #}
+
+{% if unknown_attrs %}
+	<div class="unknown-attrs-row">
+		{# Map row keys to human-friendly labels #}
+		{% set attr_labels = {
+			'is_free': 'cost unknown',
+			'fee_min': 'cost unknown',
+			'has_water': 'water unknown',
+			'toilet_type': 'toilets unknown',
+			'is_reservable': 'reservations unknown',
+			'is_open': 'open status unknown'
+		} %}
+
+		{# Collect labels, deduplicate cost-related ones #}
+		{% set shown_labels = [] %}
+		{% for attr_key in unknown_attrs %}
+			{% set label = attr_labels.get(attr_key, attr_key) %}
+			{% if label not in shown_labels %}
+				{% set _ = shown_labels.append(label) %}
+			{% endif %}
+		{% endfor %}
+
+		{# Render chips #}
+		{% for label in shown_labels %}
+			<span class="unknown-attr-chip">{{ label }}</span>
+		{% endfor %}
+	</div>
+{% endif %}

@@ -472,16 +472,128 @@ function initReadMore() {
 // popular campsites can float up in search scoring (migration 0017). Fire and
 // forget — sendBeacon survives the page unload, and a failure changes nothing.
 
+// Track whether impressions have been sent for this page render to prevent
+// double-counting on re-render, bfcache restore, or init called twice.
+let _impressions_sent = false;
+
+function _sendBeaconJSON(url, payload) {
+  // Build a Blob with application/json type for sendBeacon.
+  // sendBeacon cannot set headers, so we must use a Blob with the right type.
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(url, blob);
+  } else {
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
+function initImpressionTracking() {
+  // Send result impressions on page load. One batch per page render,
+  // not one per card. Guard against double-sending on re-render or bfcache.
+  if (_impressions_sent) return;
+
+  // Also guard on pageshow with persisted flag (bfcache restore).
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && _impressions_sent) {
+      // Page was restored from bfcache and we already sent impressions.
+      return;
+    }
+  });
+
+  const searchData = document.getElementById("searchData");
+  let query = "";
+  if (searchData) {
+    try {
+      const data = JSON.parse(searchData.textContent || "{}");
+      query = data.query || "";
+    } catch (e) {
+      // Ignore parse errors.
+    }
+  }
+
+  const cards = document.querySelectorAll("[data-position][data-campsite-id]");
+  if (!cards.length) {
+    _impressions_sent = true;
+    return;
+  }
+
+  // Collect impression events (max 100).
+  const events = [];
+  for (let i = 0; i < Math.min(cards.length, 100); i++) {
+    const card = cards[i];
+    const position = card.getAttribute("data-position");
+    const campsite_id = card.getAttribute("data-campsite-id");
+
+    if (!position || !campsite_id) continue;
+
+    events.push({
+      event_type: "result_impression",
+      campsite_id: parseInt(campsite_id, 10),
+      position: parseInt(position, 10),
+      query_text: query,
+    });
+  }
+
+  if (events.length > 0) {
+    try {
+      _sendBeaconJSON("/api/events", { events });
+    } catch (e) {
+      // Swallow any errors; tracking failure must not break the page.
+    }
+  }
+
+  _impressions_sent = true;
+}
+
 function initPickTracking() {
   document.querySelectorAll("[data-pick]").forEach((link) => {
     link.addEventListener("click", () => {
       const id = link.getAttribute("data-pick");
       if (!id) return;
-      const url = `/api/campsite/${id}/pick`;
+
+      // Fire the existing pick beacon.
+      const pickUrl = `/api/campsite/${id}/pick`;
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(url);
+        navigator.sendBeacon(pickUrl);
       } else {
-        fetch(url, { method: "POST", keepalive: true }).catch(() => {});
+        fetch(pickUrl, { method: "POST", keepalive: true }).catch(() => {});
+      }
+
+      // Additionally, send a result_clicked event with position and query.
+      const searchData = document.getElementById("searchData");
+      let query = "";
+      if (searchData) {
+        try {
+          const data = JSON.parse(searchData.textContent || "{}");
+          query = data.query || "";
+        } catch (e) {
+          // Ignore parse errors.
+        }
+      }
+
+      // Find the card containing this link to get its position.
+      const card = link.closest("[data-position][data-campsite-id]");
+      if (card) {
+        const position = card.getAttribute("data-position");
+        const campsite_id = card.getAttribute("data-campsite-id");
+
+        if (position && campsite_id) {
+          try {
+            const event = {
+              event_type: "result_clicked",
+              campsite_id: parseInt(campsite_id, 10),
+              position: parseInt(position, 10),
+              query_text: query,
+            };
+            _sendBeaconJSON("/api/events", { events: [event] });
+          } catch (e) {
+            // Swallow any errors; tracking failure must not break navigation.
+          }
+        }
       }
     });
   });
@@ -615,6 +727,109 @@ function initPhotoLightbox() {
   });
 }
 
+// Search feedback (query-level and per-result votes) ---------------------
+
+// Track which feedback targets have already received a vote to prevent duplicates.
+// Keys are "query-level", or "result-<position>" for per-result votes.
+const _feedback_votes = new Set();
+
+function initSearchFeedback() {
+  const searchData = document.getElementById("searchData");
+  let query = "";
+  if (searchData) {
+    try {
+      const data = JSON.parse(searchData.textContent || "{}");
+      query = data.query || "";
+    } catch (e) {
+      // Ignore parse errors.
+    }
+  }
+
+  // Query-level feedback buttons
+  document.querySelectorAll(".search-feedback-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const verdict = btn.getAttribute("data-feedback-vote");
+      if (!verdict) return;
+
+      // Guard against duplicate votes
+      if (_feedback_votes.has("query-level")) {
+        return;
+      }
+
+      // Update UI to show voted state
+      document.querySelectorAll(".search-feedback-btn").forEach((b) => {
+        b.classList.remove("voted");
+      });
+      btn.classList.add("voted");
+      _feedback_votes.add("query-level");
+
+      // Send event
+      try {
+        const event = {
+          event_type: "search_feedback",
+          query_text: query,
+          meta: {
+            feedback_type: "query_level",
+            verdict: verdict,
+          },
+        };
+        _sendBeaconJSON("/api/events", { events: [event] });
+      } catch (e) {
+        // Swallow any errors; tracking failure must not break the page.
+      }
+    });
+  });
+
+  // Per-result feedback buttons
+  document.querySelectorAll(".result-feedback-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const position = parseInt(btn.getAttribute("data-feedback-result"), 10);
+      const isHelpful = btn.classList.contains("result-feedback-helpful");
+      const verdict = isHelpful ? "helpful" : "unhelpful";
+
+      if (!position) return;
+
+      // Guard against duplicate votes on this specific result
+      const targetKey = "result-" + position;
+      if (_feedback_votes.has(targetKey)) {
+        return;
+      }
+
+      // Find the card containing this button
+      const card = btn.closest("[data-position][data-campsite-id]");
+      if (!card) return;
+
+      const campsite_id = parseInt(card.getAttribute("data-campsite-id"), 10);
+      if (!campsite_id) return;
+
+      // Update UI to show voted state (both buttons in the pair)
+      const card_buttons = card.querySelectorAll(".result-feedback-btn");
+      card_buttons.forEach((b) => {
+        b.classList.remove("voted");
+      });
+      btn.classList.add("voted");
+      _feedback_votes.add(targetKey);
+
+      // Send event
+      try {
+        const event = {
+          event_type: "search_feedback",
+          campsite_id: campsite_id,
+          position: position,
+          query_text: query,
+          meta: {
+            feedback_type: "result_level",
+            verdict: verdict,
+          },
+        };
+        _sendBeaconJSON("/api/events", { events: [event] });
+      } catch (e) {
+        // Swallow any errors; tracking failure must not break the page.
+      }
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -631,5 +846,38 @@ document.addEventListener("DOMContentLoaded", () => {
   initNearby();
   initDrive();
   initCollectionAdd();
+  initReviewModal();
+  initImpressionTracking();
   initPickTracking();
+  initSearchFeedback();
 });
+
+// Review form modal -------------------------------------------------------
+
+function initReviewModal() {
+  const modal = document.getElementById("reviewModal");
+  if (!modal) return;
+
+  const openButtons = document.querySelectorAll('[data-review-open]');
+  const closeButtons = document.querySelectorAll('[data-review-close]');
+
+  const showModal = () => modal.hidden = false;
+  const hideModal = () => modal.hidden = true;
+
+  openButtons.forEach(btn => btn.addEventListener('click', showModal));
+  closeButtons.forEach(btn => btn.addEventListener('click', hideModal));
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal.querySelector('.modal-backdrop')) {
+      hideModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) {
+      hideModal();
+    }
+  });
+}

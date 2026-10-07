@@ -19,10 +19,21 @@ from db import (
     add_to_collection, remove_from_collection, get_collection_campsites,
     set_collection_public, get_public_users, get_public_profile,
     get_public_collection,
+    merge_anon_events,
+    log_event,
+    create_review, get_review_by_user_and_campsite, count_reviews_today,
+    create_review_photo, get_review_photos, count_review_photos,
+    get_reviews_for_campsite, count_reviews_for_campsite,
+    get_review_verdict_counts,
+    get_pending_photos, get_open_reports, get_attribute_report_groups,
+    set_photo_status, set_review_status, set_report_status,
+    evaluate_attribute_reports, apply_attribute_correction,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
 from functools import wraps
+from uuid import uuid4
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from search import (
     get_campsite_by_name,
     search_campsites,
@@ -36,11 +47,35 @@ import math
 import re
 import os
 from forests import forest_label
+import psycopg2
+from content_filter import has_blocked_content
+from io import BytesIO
+
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    Image = None
+    ImageOps = None
 
 # Profile-picture uploads land under static/ so Flask can serve them directly.
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads", "avatars")
 AVATAR_EXT = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif"}
 MAX_AVATAR_BYTES = 3 * 1024 * 1024
+
+# Review photos are stored pending approval, then moved or served conditionally.
+# We store them outside static/ and serve via a view that checks status, so
+# pending photos cannot be accessed by direct URL.
+# Review photos live OUTSIDE static/ on purpose. Flask serves static/
+# wholesale, so a file placed there is fetchable at its own URL no matter what
+# any page links to, which would hand out pending photos that no moderator has
+# approved yet. A uuid filename makes that hard to guess but guessing is not
+# the threat model: a leaked, logged or shared URL is. Everything here is
+# served through serve_review_photo, which checks status first.
+REVIEW_PHOTOS_DIR = os.path.join(os.path.dirname(__file__), "var", "review_photos")
+REVIEW_PHOTO_EXTS = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
+MAX_REVIEW_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB per file
+MAX_PHOTOS_PER_REVIEW = 4
+THUMBNAIL_SIZE = (200, 200)
 
 
 def save_avatar(file_storage, user_id):
@@ -67,6 +102,131 @@ def save_avatar(file_storage, user_id):
             os.remove(p)
     file_storage.save(os.path.join(AVATAR_DIR, f"{user_id}.{ext}"))
     return f"uploads/avatars/{user_id}.{ext}"
+
+
+def _validate_and_strip_image(file_bytes):
+    """Validate that bytes are a real image and strip all EXIF data.
+
+    Args:
+        file_bytes: Raw file bytes (BytesIO or similar).
+
+    Returns:
+        (img_bytes, ext) where img_bytes is the cleaned image data without EXIF,
+        and ext is the detected format (png, jpg, webp).
+
+    Raises:
+        ValueError: If the file is not a valid image format (JPEG, PNG, WebP),
+                    or if Pillow is not available.
+    """
+    if not Image or not ImageOps:
+        raise ValueError("Image processing not available. Install Pillow.")
+
+    file_bytes.seek(0)
+    try:
+        img = Image.open(file_bytes)
+
+        # Check that the decoded format is one we accept.
+        # This rejects SVG, PHP files renamed to .jpg, etc.
+        img_format = img.format
+        if img_format not in ("JPEG", "PNG", "WEBP"):
+            raise ValueError(f"Image format {img_format} is not accepted. Only JPEG, PNG, and WebP are allowed.")
+
+        # Determine the output extension.
+        ext_map = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+        ext = ext_map[img_format]
+
+        # Apply EXIF orientation before stripping, so portrait photos stay upright
+        # after the EXIF tag is removed.
+        img = ImageOps.exif_transpose(img)
+
+        # Decode and re-encode to strip all metadata, including EXIF/GPS.
+        # This creates a fresh image object with no metadata.
+        rgb_img = img.convert("RGB") if img.mode in ("RGBA", "LA", "P") else img
+        output = BytesIO()
+        rgb_img.save(output, format=img_format, optimize=False)
+        output.seek(0)
+
+        return output, ext
+
+    except Image.UnidentifiedImageError:
+        raise ValueError("File is not a valid image.")
+    except Exception as e:
+        raise ValueError(f"Error processing image: {str(e)}")
+
+
+def _create_thumbnail(img_bytes, ext):
+    """Create a thumbnail from image bytes.
+
+    Args:
+        img_bytes: BytesIO with the main image.
+        ext: Image format (png, jpg, webp).
+
+    Returns:
+        BytesIO with the thumbnail, ready to save.
+    """
+    if not Image:
+        raise ValueError("Image processing not available. Install Pillow.")
+
+    img_bytes.seek(0)
+    img = Image.open(img_bytes)
+    img.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+    thumb_out = BytesIO()
+    # Convert ext (jpg, png, webp) to PIL format (JPEG, PNG, WEBP)
+    fmt_map = {"jpg": "JPEG", "png": "PNG", "webp": "WEBP"}
+    pil_format = fmt_map.get(ext, ext.upper())
+    img.save(thumb_out, format=pil_format, optimize=False)
+    thumb_out.seek(0)
+    return thumb_out
+
+
+def save_review_photo(file_storage):
+    """Validate and persist a review photo with EXIF stripped.
+
+    Args:
+        file_storage: A Flask FileStorage object from request.files.
+
+    Returns:
+        (main_path, thumb_path, ext) where main_path and thumb_path are relative
+        paths for storage in the database, and ext is the image format.
+
+    Raises:
+        ValueError: On file size, format, or processing errors.
+    """
+    if not file_storage or not file_storage.filename:
+        return None
+
+    # Check size before decoding.
+    file_storage.stream.seek(0, os.SEEK_END)
+    size = file_storage.stream.tell()
+    file_storage.stream.seek(0)
+    if size > MAX_REVIEW_PHOTO_BYTES:
+        raise ValueError(f"Photo must be under 5 MB (was {size / 1024 / 1024:.1f} MB).")
+
+    # Validate and strip EXIF.
+    cleaned_bytes, ext = _validate_and_strip_image(file_storage.stream)
+
+    # Generate server-generated filename to prevent path traversal and overwrites.
+    photo_id = str(uuid4())
+    filename = f"{photo_id}.{ext}"
+
+    # Create thumbnail.
+    thumb = _create_thumbnail(cleaned_bytes, ext)
+
+    # Write files to disk.
+    os.makedirs(REVIEW_PHOTOS_DIR, exist_ok=True)
+    main_path = os.path.join(REVIEW_PHOTOS_DIR, filename)
+    thumb_path = os.path.join(REVIEW_PHOTOS_DIR, f"{photo_id}_thumb.{ext}")
+
+    cleaned_bytes.seek(0)
+    with open(main_path, "wb") as f:
+        f.write(cleaned_bytes.getvalue())
+
+    with open(thumb_path, "wb") as f:
+        f.write(thumb.getvalue())
+
+    # Return relative paths for storage in the database.
+    # We store the full path so it works even if the upload directory location changes.
+    return (main_path, thumb_path, ext)
 
 
 def _int_arg(name):
@@ -170,13 +330,147 @@ def _inject_csrf():
     }
 
 
+# --- anonymous identity (migration 0023) -----------------------------------
+
+ANON_COOKIE_DAYS = 30
+
+
+def _get_anon_serializer():
+    """Create a signer for the anonymous identity cookie using the Flask secret key."""
+    return URLSafeTimedSerializer(_config.secret_key())
+
+
+def _set_anon_cookie(response, anon_id):
+    """Set the cs_anon cookie on the response with signed value and proper flags."""
+    serializer = _get_anon_serializer()
+    signed_value = serializer.dumps(str(anon_id))
+
+    max_age = ANON_COOKIE_DAYS * 24 * 3600  # Convert days to seconds
+    secure = request.is_secure or request.environ.get("wsgi.url_scheme") == "https"
+
+    response.set_cookie(
+        "cs_anon",
+        signed_value,
+        max_age=max_age,
+        httponly=True,
+        samesite="Lax",
+        secure=secure,
+    )
+
+
+def _get_anon_id_from_cookie():
+    """Read and validate the cs_anon cookie. Returns UUID or None.
+
+    If the cookie is present but invalid (tampered, expired, malformed),
+    returns None so a fresh one will be minted.
+    """
+    cookie_val = request.cookies.get("cs_anon")
+    if not cookie_val:
+        return None
+
+    serializer = _get_anon_serializer()
+    try:
+        anon_id_str = serializer.loads(cookie_val)
+        # Validate it is a valid UUID
+        from uuid import UUID
+        UUID(anon_id_str)
+        return anon_id_str
+    except (BadSignature, SignatureExpired, ValueError):
+        # Tampered, expired, or invalid UUID format
+        return None
+
+
+def current_actor():
+    """Return (user_id, anon_id) for the current request.
+
+    Signed-in user: (user_id, None)
+    Anonymous visitor: (None, anon_id)
+    """
+    uid = session.get("user_id")
+    if uid:
+        return uid, None
+
+    # For anonymous visitors, get or create an anon_id
+    anon_id = _get_anon_id_from_cookie()
+    return None, anon_id
+
+
+def get_session_id():
+    """Return a per-browser-session UUID, minted on first use.
+
+    Stored in Flask session so it resets when the browser session ends,
+    distinguishing new visits from continued browsing.
+    """
+    sess_id = session.get("_session_id")
+    if not sess_id:
+        sess_id = str(uuid4())
+        session["_session_id"] = sess_id
+    return sess_id
+
+
+@app.before_request
+def _anon_identity():
+    """Ensure an anonymous visitor has a signed identity cookie.
+
+    This runs on every request except static assets. If the visitor does not
+    have a valid cs_anon cookie, mint one and schedule it to be set on the
+    response. If they have one, refresh its expiry.
+
+    Static assets (images, CSS, JS) bypass this by virtue of Flask's static
+    file handler not going through before_request for them.
+    """
+    # Check if this might be a static file (skip setting anon for those)
+    if request.path.startswith("/static/"):
+        return
+
+    uid = session.get("user_id")
+    if uid:
+        # Signed in, no anon cookie needed
+        return
+
+    anon_id = _get_anon_id_from_cookie()
+    if not anon_id:
+        # Need to mint a fresh one
+        anon_id = str(uuid4())
+
+    # Store in g so after_request can pick it up
+    g.anon_id = anon_id
+
+
+@app.after_request
+def _set_anon_cookie_response(response):
+    """Set or refresh the anon cookie on the response if needed."""
+    if hasattr(g, "anon_id"):
+        _set_anon_cookie(response, g.anon_id)
+    return response
+
+
 @app.before_request
 def _csrf_protect():
     if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
         return
-    # JSON/beacon API endpoints are unauthenticated and change nothing per-user;
-    # a CSRF token there would just break navigator.sendBeacon.
+    # Beacon endpoints under /api/ cannot carry a CSRF token, because
+    # navigator.sendBeacon cannot set request headers. They are guarded by
+    # origin instead.
+    #
+    # The blanket exemption that used to live here was justified by these
+    # endpoints being "unauthenticated and changing nothing per-user". That
+    # stopped being true once /api/events began attributing behaviour to the
+    # signed-in user: any site a user visited could POST fabricated events into
+    # their account, poisoning both their personalisation and the aggregate
+    # signals the ranking model is trained on. /api/campsite/<id>/pick has the
+    # same shape, where forged picks inflate a campsite's search ranking.
+    #
+    # A browser always sends Origin on a cross-origin POST, so rejecting a
+    # mismatched Origin blocks the cross-site case without breaking sendBeacon.
+    # An absent Origin is allowed: same-origin requests from older browsers and
+    # non-browser clients omit it, and those are not the attack being stopped.
     if request.path.startswith("/api/"):
+        origin = request.headers.get("Origin")
+        if origin:
+            from urllib.parse import urlparse
+            if urlparse(origin).netloc != request.host:
+                abort(403, "Cross-origin request rejected.")
         return
     sent = request.form.get("_csrf") or request.headers.get("X-CSRFToken")
     if not sent or not _secrets.compare_digest(sent, session.get("_csrf", "")):
@@ -211,6 +505,17 @@ def login_required(view):
         if not current_user():
             flash("Sign in to do that.")
             return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    """Protect a route to admins only. Non-admins get 404, not 403."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        user = current_user()
+        if not user or not user.get("is_admin"):
+            abort(404)
         return view(*args, **kwargs)
     return wrapped
 
@@ -391,6 +696,69 @@ def campsite_pick(campsite_id):
     return "", 204
 
 
+@app.route("/api/events", methods=["POST"])
+def api_events():
+    """Log a batch of user behavior events from the browser.
+
+    Fired by navigator.sendBeacon for impressions and clicks. Accepts up to
+    100 events per request; excess is silently dropped. The server decides
+    user_id, anon_id, and session_id; accepting these from the client is a
+    security violation (it could forge history into someone else's account).
+
+    Only forgivable event types are accepted here. Server-generated types like
+    'search_performed' are rejected to prevent forgery.
+
+    Returns 204 (No Content) regardless of success or failure. Logging errors
+    are swallowed so this endpoint never breaks a page load.
+    """
+    from db import ALLOWED_EVENT_TYPES
+
+    # Browser-allowed event types (server-generated types are excluded)
+    BROWSER_ALLOWED = frozenset({
+        'result_impression',
+        'result_clicked',
+        'campsite_viewed',
+        'search_feedback',
+    })
+
+    try:
+        data = request.get_json() or {}
+    except Exception:
+        return "", 204
+
+    events = data.get("events") or []
+    if not isinstance(events, list):
+        return "", 204
+
+    # Cap batch size to prevent abuse
+    events = events[:100]
+
+    user_id, anon_id = current_actor()
+    session_id = get_session_id()
+
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+
+        event_type = event.get("event_type")
+        if event_type not in BROWSER_ALLOWED:
+            continue
+
+        # Extract fields from request; server fills in user/anon/session_id
+        log_event(
+            event_type=event_type,
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=session_id,
+            campsite_id=event.get("campsite_id"),
+            position=event.get("position"),
+            query_text=event.get("query_text"),
+            meta=event.get("meta"),
+        )
+
+    return "", 204
+
+
 @app.route("/api/weather")
 def weather():
     """
@@ -500,6 +868,23 @@ def results():
         camp["weather_summary"] = build_weather_summary(raw_forecast)
         enriched.append(camp)
 
+    # Log the search event (best-effort; don't break page on logging failure)
+    try:
+        result_ids = [camp["id"] for camp in enriched]
+        user_id, anon_id = current_actor()
+        log_event(
+            event_type="search_performed",
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=get_session_id(),
+            query_text=query or None,
+            filters=filters,
+            result_ids=result_ids,
+            meta={"result_count": len(enriched)},
+        )
+    except Exception:
+        pass
+
     return render_template(
         "results.html",
         query=query,
@@ -596,6 +981,15 @@ def campsite(campsite_id):
     # constructed alltrails_url is the fallback "explore" link in that case).
     trails = get_trails_for_campsite(campsite_id)
 
+    # Reviews for this campsite, paginated at 20 per page.
+    page = request.args.get("review_page", 1, type=int)
+    if page < 1:
+        page = 1
+    offset = (page - 1) * 20
+    reviews = get_reviews_for_campsite(campsite_id, limit=20, offset=offset)
+    reviews_total_count = count_reviews_for_campsite(campsite_id)
+    review_verdict_counts = get_review_verdict_counts(campsite_id)
+
     # Driving distance from the user's home (or device location if given and
     # far from home). Computed server-side only when we already have a home on
     # file; otherwise the page's JS offers to use the browser location.
@@ -611,9 +1005,24 @@ def campsite(campsite_id):
 
     saved = False
     user_collections = []
+    existing_review = None
     if current_user():
         saved = is_campsite_saved(session["user_id"], campsite_id)
         user_collections = get_collections(session["user_id"])
+        existing_review = get_review_by_user_and_campsite(session["user_id"], campsite_id)
+
+    # Log the campsite view event (best-effort; don't break page on logging failure)
+    try:
+        user_id, anon_id = current_actor()
+        log_event(
+            event_type="campsite_viewed",
+            user_id=user_id,
+            anon_id=anon_id,
+            session_id=get_session_id(),
+            campsite_id=campsite_id,
+        )
+    except Exception:
+        pass
 
     return render_template(
         "campsite.html",
@@ -623,6 +1032,11 @@ def campsite(campsite_id):
         drive=drive,
         saved=saved,
         user_collections=user_collections,
+        existing_review=existing_review,
+        reviews=reviews,
+        reviews_total_count=reviews_total_count,
+        review_verdict_counts=review_verdict_counts,
+        reviews_page=page,
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
         dates_explicit=bool(start_str or end_str),
@@ -805,10 +1219,19 @@ def signup():
         except ValueError as exc:
             flash(str(exc) + " (Account created without a picture.)")
 
+        # Merge any anonymous event history to the new account
+        anon_id = _get_anon_id_from_cookie()
+        if anon_id:
+            merge_anon_events(user["id"], anon_id)
+
         session.clear()
         session["user_id"] = user["id"]
         flash("Account created.")
-        return redirect(url_for("account"))
+
+        # Clear the anon cookie now that we have an account
+        response = redirect(url_for("account"))
+        response.delete_cookie("cs_anon")
+        return response
 
     return render_template("signup.html", form={})
 
@@ -825,10 +1248,20 @@ def login():
         if not row or not check_password_hash(row["password_hash"], password):
             flash("Wrong username or password.")
             return render_template("login.html", username=username)
+
+        # Merge any anonymous event history to the account
+        anon_id = _get_anon_id_from_cookie()
+        if anon_id:
+            merge_anon_events(row["id"], anon_id)
+
         session.clear()
         session["user_id"] = row["id"]
         nxt = request.args.get("next") or request.form.get("next")
-        return redirect(nxt if _is_safe_next(nxt) else url_for("account"))
+
+        # Clear the anon cookie now that we have an account
+        response = redirect(nxt if _is_safe_next(nxt) else url_for("account"))
+        response.delete_cookie("cs_anon")
+        return response
 
     return render_template("login.html", username="")
 
@@ -999,6 +1432,173 @@ def campsite_add_to_collection(campsite_id):
     return redirect(_safe_next(url_for("campsite", campsite_id=campsite_id)))
 
 
+@app.route("/campsite/<int:campsite_id>/review", methods=["POST"])
+@login_required
+def submit_review(campsite_id):
+    """Submit a review for a campsite.
+
+    Form parameters:
+        verdict: 'up' or 'down' (required)
+        body: Review text (optional)
+        visited: '1' if user visited (boolean as string, defaults to true)
+        attribute_<name>: Reported attribute value (e.g., attribute_water='true')
+    """
+    # Verify campsite exists
+    if not get_campsite_by_id(campsite_id):
+        abort(404)
+
+    user_id = current_user()["id"]
+
+    # Parse verdict
+    verdict_str = request.form.get("verdict", "").lower()
+    if verdict_str == "up":
+        verdict = True
+    elif verdict_str == "down":
+        verdict = False
+    else:
+        flash("Verdict must be 'up' or 'down'.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse body
+    body = (request.form.get("body") or "").strip()
+
+    # Filter content
+    if has_blocked_content(body):
+        flash("Your review contains language we don't accept. Please revise and try again.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse visited flag
+    visited = request.form.get("visited", "1") != "0"
+
+    # Rate limit: 3 reviews per day
+    count = count_reviews_today(user_id)
+    if count >= 3:
+        flash("You've submitted 3 reviews today. Come back tomorrow.")
+        return redirect(url_for("campsite", campsite_id=campsite_id))
+
+    # Parse and validate attribute reports
+    allowed_attributes = {"water", "toilet_type", "is_free", "fee_min", "is_reservable", "is_open"}
+    attribute_reports = []
+    for key in request.form.keys():
+        if key.startswith("attribute_"):
+            attr_name = key[10:]  # Remove "attribute_" prefix
+            if attr_name not in allowed_attributes:
+                flash(f"Invalid attribute: {attr_name}")
+                return redirect(url_for("campsite", campsite_id=campsite_id))
+            claimed_value = request.form.get(key)
+            if claimed_value:
+                attribute_reports.append({
+                    "attribute": attr_name,
+                    "claimed_value": claimed_value,
+                })
+
+    # Create the review
+    try:
+        review_id = create_review(
+            user_id=user_id,
+            campsite_id=campsite_id,
+            verdict=verdict,
+            body=body,
+            visited=visited,
+            attribute_reports=attribute_reports,
+        )
+        flash("Review submitted!")
+
+        # Process uploaded photos (if any).
+        # Store up to MAX_PHOTOS_PER_REVIEW photos. Failures on individual photos
+        # do not roll back the review.
+        photo_errors = []
+        photo_count = 0
+        for photo_file in request.files.getlist("photos"):
+            if not photo_file or not photo_file.filename:
+                continue
+
+            if photo_count >= MAX_PHOTOS_PER_REVIEW:
+                photo_errors.append("Only 4 photos per review are allowed.")
+                break
+
+            try:
+                main_path, thumb_path, ext = save_review_photo(photo_file)
+                create_review_photo(review_id, main_path)
+                photo_count += 1
+            except ValueError as e:
+                photo_errors.append(f"Photo error: {str(e)}")
+            except Exception as e:
+                photo_errors.append(f"Photo upload failed: {str(e)}")
+
+        if photo_errors:
+            for error in photo_errors:
+                flash(error, "warning")
+
+        # Log the event (best-effort)
+        try:
+            log_event(
+                event_type="review_submitted",
+                user_id=user_id,
+                campsite_id=campsite_id,
+            )
+        except Exception:
+            pass
+
+    except psycopg2.IntegrityError:
+        flash("You've already reviewed this campsite.")
+    except psycopg2.DatabaseError as e:
+        flash("Error submitting review. Please check your input.")
+
+    return redirect(url_for("campsite", campsite_id=campsite_id))
+
+
+# --- review photos -------------------------------------------------------
+
+@app.route("/api/review_photos/<int:photo_id>")
+def serve_review_photo(photo_id):
+    """Serve a review photo if it is approved.
+
+    Pending and rejected photos are not served to anyone, including the
+    reviewer, ensuring privacy and preventing direct URL access to unapproved
+    content.
+    """
+    from db import RealDictCursor
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status
+            FROM review_photos
+            WHERE id = %s
+            """,
+            (photo_id,),
+        )
+        photo = cur.fetchone()
+    finally:
+        if conn:
+            conn.close()
+
+    if not photo:
+        abort(404)
+
+    # Only serve approved photos.
+    if photo["status"] != "approved":
+        abort(403)
+
+    # Serve the file if it exists.
+    if not os.path.exists(photo["path"]):
+        abort(404)
+
+    with open(photo["path"], "rb") as f:
+        data = f.read()
+
+    # Infer content type from file extension.
+    ext = photo["path"].split(".")[-1].lower()
+    content_type_map = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+    content_type = content_type_map.get(ext, "application/octet-stream")
+
+    return Response(data, mimetype=content_type)
+
+
 # --- public users / shared collections -----------------------------------
 
 @app.route("/users")
@@ -1098,6 +1698,198 @@ def api_distance():
     dist["label"] = label
     dist["approximate"] = coord_is_approx
     return jsonify(dist)
+
+
+# --- admin/moderation (migration 0025) ----------------------------------------
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    """Admin moderation queue dashboard."""
+    pending_photos = get_pending_photos()
+    open_reports = get_open_reports()
+    attribute_report_groups = evaluate_attribute_reports()
+
+    return render_template(
+        "admin.html",
+        pending_photos=pending_photos,
+        open_reports=open_reports,
+        attribute_report_groups=attribute_report_groups,
+    )
+
+
+@app.route("/admin/photo/<int:photo_id>/approve", methods=["POST"])
+@admin_required
+def admin_approve_photo(photo_id):
+    """Approve a pending review photo."""
+    user = current_user()
+    try:
+        set_photo_status(photo_id, "approved", user["id"])
+        flash("Photo approved.")
+    except Exception as e:
+        flash(f"Error approving photo: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/photo/<int:photo_id>/reject", methods=["POST"])
+@admin_required
+def admin_reject_photo(photo_id):
+    """Reject a pending review photo."""
+    user = current_user()
+    try:
+        set_photo_status(photo_id, "rejected", user["id"])
+        flash("Photo rejected.")
+    except Exception as e:
+        flash(f"Error rejecting photo: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/review/<int:review_id>/remove", methods=["POST"])
+@admin_required
+def admin_remove_review(review_id):
+    """Remove a published review."""
+    user = current_user()
+    try:
+        set_review_status(review_id, "removed", user["id"])
+        flash("Review removed.")
+    except Exception as e:
+        flash(f"Error removing review: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/review/<int:review_id>/restore", methods=["POST"])
+@admin_required
+def admin_restore_review(review_id):
+    """Restore a removed review."""
+    user = current_user()
+    try:
+        set_review_status(review_id, "published", user["id"])
+        flash("Review restored.")
+    except Exception as e:
+        flash(f"Error restoring review: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/report/<int:report_id>/dismiss", methods=["POST"])
+@admin_required
+def admin_dismiss_report(report_id):
+    """Dismiss a content report."""
+    user = current_user()
+    try:
+        set_report_status(report_id, "dismissed", user["id"])
+        flash("Report dismissed.")
+    except Exception as e:
+        flash(f"Error dismissing report: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/report/<int:report_id>/action", methods=["POST"])
+@admin_required
+def admin_action_report(report_id):
+    """Mark a content report as actioned."""
+    user = current_user()
+    try:
+        set_report_status(report_id, "actioned", user["id"])
+        flash("Report marked as actioned.")
+    except Exception as e:
+        flash(f"Error actioning report: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/attribute/apply", methods=["POST"])
+@admin_required
+def admin_apply_attribute():
+    """Apply a user-reported attribute correction to a campsite."""
+    user = current_user()
+    campsite_id = request.form.get("campsite_id", type=int)
+    attribute = request.form.get("attribute")
+    claimed_value = request.form.get("claimed_value")
+
+    try:
+        apply_attribute_correction(campsite_id, attribute, claimed_value, user["id"])
+        flash("Attribute correction applied.")
+    except ValueError as e:
+        flash(f"Invalid attribute or value: {e}")
+    except Exception as e:
+        flash(f"Error applying correction: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/attribute/dismiss", methods=["POST"])
+@admin_required
+def admin_dismiss_attribute():
+    """Record a dismiss action for an attribute report without applying it."""
+    user = current_user()
+    campsite_id = request.form.get("campsite_id", type=int)
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Record the dismiss action.
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, 'dismiss', 'attribute_report', %s)
+            """,
+            (user["id"], campsite_id),
+        )
+
+        conn.commit()
+        flash("Attribute reports dismissed.")
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        flash(f"Error dismissing reports: {e}")
+
+    finally:
+        if conn:
+            conn.close()
+
+    return redirect("/admin")
+
+
+@app.route("/api/review_photos/<int:photo_id>/admin")
+@admin_required
+def serve_review_photo_admin(photo_id):
+    """Serve a review photo to an admin for review, regardless of status.
+
+    This allows admins to review pending photos before approval. The public
+    /api/review_photos/ endpoint still only serves approved photos.
+    """
+    from db import RealDictCursor
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, path, status
+            FROM review_photos
+            WHERE id = %s
+            """,
+            (photo_id,),
+        )
+        photo = cur.fetchone()
+    finally:
+        if conn:
+            conn.close()
+
+    if not photo:
+        abort(404)
+
+    # Serve the file if it exists.
+    if not os.path.exists(photo["path"]):
+        abort(404)
+
+    with open(photo["path"], "rb") as f:
+        data = f.read()
+
+    return Response(data, mimetype="image/jpeg")
 
 
 # lets see what next
