@@ -17,6 +17,11 @@
         <button type="button" class="theme-toggle-btn" data-theme-choice="dark">Dark</button>
         <button type="button" class="theme-toggle-btn" data-theme-choice="system">System</button>
       </div>
+      {% if current_user and current_user.is_admin %}
+        {# Only rendered for admins. The route itself 404s for everyone else,
+           so this is a convenience, not the access control. #}
+        <a href="/admin" class="menu-link">Moderation queue</a>
+      {% endif %}
       {% if current_user %}
         <form method="POST" action="/logout" class="menu-form">
         	{{ csrf_input() }}
