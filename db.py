@@ -1435,3 +1435,237 @@ def set_report_status(report_id, status, admin_id):
     finally:
         if conn:
             conn.close()
+
+
+# Attribute correction thresholds: auto-apply only when at least N distinct
+# users agree (and agreement >= X%). Both gates must pass independently.
+ATTRIBUTE_THRESHOLD_MIN_USERS = 3
+ATTRIBUTE_THRESHOLD_MIN_PERCENT = 75
+
+
+def evaluate_attribute_reports():
+    """Evaluate attribute reports to determine which meet approval thresholds.
+
+    Counts distinct users per (campsite, attribute, claimed_value) group and
+    calculates whether each group meets the approval thresholds (distinct user
+    count >= ATTRIBUTE_THRESHOLD_MIN_USERS AND agreement percentage >=
+    ATTRIBUTE_THRESHOLD_MIN_PERCENT).
+
+    Returns:
+        A list of dicts with keys: campsite_id, campsite_name, attribute,
+        claimed_value, agreeing_users (distinct count), total_users (distinct
+        users who reported this campsite + attribute), agreement_percent,
+        meets_threshold (boolean).
+    """
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # For each (campsite, attribute, claimed_value) group, count distinct
+        # users who reported that exact value, and count all distinct users who
+        # reported anything for that (campsite, attribute) pair.
+        cur.execute(
+            """
+            WITH group_stats AS (
+                SELECT
+                    campsite_id,
+                    attribute,
+                    claimed_value,
+                    COUNT(DISTINCT review_id) AS report_count,
+                    COUNT(DISTINCT COALESCE((
+                        SELECT user_id FROM reviews r WHERE r.id = rar.review_id
+                    ), -1)) AS agreeing_users
+                FROM review_attribute_reports rar
+                GROUP BY campsite_id, attribute, claimed_value
+            ),
+            campsite_attribute_stats AS (
+                SELECT
+                    rar.campsite_id,
+                    rar.attribute,
+                    COUNT(DISTINCT COALESCE((
+                        SELECT user_id FROM reviews r WHERE r.id = rar.review_id
+                    ), -1)) AS total_users_for_pair
+                FROM review_attribute_reports rar
+                GROUP BY rar.campsite_id, rar.attribute
+            )
+            SELECT
+                gs.campsite_id,
+                c.name AS campsite_name,
+                gs.attribute,
+                gs.claimed_value,
+                gs.agreeing_users,
+                cas.total_users_for_pair AS total_users,
+                ROUND(100.0 * gs.agreeing_users / NULLIF(cas.total_users_for_pair, 0)) AS agreement_percent,
+                (gs.agreeing_users >= %s AND
+                 100.0 * gs.agreeing_users / NULLIF(cas.total_users_for_pair, 0) >= %s) AS meets_threshold
+            FROM group_stats gs
+            JOIN campsite_attribute_stats cas ON
+                cas.campsite_id = gs.campsite_id AND
+                cas.attribute = gs.attribute
+            JOIN campsites c ON c.id = gs.campsite_id
+            ORDER BY gs.campsite_id, gs.attribute, gs.claimed_value
+            """,
+            (ATTRIBUTE_THRESHOLD_MIN_USERS, ATTRIBUTE_THRESHOLD_MIN_PERCENT),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+    finally:
+        if conn:
+            conn.close()
+
+
+def apply_attribute_correction(campsite_id, attribute, claimed_value, admin_id):
+    """Apply a user-reported attribute correction to a campsite.
+
+    Writes the claimed value to the correct column on the correct table, and
+    records the action in an audit row, both within one atomic transaction.
+
+    Attributes and their target columns:
+      - water -> amenities.water_feature (TEXT)
+      - toilet_type -> amenities.toilet_type (TEXT)
+      - is_free -> campsites.is_free (BOOLEAN)
+      - fee_min -> campsites.fee_min (NUMERIC)
+      - is_reservable -> reservations.is_reservable (BOOLEAN)
+      - is_open -> status_updates.is_open (BOOLEAN)
+
+    Args:
+        campsite_id: The campsite ID.
+        attribute: One of the six allowed attributes.
+        claimed_value: The value to apply (will be coerced to the column type).
+        admin_id: The admin user ID performing the action.
+
+    Raises:
+        ValueError: If attribute is not allowed or claimed_value has the wrong type.
+        psycopg2.DatabaseError: On database errors.
+    """
+    allowed_attributes = ('water', 'toilet_type', 'is_free', 'fee_min',
+                         'is_reservable', 'is_open')
+    if attribute not in allowed_attributes:
+        raise ValueError(f"Attribute '{attribute}' is not allowed.")
+
+    # Type coercion and validation by attribute.
+    if attribute == 'water':
+        # amenities.water is a BOOLEAN meaning "has drinking water". It is NOT
+        # amenities.water_feature, which is the lake/creek/river TEXT facet.
+        # Writing a water report into water_feature both fails to fix the
+        # boolean and pollutes the facet the search filter reads.
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str) and claimed_value.lower() in (
+                'true', '1', 'yes'):
+            coerced_value = True
+        elif isinstance(claimed_value, str) and claimed_value.lower() in (
+                'false', '0', 'no'):
+            coerced_value = False
+        else:
+            raise ValueError(
+                "water must be a boolean, got '%s'." % (claimed_value,))
+    elif attribute == 'toilet_type':
+        # TEXT column, constrained to known values in the app
+        allowed_types = ('flush', 'vault', 'none')
+        if claimed_value not in allowed_types:
+            raise ValueError(f"toilet_type must be one of {allowed_types}.")
+        coerced_value = claimed_value
+    elif attribute == 'is_free':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_free must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_free must be a boolean, got {type(claimed_value).__name__}.")
+    elif attribute == 'fee_min':
+        # NUMERIC(8, 2) column
+        try:
+            coerced_value = float(claimed_value)
+        except (ValueError, TypeError):
+            raise ValueError(f"fee_min must be numeric, got '{claimed_value}'.")
+    elif attribute == 'is_reservable':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_reservable must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_reservable must be a boolean, got {type(claimed_value).__name__}.")
+    elif attribute == 'is_open':
+        # BOOLEAN column
+        if isinstance(claimed_value, bool):
+            coerced_value = claimed_value
+        elif isinstance(claimed_value, str):
+            if claimed_value.lower() in ('true', '1', 'yes'):
+                coerced_value = True
+            elif claimed_value.lower() in ('false', '0', 'no'):
+                coerced_value = False
+            else:
+                raise ValueError(f"is_open must be a boolean, got '{claimed_value}'.")
+        else:
+            raise ValueError(f"is_open must be a boolean, got {type(claimed_value).__name__}.")
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Update the appropriate column based on attribute.
+        if attribute == 'water':
+            cur.execute(
+                "UPDATE amenities SET water = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'toilet_type':
+            cur.execute(
+                "UPDATE amenities SET toilet_type = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_free':
+            cur.execute(
+                "UPDATE campsites SET is_free = %s WHERE id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'fee_min':
+            cur.execute(
+                "UPDATE campsites SET fee_min = %s WHERE id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_reservable':
+            cur.execute(
+                "UPDATE reservations SET is_reservable = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+        elif attribute == 'is_open':
+            cur.execute(
+                "UPDATE status_updates SET is_open = %s WHERE campsite_id = %s",
+                (coerced_value, campsite_id),
+            )
+
+        # Record the approval action.
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, 'approve', 'attribute_report', %s)
+            """,
+            (admin_id, campsite_id),
+        )
+
+        conn.commit()
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+
+    finally:
+        if conn:
+            conn.close()

@@ -27,6 +27,7 @@ from db import (
     get_review_verdict_counts,
     get_pending_photos, get_open_reports, get_attribute_report_groups,
     set_photo_status, set_review_status, set_report_status,
+    evaluate_attribute_reports, apply_attribute_correction,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -1708,7 +1709,7 @@ def admin_dashboard():
     """Admin moderation queue dashboard."""
     pending_photos = get_pending_photos()
     open_reports = get_open_reports()
-    attribute_report_groups = get_attribute_report_groups()
+    attribute_report_groups = evaluate_attribute_reports()
 
     return render_template(
         "admin.html",
@@ -1793,6 +1794,61 @@ def admin_action_report(report_id):
         flash("Report marked as actioned.")
     except Exception as e:
         flash(f"Error actioning report: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/attribute/apply", methods=["POST"])
+@admin_required
+def admin_apply_attribute():
+    """Apply a user-reported attribute correction to a campsite."""
+    user = current_user()
+    campsite_id = request.form.get("campsite_id", type=int)
+    attribute = request.form.get("attribute")
+    claimed_value = request.form.get("claimed_value")
+
+    try:
+        apply_attribute_correction(campsite_id, attribute, claimed_value, user["id"])
+        flash("Attribute correction applied.")
+    except ValueError as e:
+        flash(f"Invalid attribute or value: {e}")
+    except Exception as e:
+        flash(f"Error applying correction: {e}")
+    return redirect("/admin")
+
+
+@app.route("/admin/attribute/dismiss", methods=["POST"])
+@admin_required
+def admin_dismiss_attribute():
+    """Record a dismiss action for an attribute report without applying it."""
+    user = current_user()
+    campsite_id = request.form.get("campsite_id", type=int)
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Record the dismiss action.
+        cur.execute(
+            """
+            INSERT INTO moderation_actions (admin_id, action, target_type, target_id)
+            VALUES (%s, 'dismiss', 'attribute_report', %s)
+            """,
+            (user["id"], campsite_id),
+        )
+
+        conn.commit()
+        flash("Attribute reports dismissed.")
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        flash(f"Error dismissing reports: {e}")
+
+    finally:
+        if conn:
+            conn.close()
+
     return redirect("/admin")
 
 
