@@ -727,6 +727,109 @@ function initPhotoLightbox() {
   });
 }
 
+// Search feedback (query-level and per-result votes) ---------------------
+
+// Track which feedback targets have already received a vote to prevent duplicates.
+// Keys are "query-level", or "result-<position>" for per-result votes.
+const _feedback_votes = new Set();
+
+function initSearchFeedback() {
+  const searchData = document.getElementById("searchData");
+  let query = "";
+  if (searchData) {
+    try {
+      const data = JSON.parse(searchData.textContent || "{}");
+      query = data.query || "";
+    } catch (e) {
+      // Ignore parse errors.
+    }
+  }
+
+  // Query-level feedback buttons
+  document.querySelectorAll(".search-feedback-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const verdict = btn.getAttribute("data-feedback-vote");
+      if (!verdict) return;
+
+      // Guard against duplicate votes
+      if (_feedback_votes.has("query-level")) {
+        return;
+      }
+
+      // Update UI to show voted state
+      document.querySelectorAll(".search-feedback-btn").forEach((b) => {
+        b.classList.remove("voted");
+      });
+      btn.classList.add("voted");
+      _feedback_votes.add("query-level");
+
+      // Send event
+      try {
+        const event = {
+          event_type: "search_feedback",
+          query_text: query,
+          meta: {
+            feedback_type: "query_level",
+            verdict: verdict,
+          },
+        };
+        _sendBeaconJSON("/api/events", { events: [event] });
+      } catch (e) {
+        // Swallow any errors; tracking failure must not break the page.
+      }
+    });
+  });
+
+  // Per-result feedback buttons
+  document.querySelectorAll(".result-feedback-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const position = parseInt(btn.getAttribute("data-feedback-result"), 10);
+      const isHelpful = btn.classList.contains("result-feedback-helpful");
+      const verdict = isHelpful ? "helpful" : "unhelpful";
+
+      if (!position) return;
+
+      // Guard against duplicate votes on this specific result
+      const targetKey = "result-" + position;
+      if (_feedback_votes.has(targetKey)) {
+        return;
+      }
+
+      // Find the card containing this button
+      const card = btn.closest("[data-position][data-campsite-id]");
+      if (!card) return;
+
+      const campsite_id = parseInt(card.getAttribute("data-campsite-id"), 10);
+      if (!campsite_id) return;
+
+      // Update UI to show voted state (both buttons in the pair)
+      const card_buttons = card.querySelectorAll(".result-feedback-btn");
+      card_buttons.forEach((b) => {
+        b.classList.remove("voted");
+      });
+      btn.classList.add("voted");
+      _feedback_votes.add(targetKey);
+
+      // Send event
+      try {
+        const event = {
+          event_type: "search_feedback",
+          campsite_id: campsite_id,
+          position: position,
+          query_text: query,
+          meta: {
+            feedback_type: "result_level",
+            verdict: verdict,
+          },
+        };
+        _sendBeaconJSON("/api/events", { events: [event] });
+      } catch (e) {
+        // Swallow any errors; tracking failure must not break the page.
+      }
+    });
+  });
+}
+
 // Init on DOM ready ------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -746,6 +849,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initReviewModal();
   initImpressionTracking();
   initPickTracking();
+  initSearchFeedback();
 });
 
 // Review form modal -------------------------------------------------------

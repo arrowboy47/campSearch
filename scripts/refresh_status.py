@@ -30,6 +30,7 @@ abstentions are the point.
 
 import argparse
 import collections
+import contextlib
 import datetime
 import random
 import sys
@@ -61,7 +62,6 @@ AMBIGUOUS_STATES = {"Not Reservable", "NYR"}
 HORIZON_DAYS = 30
 # Below this many site-days there is not enough evidence to call a closure.
 MIN_EVIDENCE = 10
-
 
 def classify(day_statuses, *, reservable, horizon_days=HORIZON_DAYS):
     """(is_open, detail) for one campground.
@@ -171,6 +171,23 @@ UPSERT_SQL = """
 """
 
 
+class _NoOpRunCounters:
+    """Dummy counters for dry runs that writes nothing."""
+    def __init__(self):
+        self.seen = 0
+        self.upserted = 0
+        self.errors = 0
+        self.note = None
+
+
+@contextlib.contextmanager
+def _no_op_scrape_run():
+    """Context manager that yields counters but writes nothing.
+    Used for --dry-run to ensure no scrape_runs row is created.
+    """
+    yield _NoOpRunCounters()
+
+
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--dry-run", action="store_true",
@@ -190,7 +207,10 @@ def main(argv=None):
     session = requests.Session()
     session.headers.update({"User-Agent": UA, "Accept": "application/json"})
 
-    with get_conn() as conn, scrape_run("recreation_gov_status") as run:
+    # Use no-op context manager for dry runs to avoid writing scrape_runs row
+    run_context = _no_op_scrape_run() if args.dry_run else scrape_run("recreation_gov_status")
+
+    with get_conn() as conn, run_context as run:
         sel = conn.cursor()
         sel.execute(SELECT_SQL + (f" LIMIT {int(args.limit)}" if args.limit else ""))
         rows = sel.fetchall()
