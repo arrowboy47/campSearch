@@ -255,11 +255,127 @@ it silently invalidated a whole round of mutation results. Assert the mutated
 value is really live (read it back with `inspect.signature`) rather than
 trusting that editing the file was enough.
 
-## Later phases (not yet tasked)
+# Phase 2: retrieval
 
-**Phase 2, retrieval.** pgvector migration and embedding job; `rank_bm25`
-index; retrieve-then-fuse restructure of `search.py`; `RankingConfig`; golden
-set and eval harness writing to `search_eval_runs`.
+Branch `phase2-retrieval`. Phase 1 merged as `ac48fe8`.
+
+## Preconditions, verified 2026-10-07
+
+| Fact | Value |
+|---|---|
+| pgvector | 0.8.2 available, **not yet installed** into the database |
+| Latest migration | `0025_admin_and_moderation` |
+| Campsites | 2630 |
+| **Campsites with `overview` text** | **1602, so 1028 have none** |
+| Embedding model | `nomic-embed-text`, Jadu `:9091`, 768 dims, batching, ~21 ms/doc |
+| Full corpus embed | about 55 seconds |
+| `user_events` rows | 10 (local testing only) |
+
+Two of those drive the design.
+
+**39% of campsites have no overview.** Embedding `overview` alone would leave
+1028 campsites semantically unreachable while looking like it worked, because
+the ones that do have text would return plausible results. The embedded
+document must compose from name, forest, terrain, activities, water feature
+and fee status rendered into a sentence, with `overview` as an addition rather
+than the basis.
+
+**There is almost no behavioural data.** The feedback UI shipped but nothing is
+deployed, so the golden set cannot come from real judgements yet. It has to be
+hand-seeded, and the harness has to work with a small set.
+
+## Order, and why
+
+The eval harness comes before the retrievers, not after. Without a baseline
+measurement taken against today's name-only search, there is nothing to say
+whether semantic retrieval improved anything, and "it feels better" is how
+ranking work goes wrong. The config object comes first for the same reason:
+every weight has to be in one place before anything starts adding weights.
+
+## Task P2-01: RankingConfig
+
+A single versioned object holding every tunable: the weight of each retriever
+in fusion, the popularity weight and cap (currently the magic numbers
+`_POPULARITY_WEIGHT = 2.2` and `_POPULARITY_CAP = 8.0` in `search.py`), the
+unknown-attribute penalty, candidate pool sizes, and the fuzzthresh gate.
+Loaded from defaults, overridable per call so the eval harness can sweep it.
+
+No behaviour change in this task. It moves existing constants into the object
+and makes `search.py` read them from there.
+
+Verify: the suite passes unmutated AND fails when a weight is changed in the
+config but the old constant is left in place, proving nothing still reads the
+constant directly.
+Done when: no ranking number is hardcoded outside the config.
+
+## Task P2-02: eval harness and a baseline
+
+`scripts/eval_search.py` plus a `search_eval_runs` table (migration 0026)
+holding config json, metrics json, git sha and timestamp.
+
+Metrics: nDCG@10, MRR, recall@50. A golden set of 30 to 50 hand-written
+queries with graded judgements, stored as a versioned file in the repo, not in
+the database, so it diffs in review.
+
+**Record a baseline against today's search before changing retrieval.** That
+number is the whole point of the task.
+
+Verify: `python scripts/eval_search.py --golden data/golden_queries.yaml`
+prints the three metrics and writes one `search_eval_runs` row.
+Done when: a baseline exists and a config change visibly moves a metric.
+
+## Task P2-03: embeddings schema and provider
+
+Migration 0026 or 0027: `CREATE EXTENSION vector`, plus
+`campsite_embeddings(campsite_id PK, embedding vector(768), source_text_hash,
+model, updated_at)` with an `hnsw` cosine index.
+
+A provider module with one interface, base URL and model from config, so local
+llama.cpp in development and an OpenAI-compatible endpoint in production
+differ only by configuration.
+
+Verify: the migration applies twice inside a rolled-back transaction, and the
+provider returns 768 floats for a batch of three.
+
+## Task P2-04: the embedding job
+
+`scripts/embed_campsites.py`. Composes the document text per the finding above
+(never `overview` alone), hashes it, embeds only rows whose hash changed, and
+writes a `scrape_runs` row. Batched. Runs after the scrape chain as a new
+Airflow task.
+
+Verify: a dry run writes nothing; a real run embeds 2630 rows in about a
+minute and a second run embeds zero.
+
+## Task P2-05: BM25
+
+In-process `rank_bm25` over the same composed documents, rebuilt on boot and
+after a refresh. Postgres has no native BM25 and `ts_rank` is a different,
+weaker function; at 2630 documents an in-memory index is trivial and far
+easier to tune and test than SQL ranking.
+
+## Task P2-06: retrieve-then-fuse
+
+Restructure `search.py` into separate retrieval and ranking stages: structured
+prefilter, then lexical, semantic and name retrievers in parallel, fused by
+the config weights, then ranked with popularity and the unknown-attribute
+penalty.
+
+The `fuzzthresh` gate must not survive as a filter on the fused set. It
+currently drops anything that fails a name match, which would eat every
+semantic result.
+
+Verify: the 25 end-to-end tests from Phase 1 Task 01 still pass or are
+consciously updated, and the eval metrics improve against the P2-02 baseline.
+
+## Task P2-07: wire it into /results
+
+Semantic results appear in the UI, with the unknown-attribute penalty applied
+so the honest-but-useless filter behaviour from Phase 1 is fixed.
+
+---
+
+## Later phases (not yet tasked)
 
 **Phase 3, personalization.** Derived affinity job; content-based scoring;
 item-item collaborative filtering skeleton, switched on by config once volume
