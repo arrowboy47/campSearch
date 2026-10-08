@@ -1,20 +1,31 @@
 from rapidfuzz import fuzz
 from db import get_connection
+from ranking_config import DEFAULT_CONFIG, RankingConfig
 import math
 import re
 
-# Popularity bonus: how many result-list click-throughs a campsite has had
-# (campsites.pick_count, migration 0017) nudges its score. Log-scaled so the
-# first few picks matter and a runaway favourite can't dominate, and hard-capped
-# well below the gap between a real name match and a fuzzy one.
-_POPULARITY_WEIGHT = 2.2
-_POPULARITY_CAP = 8.0
 
+def _popularity_bonus(pick_count, popularity_weight=None, popularity_cap=None):
+    """Calculate log-scaled popularity bonus capped at popularity_cap.
 
-def _popularity_bonus(pick_count):
+    Popularity bonus: how many result-list click-throughs a campsite has had
+    (campsites.pick_count, migration 0017) nudges its score. Log-scaled so the
+    first few picks matter and a runaway favourite can't dominate, and hard-capped
+    well below the gap between a real name match and a fuzzy one.
+
+    Args:
+        pick_count: number of times this site has been picked/clicked.
+        popularity_weight: coefficient for log-scaled bonus (defaults to config).
+        popularity_cap: ceiling on the bonus (defaults to config).
+    """
+    if popularity_weight is None:
+        popularity_weight = DEFAULT_CONFIG.popularity_weight
+    if popularity_cap is None:
+        popularity_cap = DEFAULT_CONFIG.popularity_cap
+
     if not pick_count or pick_count < 1:
         return 0.0
-    return min(_POPULARITY_CAP, _POPULARITY_WEIGHT * math.log1p(pick_count))
+    return min(popularity_cap, popularity_weight * math.log1p(pick_count))
 
 
 def normalize(text):
@@ -203,7 +214,9 @@ def unknown_attrs_for(row, filters):
     return sorted(list(set(unknown)))
 
 
-def _fetch_filtered(filters, hard_limit=5000):
+def _fetch_filtered(filters, hard_limit=None):
+    if hard_limit is None:
+        hard_limit = DEFAULT_CONFIG.candidate_hard_limit
     conn = get_connection()
     cur = conn.cursor()
     frag, params = _build_where(filters)
@@ -238,14 +251,30 @@ def _name_score(name_flat, nq):
     )
 
 
-def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
+def search_campsites(query=None, *, config=None, fuzzthresh=None, limit=None, **filters):
     """Faceted search. Filters run in SQL; an optional text query then scores
     what's left. With no query, results come back sorted by forest then name.
+
+    Args:
+        query: optional text query to score candidates.
+        config: RankingConfig instance. Defaults to DEFAULT_CONFIG.
+        fuzzthresh: minimum score for fuzzy matches. Overrides config.
+        limit: maximum results to return. Overrides config.
+        **filters: faceted filters (is_open, forest, water, toilet, free_only,
+                   fee_max, reservable, camping_type, elev_min, elev_max,
+                   terrain, water_feature, activities).
 
     Accepted filters: is_open, forest, water, toilet ('any'|'flush'|'vault'),
     free_only, fee_max, reservable, camping_type ('dispersed'|'developed'),
     elev_min, elev_max, terrain (list), water_feature (list), activities (list).
     """
+
+    if config is None:
+        config = DEFAULT_CONFIG
+
+    # Explicit keyword arguments override config values
+    actual_fuzzthresh = fuzzthresh if fuzzthresh is not None else config.fuzzthresh
+    actual_limit = limit if limit is not None else config.result_limit
 
     rows = _fetch_filtered(filters)
     if not rows:
@@ -261,7 +290,7 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
 
     nq = normalize(query) if query else ""
     if not nq:
-        return _by_forest_then_name(rows)[:limit]
+        return _by_forest_then_name(rows)[:actual_limit]
 
     # Forest-name search: the query is a substring of a forest slug and matches
     # more forests than site names (e.g. "stanislaus", "shasta"). Needs >=4
@@ -270,23 +299,33 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
         forest_hits = [r for r in rows if nq in normalize(r["forest_name"])]
         name_substr = sum(1 for r in rows if nq in normalize(r["name"]))
         if forest_hits and len(forest_hits) > name_substr:
-            return _by_forest_then_name(forest_hits)[:limit]
+            return _by_forest_then_name(forest_hits)[:actual_limit]
 
     scored = []
     for row in rows:
         name_score = _name_score(normalize(row["name"]), nq)
-        if name_score < fuzzthresh:
+        if name_score < actual_fuzzthresh:
             continue
         # Popularity only breaks ties / nudges; the name match still leads.
-        total = name_score + _popularity_bonus(row.get("pick_count"))
+        total = name_score + _popularity_bonus(
+            row.get("pick_count"),
+            config.popularity_weight,
+            config.popularity_cap,
+        )
         scored.append(dict(row, score=total, name_score=name_score))
 
     scored.sort(key=lambda x: (-x["score"], -(x.get("pick_count") or 0), (x["name"] or "").lower()))
-    return scored[:limit]
+    return scored[:actual_limit]
 
 
-def get_campsite_by_name(query, fuzzthresh=62, limit=10):
-    """Backward-compatible wrapper: text-only search, no facets."""
+def get_campsite_by_name(query, fuzzthresh=None, limit=None):
+    """Backward-compatible wrapper: text-only search, no facets.
+
+    Args:
+        query: text query to search for.
+        fuzzthresh: minimum score for fuzzy matches (overrides config).
+        limit: maximum results (overrides config).
+    """
     return search_campsites(query=query, fuzzthresh=fuzzthresh, limit=limit)
 
 
