@@ -20,6 +20,9 @@ class RankingConfig:
         result_limit: maximum number of results returned.
         candidate_hard_limit: maximum candidate rows pulled from database.
         unknown_attr_penalty: penalty (unused, for future refinement).
+        bm25_k1: BM25 k1 parameter, controls term frequency saturation.
+        bm25_b: BM25 b parameter, controls length normalization (0..1).
+        bm25_min_token_length: minimum token length for lexical indexing.
     """
 
     popularity_weight: float = 2.2
@@ -28,6 +31,9 @@ class RankingConfig:
     result_limit: int = 200
     candidate_hard_limit: int = 5000
     unknown_attr_penalty: float = 0.0
+    bm25_k1: float = 1.5
+    bm25_b: float = 0.75
+    bm25_min_token_length: int = 2
 
     def replace(self, **kwargs):
         """Return a new RankingConfig with specified fields replaced.
@@ -46,7 +52,8 @@ class RankingConfig:
         field_str = (
             f"{self.popularity_weight}|{self.popularity_cap}|"
             f"{self.fuzzthresh}|{self.result_limit}|"
-            f"{self.candidate_hard_limit}|{self.unknown_attr_penalty}"
+            f"{self.candidate_hard_limit}|{self.unknown_attr_penalty}|"
+            f"{self.bm25_k1}|{self.bm25_b}|{self.bm25_min_token_length}"
         )
         digest = hashlib.sha256(field_str.encode()).hexdigest()
         return digest[:16]

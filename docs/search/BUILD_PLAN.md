@@ -354,6 +354,29 @@ after a refresh. Postgres has no native BM25 and `ts_rank` is a different,
 weaker function; at 2630 documents an in-memory index is trivial and far
 easier to tune and test than SQL ranking.
 
+Verify: a rare term beats a common one, campsites with no overview are
+findable, the tunables live in `RankingConfig` and demonstrably bite,
+importing the module touches no database, and real-corpus queries return
+sensible results.
+
+**Landed 2026-10-09.** `lexical.py` plus 20 tests. Verified against the real
+2630-document corpus, not fixtures:
+
+| query | hits | top result | |
+|---|---|---|---|
+| `pinecrest` | 7 | Pinecrest Campground | |
+| `lake fishing` | 1509 | Fish Lake | |
+| `off-roading` | 563 | ATV Campground | all of the top 5 have no overview |
+| `quiet creek with vault toilet` | 2034 | Butte Creek | |
+
+The `off-roading` row is the one that mattered: all 1028 overview-less
+campsites are reachable lexically, so the composed document is doing its job
+for the 39% that the overview would have hidden.
+
+Measured: 2.8 s to build, about 130 MB resident, 5 to 15 ms per query. The
+build is lazy and per-process, so the first search after a restart pays the
+2.8 s.
+
 ## Task P2-06: retrieve-then-fuse
 
 Restructure `search.py` into separate retrieval and ranking stages: structured
@@ -364,6 +387,25 @@ penalty.
 The `fuzzthresh` gate must not survive as a filter on the fused set. It
 currently drops anything that fails a name match, which would eat every
 semantic result.
+
+**Do not fuse on the normalized BM25 score.** P2-05 max-normalizes within a
+result set, so the top hit is 1.0 whatever it actually scored. Measured on the
+real corpus, raw top scores run from about 5 (`lake fishing`, a vague match)
+to about 10 (`pinecrest`, a confident one), and both report 1.0. A weighted
+sum of normalized scores therefore treats a vague lexical match exactly like a
+confident one. Worse, the scores bunch: `off-roading` puts 75 results at 0.9
+or above and the stopword query `the and of` puts 574 there, so within the
+candidate set the lexical signal is nearly flat.
+
+Use Reciprocal Rank Fusion. RRF reads only the rank, so it is immune to the
+scale problem and needs no calibration between a cosine distance and a BM25
+score, which are not comparable quantities. Keep the weights in
+`RankingConfig` and in `fingerprint()` so P2-02 can attribute a metric change
+to them. If a score-based fusion is wanted later, it needs the eval harness
+first, which is the point of doing RRF now.
+
+There is also no stopword filtering. BM25's IDF already pushes stopwords down,
+so this is not urgent, but it is why `the and of` matches 1599 documents.
 
 Verify: the 25 end-to-end tests from Phase 1 Task 01 still pass or are
 consciously updated, and the eval metrics improve against the P2-02 baseline.
