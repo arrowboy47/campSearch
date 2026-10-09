@@ -28,7 +28,7 @@ class TestEmbeddingProvider:
             from embeddings import EmbeddingProvider
             provider = EmbeddingProvider()
             assert provider.model == "nomic-embed-text"
-            assert provider.timeout == 60
+            assert provider.timeout == 300  # raised: a CPU batch needs minutes, not 60s
             assert provider.max_retries == 3
             assert provider.expected_dimension == 768
 

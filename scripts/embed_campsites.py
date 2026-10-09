@@ -217,52 +217,71 @@ def main(argv=None):
             return
 
         # Commit mode: embed and write to database
+        written = 0
+        failed_batches = 0
         print(f"\nEmbedding {len(to_embed)} documents...")
 
         try:
-            # Batch embed
-            docs = [doc for _, doc, _ in to_embed]
-            embeddings = []
-
-            for i in range(0, len(docs), BATCH_SIZE):
-                batch = docs[i:i + BATCH_SIZE]
-                try:
-                    batch_embeddings = provider.embed(batch)
-                    embeddings.extend(batch_embeddings)
-                    print(f"  Batch {i // BATCH_SIZE + 1}: {len(batch_embeddings)} embeddings")
-                except EmbeddingError as e:
-                    print(f"Error embedding batch {i // BATCH_SIZE + 1}: {e}", file=sys.stderr)
-                    raise
-
-            # Write to database
+            # Embed and write one batch at a time, committing as we go.
+            #
+            # The first version embedded all 2630 documents into memory and
+            # committed once at the end. On a run of any length that means an
+            # interruption loses everything, and it makes the hash-based skip
+            # useless for resuming, since nothing was ever written to skip
+            # against. Committing per batch turns a failed run into a partial
+            # one that the next run finishes.
             upd = conn.cursor()
-            for (cid, doc, doc_hash), embedding in zip(to_embed, embeddings):
-                upd.execute(
-                    """
-                    INSERT INTO campsite_embeddings
-                        (campsite_id, embedding, source_text_hash, model, updated_at)
-                    VALUES (%s, %s, %s, %s, now())
-                    ON CONFLICT (campsite_id) DO UPDATE SET
-                        embedding = EXCLUDED.embedding,
-                        source_text_hash = EXCLUDED.source_text_hash,
-                        updated_at = now()
-                    """,
-                    (cid, embedding, doc_hash, MODEL_NAME)
-                )
-            conn.commit()
-            upd.close()
 
-            print(f"Wrote {len(to_embed)} embeddings")
+            for i in range(0, len(to_embed), BATCH_SIZE):
+                chunk = to_embed[i:i + BATCH_SIZE]
+                batch_no = i // BATCH_SIZE + 1
+                try:
+                    vectors = provider.embed([doc for _, doc, _ in chunk])
+                except EmbeddingError as e:
+                    # One bad batch should not discard the batches already
+                    # committed, nor abandon the rest of the corpus.
+                    failed_batches += 1
+                    print("  batch %d failed: %s" % (batch_no, e), file=sys.stderr)
+                    continue
+
+                for (cid, doc, doc_hash), embedding in zip(chunk, vectors):
+                    upd.execute(
+                        """
+                        INSERT INTO campsite_embeddings
+                            (campsite_id, embedding, source_text_hash, model, updated_at)
+                        VALUES (%s, %s, %s, %s, now())
+                        ON CONFLICT (campsite_id) DO UPDATE SET
+                            embedding = EXCLUDED.embedding,
+                            source_text_hash = EXCLUDED.source_text_hash,
+                            model = EXCLUDED.model,
+                            updated_at = now()
+                        """,
+                        (cid, embedding, doc_hash, MODEL_NAME)
+                    )
+                conn.commit()
+                written += len(chunk)
+                if batch_no % 10 == 0 or i + BATCH_SIZE >= len(to_embed):
+                    print("  %d/%d embedded" % (written, len(to_embed)))
+
+            upd.close()
+            if failed_batches:
+                print("  %d batch(es) failed; re-run to fill the gaps"
+                      % failed_batches, file=sys.stderr)
+
+            print(f"Wrote {written} embeddings")
 
         except EmbeddingError as e:
             print(f"Embedding failed: {e}", file=sys.stderr)
             sys.exit(1)
 
-    # Log the run (if not dry-run)
+    # Log the run (dry runs write nothing at all, not even this row)
     if not args.dry_run:
         with scrape_run(args.source) as run:
             run.seen = len(all_rows)
-            run.upserted = len(to_embed)
+            # What was actually written, not what was intended. Reporting
+            # len(to_embed) would claim success for batches that failed.
+            run.upserted = written
+            run.errors = failed_batches
 
 
 if __name__ == "__main__":

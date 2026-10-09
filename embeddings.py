@@ -8,7 +8,7 @@ code changes.
 Environment variables:
     EMBEDDINGS_BASE_URL (default: http://localhost:8000/v1)
     EMBEDDINGS_MODEL (default: nomic-embed-text)
-    EMBEDDINGS_TIMEOUT (default: 60)
+    EMBEDDINGS_TIMEOUT (default: 300)
     EMBEDDINGS_MAX_RETRIES (default: 3)
 """
 
@@ -35,7 +35,7 @@ class EmbeddingProvider:
             "EMBEDDINGS_BASE_URL", "http://localhost:8000/v1"
         ).rstrip("/")
         self.model = os.environ.get("EMBEDDINGS_MODEL", "nomic-embed-text")
-        self.timeout = int(os.environ.get("EMBEDDINGS_TIMEOUT", "60"))
+        self.timeout = int(os.environ.get("EMBEDDINGS_TIMEOUT", "300"))
         self.max_retries = int(os.environ.get("EMBEDDINGS_MAX_RETRIES", "3"))
         self.expected_dimension = 768
 
