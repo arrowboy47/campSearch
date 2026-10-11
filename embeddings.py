@@ -30,13 +30,32 @@ class EmbeddingDimensionError(EmbeddingError):
 class EmbeddingProvider:
     """Interface to an OpenAI-compatible embedding service."""
 
-    def __init__(self):
+    def __init__(self, timeout=None, max_retries=None):
+        """Construct a provider.
+
+        Args:
+            timeout: per-request timeout in seconds. Overrides
+                EMBEDDINGS_TIMEOUT. The env default of 300 is sized for the
+                batch job, where a 32-document batch on CPU legitimately
+                takes minutes. An interactive search must pass something
+                small; see semantic.py.
+            max_retries: attempts before giving up. Overrides
+                EMBEDDINGS_MAX_RETRIES. Retries with backoff are right for a
+                batch job and wrong on a request path, where they turn a dead
+                service into a multi-second page hang.
+        """
         self.base_url = os.environ.get(
             "EMBEDDINGS_BASE_URL", "http://localhost:8000/v1"
         ).rstrip("/")
         self.model = os.environ.get("EMBEDDINGS_MODEL", "nomic-embed-text")
-        self.timeout = int(os.environ.get("EMBEDDINGS_TIMEOUT", "300"))
-        self.max_retries = int(os.environ.get("EMBEDDINGS_MAX_RETRIES", "3"))
+        self.timeout = (
+            timeout if timeout is not None
+            else int(os.environ.get("EMBEDDINGS_TIMEOUT", "300"))
+        )
+        self.max_retries = (
+            max_retries if max_retries is not None
+            else int(os.environ.get("EMBEDDINGS_MAX_RETRIES", "3"))
+        )
         self.expected_dimension = 768
 
     def embed(self, texts):

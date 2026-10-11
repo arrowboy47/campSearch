@@ -389,26 +389,70 @@ currently drops anything that fails a name match, which would eat every
 semantic result.
 
 **Do not fuse on the normalized BM25 score.** P2-05 max-normalizes within a
-result set, so the top hit is 1.0 whatever it actually scored. Measured on the
-real corpus, raw top scores run from about 5 (`lake fishing`, a vague match)
-to about 10 (`pinecrest`, a confident one), and both report 1.0. A weighted
-sum of normalized scores therefore treats a vague lexical match exactly like a
-confident one. Worse, the scores bunch: `off-roading` puts 75 results at 0.9
-or above and the stopword query `the and of` puts 574 there, so within the
-candidate set the lexical signal is nearly flat.
-
-Use Reciprocal Rank Fusion. RRF reads only the rank, so it is immune to the
-scale problem and needs no calibration between a cosine distance and a BM25
-score, which are not comparable quantities. Keep the weights in
-`RankingConfig` and in `fingerprint()` so P2-02 can attribute a metric change
-to them. If a score-based fusion is wanted later, it needs the eval harness
-first, which is the point of doing RRF now.
-
-There is also no stopword filtering. BM25's IDF already pushes stopwords down,
-so this is not urgent, but it is why `the and of` matches 1599 documents.
+result set, so the top hit is 1.0 whatever it actually scored. Use reciprocal
+rank fusion, which reads only the rank.
 
 Verify: the 25 end-to-end tests from Phase 1 Task 01 still pass or are
 consciously updated, and the eval metrics improve against the P2-02 baseline.
+
+**Landed 2026-10-10**, except the eval half, which waits on P2-02.
+
+New `semantic.py` (the retriever was missing; P2-03 and P2-04 built the schema,
+the provider and the job, but nothing ever queried the vectors) and `fusion.py`
+(RRF). `search.py` is now prefilter, retrieve, fuse, rank. 569 tests pass, 1
+skipped, with `DATABASE_URL` pointed at a dead port.
+
+Four things turned up that the plan had not anticipated:
+
+1. **`fuzzthresh` is fixed**, which was the point. It now bounds only what the
+   name retriever vouches for, so a campsite found lexically or semantically
+   survives. Pinned by `test_semantic_only_hit_survives_fuzzthresh`.
+
+2. **The additive popularity bonus could not survive rank fusion.** A fused
+   score rescaled to 0-100 puts adjacent ranks about 1.6 points apart at
+   `rrf_k=60`, so the 0-8 bonus became the ranking outright; at a small
+   `rrf_k` the same 8 points would stop mattering. Whether popularity did
+   anything depended entirely on `rrf_k`. **Contract change:** relevance now
+   decides outright and popularity only breaks ties. The log-scaled capped
+   curve still orders those ties. Two tests that asserted the old contract
+   were rewritten and `test_popularity_cannot_outrank_a_better_match` pins
+   the new one.
+
+3. **RRF turned equal scores into consecutive ranks**, so database row order
+   leaked into the ranking and nothing downstream could break a tie.
+   `fusion.competition_ranks` gives equal scores the same rank. Related:
+   `name_score_bucket` (default 2.0) quantizes name scores, because a 0-100
+   fuzzy score carries sub-point noise. "Pinecrest Camp" and "Pinecrest
+   Lodge" score 98.8 and 98.5 against "pinecrest" purely because one name is
+   a character longer, and that artifact should not outrank 500 picks.
+
+4. **A dead embedding service hung every search for three seconds.** The
+   provider's batch defaults (300s timeout, 3 retries with exponential
+   backoff) are right for the embedding job and wrong on a request path.
+   `semantic.py` constructs its provider with one attempt and a 2s timeout.
+   Caught because the test suite went from 3.8s to 93s.
+
+Every new config value was mutation-tested: `rrf_k`, `name_score_bucket`, the
+three RRF weights, `semantic_candidates`, `popularity_cap` and
+`popularity_weight` each fail at least one test when changed.
+
+**Not yet verified against the real corpus.** Both hosts were unreachable
+when this landed, so there are no end-to-end numbers for fused ranking
+quality, only unit behaviour. Run the real-corpus queries from P2-05 through
+`search_campsites` once the VPN is up, and treat the fusion weights as
+unmeasured guesses until P2-02 exists.
+
+### Follow-ups this opened
+
+- **Index build on the request path.** `lexical.get_index()` takes 2.8s and
+  about 130MB, lazily, per process. The first search after a restart pays it,
+  and every worker pays it again. Needs a warm-up on boot or a shared index
+  before P2-07 goes anywhere near production.
+- **No embedding task prefixes.** `nomic-embed-text` was trained with
+  `search_document: ` and `search_query: `; the job used neither, so queries
+  use neither. Adding them to both sides is plausible but means re-embedding
+  all 2630 documents, so it waits for the eval harness. Do not add one to a
+  single side.
 
 ## Task P2-07: wire it into /results
 

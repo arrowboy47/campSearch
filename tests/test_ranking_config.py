@@ -55,9 +55,14 @@ def test_popularity_bonus_with_default_values(monkeypatch):
 
 
 def test_search_with_default_config_respects_popularity_cap(monkeypatch):
-    """With default config, popularity bonus is capped at 8.0.
+    """With default config, the popularity curve is capped at 8.0.
 
-    This is a mutation test: changing cap to 800 should flip the sort order.
+    Mutation test: changing the cap to 800 must flip the sort order.
+
+    Popularity breaks ties between equally relevant results; it does not add
+    to relevance (see search.search_campsites). So this fixture puts both
+    sites in the same name-score band and lets the cap decide which of them
+    wins the tie.
     """
 
     def _make_campsite(**kwargs):
@@ -89,27 +94,71 @@ def test_search_with_default_config_respects_popularity_cap(monkeypatch):
         base.update(kwargs)
         return base
 
-    # Row A: name exact match (100.0), pick_count=0 -> score=100.0+0=100.0
-    # Row B: name fuzzy (91.2), pick_count=1000 ->
-    #   with cap=8: score=91.2+8=99.2
-    #   with cap=800: score=91.2+15.2=106.4
+    # Against "trail": "Zeta Trail" scores 95.6 and "Alpha Trail" 94.5, both
+    # in band 47 at the default 2.0 bucket, so they are equally relevant and
+    # popularity decides.
+    #
+    #   cap=8.0:   2.2*log1p(1000)=15.2 and 2.2*log1p(100)=10.2 both clip to
+    #              8.0, so the two tie and name order wins -> Alpha (id=2).
+    #   cap=800.0: nothing clips, 15.2 > 10.2 -> Zeta (id=1).
     fixtures = [
-        _make_campsite(id=1, name="Trail", pick_count=0),
-        _make_campsite(id=2, name="Mountain Trail", pick_count=1000),
+        _make_campsite(id=1, name="Zeta Trail", pick_count=1000),
+        _make_campsite(id=2, name="Alpha Trail", pick_count=100),
     ]
 
     monkeypatch.setattr("search._fetch_filtered", lambda filters, hard_limit=None: fixtures)
 
-    # With default config (cap=8.0)
     results_default = search_campsites(query="trail")
     assert len(results_default) >= 2
-    assert results_default[0]["id"] == 1, "With cap=8, id=1 (score=100) should rank first"
+    assert results_default[0]["id"] == 2, (
+        "With cap=8 both bonuses clip to 8.0, so the tie falls to name order "
+        "and Alpha Trail must lead"
+    )
 
-    # With modified config (cap=800.0) - config argument
     config_high_cap = DEFAULT_CONFIG.replace(popularity_cap=800.0)
     results_high_cap = search_campsites(query="trail", config=config_high_cap)
     assert len(results_high_cap) >= 2
-    assert results_high_cap[0]["id"] == 2, "With cap=800, id=2 (score=106.4) should rank first"
+    assert results_high_cap[0]["id"] == 1, (
+        "With cap=800 nothing clips, so 1000 picks must beat 100"
+    )
+
+
+def test_popularity_cannot_outrank_a_better_match(monkeypatch):
+    """Relevance decides outright; popularity never overturns it.
+
+    This is the contract that changed in P2-06. Popularity used to be a 0-8
+    additive bonus on a 0-100 name score, so a heavily picked fuzzy match
+    could beat an exact name match. It can no longer do that at any cap.
+    """
+
+    def _row(**kwargs):
+        base = {
+            "id": 1, "name": "Test", "forest_name": "Test", "latitude": 37.0,
+            "longitude": -119.0, "source": "fs_usda",
+            "reservation_type": "reservation", "num_sites": 10, "fee": None,
+            "fee_min": None, "is_free": False, "terrain": None,
+            "elevation_ft": 5000, "pick_count": 0, "is_open": True,
+            "forecast_json": None, "has_water": False, "has_restrooms": False,
+            "toilet_type": None, "water_feature": None, "activities": [],
+            "is_reservable": False, "forecast": None,
+        }
+        base.update(kwargs)
+        return base
+
+    # "Trail" scores 100.0 (band 50), "Mountain Trail" 91.2 (band 45):
+    # different bands, so this is a real relevance difference, not a tie.
+    fixtures = [
+        _row(id=1, name="Trail", pick_count=0),
+        _row(id=2, name="Mountain Trail", pick_count=1000),
+    ]
+    monkeypatch.setattr("search._fetch_filtered", lambda filters, hard_limit=None: fixtures)
+
+    for cap in (8.0, 800.0, 100000.0):
+        config = DEFAULT_CONFIG.replace(popularity_cap=cap)
+        results = search_campsites(query="trail", config=config)
+        assert results[0]["id"] == 1, (
+            f"at cap={cap}, 1000 picks must not beat the better name match"
+        )
 
 
 def test_search_with_default_fuzzthresh_boundary(monkeypatch):
@@ -248,8 +297,14 @@ def test_config_fuzzthresh_changes_results(monkeypatch):
     assert len(results_low) >= 1, "With low threshold, score 45.7 should pass"
 
 
-def test_config_popularity_cap_changes_sort_order(monkeypatch):
-    """Changing popularity_cap flips sort order (mutation test)."""
+def test_config_popularity_weight_changes_sort_order(monkeypatch):
+    """Changing popularity_weight flips sort order (mutation test).
+
+    The companion to test_search_with_default_config_respects_popularity_cap,
+    which pins the cap. Weight alone is a monotone scaling and so cannot
+    reorder anything on its own; it bites through its interaction with the
+    cap, by deciding whether two sites get clipped to the same ceiling.
+    """
 
     def _make_campsite(**kwargs):
         base = {
@@ -280,21 +335,28 @@ def test_config_popularity_cap_changes_sort_order(monkeypatch):
         base.update(kwargs)
         return base
 
+    # Equally relevant (bands 47 and 47 against "trail"), so popularity
+    # decides the tie. Cap is the default 8.0 throughout.
     fixtures = [
-        _make_campsite(id=1, name="Trail", pick_count=0),
-        _make_campsite(id=2, name="Mountain Trail", pick_count=1000),
+        _make_campsite(id=1, name="Zeta Trail", pick_count=1000),
+        _make_campsite(id=2, name="Alpha Trail", pick_count=100),
     ]
     monkeypatch.setattr("search._fetch_filtered", lambda filters, hard_limit=None: fixtures)
 
-    # With cap=8
-    config_cap_8 = DEFAULT_CONFIG.replace(popularity_cap=8.0)
-    results_cap_8 = search_campsites(query="trail", config=config_cap_8)
-    assert results_cap_8[0]["id"] == 1
+    # weight=2.2: 15.2 and 10.2 both clip to the 8.0 cap, so the two tie and
+    # name order decides.
+    config_default_weight = DEFAULT_CONFIG.replace(popularity_weight=2.2)
+    results_default = search_campsites(query="trail", config=config_default_weight)
+    assert results_default[0]["id"] == 2, (
+        "at weight=2.2 both clip to the cap, so Alpha Trail wins on name"
+    )
 
-    # With cap=800
-    config_cap_800 = DEFAULT_CONFIG.replace(popularity_cap=800.0)
-    results_cap_800 = search_campsites(query="trail", config=config_cap_800)
-    assert results_cap_800[0]["id"] == 2
+    # weight=0.5: 3.45 and 2.30, neither reaches the cap, so the picks speak.
+    config_low_weight = DEFAULT_CONFIG.replace(popularity_weight=0.5)
+    results_low = search_campsites(query="trail", config=config_low_weight)
+    assert results_low[0]["id"] == 1, (
+        "at weight=0.5 nothing clips, so 1000 picks must beat 100"
+    )
 
 
 # ========== Test 4: Explicit keywords override config ==========
