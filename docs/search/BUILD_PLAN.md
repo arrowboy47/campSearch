@@ -373,9 +373,10 @@ The `off-roading` row is the one that mattered: all 1028 overview-less
 campsites are reachable lexically, so the composed document is doing its job
 for the 39% that the overview would have hidden.
 
-Measured: 2.8 s to build, about 130 MB resident, 5 to 15 ms per query. The
-build is lazy and per-process, so the first search after a restart pays the
-2.8 s.
+Measured: about 0.9 s to build, roughly 90 MB resident, 5 to 15 ms per query.
+The build is lazy and per-process, so the first search after a restart pays
+it. (A first pass reported 2.8 s and 130 MB; that run had tracemalloc active,
+which roughly doubles allocation-heavy work.)
 
 ## Task P2-06: retrieve-then-fuse
 
@@ -444,10 +445,13 @@ unmeasured guesses until P2-02 exists.
 
 ### Follow-ups this opened
 
-- **Index build on the request path.** `lexical.get_index()` takes 2.8s and
-  about 130MB, lazily, per process. The first search after a restart pays it,
-  and every worker pays it again. Needs a warm-up on boot or a shared index
-  before P2-07 goes anywhere near production.
+- **Index build on the request path.** `lexical.get_index()` takes about 0.9 s
+  and roughly 90 MB, lazily, per process: a 1.6 s first search against 0.6 s
+  warm. Smaller than first reported (the 2.8 s figure was measured with
+  tracemalloc active). A one-off second on the first search after a deploy is
+  worth a warm-up call at startup, but it is not a blocker for P2-07. The
+  build is CPU-bound text work, so a GPU does not help; the GPU matters for
+  re-embedding the corpus (12 ms/doc vs 5377 ms/doc on CPU), not for search.
 - **No embedding task prefixes.** `nomic-embed-text` was trained with
   `search_document: ` and `search_query: `; the job used neither, so queries
   use neither. Adding them to both sides is plausible but means re-embedding

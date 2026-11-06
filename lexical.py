@@ -6,11 +6,18 @@ in-process indexing rather than Postgres full-text search because:
 - Postgres lacks native BM25; ts_rank is a different and weaker function
 - In-process indexing is far easier to tune and test than SQL ranking
 
-Measured against the real 2630-document corpus on 2026-10-09: the index takes
-2.8 seconds to build and costs about 130 MB of resident memory, and a query
-returns in 5 to 15 ms. The build is per-process and lazy, so the first search
-after a restart pays the 2.8 seconds. That is fine for one dev process and is
-the thing to revisit before running multiple workers.
+Measured against the real corpus on 2026-11-05 (2634 documents): the index
+takes about 0.9 s to build and the process sits around 90 MB resident, and a
+query returns in 5 to 15 ms. End to end that is a 1.6 s first search against
+0.6 s warm, so the build is roughly a 1 s one-off per process.
+
+An earlier note here claimed 2.8 s and 130 MB. That measurement had
+tracemalloc active, which roughly doubles allocation-heavy work; do not
+profile this with tracemalloc running.
+
+The build is CPU-bound text work (fetch rows, compose, tokenize, count), so a
+GPU does nothing for it. The only GPU-able part of a query is embedding it,
+which is already about 120 ms.
 
 Scores are max-normalized within a result set, which means the top hit is
 always 1.0 whatever its raw score. That discards BM25's cross-query
@@ -197,8 +204,8 @@ def get_index(config: RankingConfig = DEFAULT_CONFIG) -> LexicalIndex:
     global _cached_index
 
     # Only one index is cached. A caller that alternates between configs
-    # rebuilds every call, at 2.8 seconds a time; that is acceptable for the
-    # eval harness and would not be for a request path.
+    # rebuilds every call, at about 0.9 seconds a time; that is acceptable for
+    # the eval harness and would not be for a request path.
     if _cached_index is not None and _cached_index.config == config:
         return _cached_index
 

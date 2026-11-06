@@ -1,0 +1,266 @@
+# Golden set for search evaluation (P2-02).
+#
+# This file is the only thing standing between "the search feels better" and
+# "the search IS better". Every fusion weight in ranking_config.py is currently
+# a guess; the harness reads this file to turn them into measurements.
+#
+# ---------------------------------------------------------------------------
+# HOW AN ENTRY WORKS
+#
+# Two kinds, because two different things can be "correct".
+#
+# kind: known_item
+#   There is exactly one right answer and we know its id. Scored by where that
+#   campsite lands: rank 1 is perfect, rank 50 is a failure. Use this for
+#   name lookups, where the right answer is not a matter of opinion.
+#
+#     - id: short-stable-slug          # never reuse or renumber these
+#       query: buckhorn campground     # typed exactly as a user would
+#       kind: known_item
+#       expect_campsite_id: 103
+#       why: one sentence on what this entry is defending
+#
+# kind: predicate
+#   Many answers are right, and what makes them right is a property, not an
+#   identity. Scored as precision@k: of the top k results, how many satisfy
+#   the predicate. Written as SQL over `campsites c` LEFT JOIN `amenities a`
+#   so it is checked against the live database rather than a frozen list of
+#   ids, which would rot with every weekly scrape.
+#
+#     - id: short-stable-slug
+#       query: free camping with a vault toilet
+#       kind: predicate
+#       precision_at: 10
+#       must_sql: "c.is_free = TRUE AND a.toilet_type = 'vault'"
+#       why: ...
+#
+# Run `python scripts/validate_golden_set.py` after editing. It checks that
+# every id exists, every predicate parses and matches enough campsites, and
+# every slug is unique. It does NOT run a search, so it is safe and fast.
+#
+# ---------------------------------------------------------------------------
+# WHAT IS MISSING AND WHY THAT MATTERS
+#
+# Everything below is objective: exact names, forests, and attributes the
+# database already knows. These entries are good at catching regressions and
+# useless at judging taste. They cannot tell us whether "somewhere quiet to
+# fish" returns a *good* answer, because no SQL predicate expresses "quiet".
+#
+# That is the half only Aiden can write, and it is the half that decides
+# whether the semantic retriever is earning its weight. See the
+# `vibe_queries` section at the bottom.
+# ---------------------------------------------------------------------------
+
+version: 1
+corpus_note: >
+  Verified against the live corpus on 2026-11-05 (2634 campsites, 2630
+  embedded). Known-item ids were confirmed by name lookup; every predicate
+  was confirmed to match at least 10 campsites.
+
+queries:
+
+  # ---- known-item: exact and near-exact names -----------------------------
+  # The baseline competence test. If any of these regress, the name retriever
+  # or the fusion weighting has broken and users will notice immediately.
+
+  - id: name-buckhorn
+    query: buckhorn campground
+    kind: known_item
+    expect_campsite_id: 103
+    why: Plain exact-name lookup, the single most common real query shape.
+
+  - id: name-partial-cibbets
+    query: cibbets flat
+    kind: known_item
+    expect_campsite_id: 136
+    why: Partial name, no "campground" suffix. Users rarely type the suffix.
+
+  - id: name-caples-lake
+    query: caples lake campground
+    kind: known_item
+    expect_campsite_id: 158
+    why: >
+      Name contains "lake", which is also a high-frequency attribute word, so
+      this is where lexical and semantic retrieval will try to drag in 549
+      other lakeside sites. The name must still win.
+
+  - id: name-observatory
+    query: observatory campground
+    kind: known_item
+    expect_campsite_id: 147
+    why: Distinctive single token, should be trivially rank 1.
+
+  - id: name-single-token-guffy
+    query: guffy
+    kind: known_item
+    expect_campsite_id: 109
+    why: >
+      One short rare token and nothing else. Checks that bm25_min_token_length
+      and the name retriever both still handle a bare distinctive word.
+
+  - id: name-misspelled-buckhorn
+    query: bukhorn campground
+    kind: known_item
+    expect_campsite_id: 103
+    why: >
+      Fuzzy robustness. This is the entry that justifies keeping the name
+      retriever at all once embeddings exist: a typo has no good embedding
+      but rapidfuzz handles it fine.
+
+  # ---- known-item: disambiguation ----------------------------------------
+  # Two real campsites whose names are prefixes of each other. These two
+  # entries pull in opposite directions on purpose, so a change that games
+  # one will break the other.
+
+  - id: name-disambig-kirkwood-plain
+    query: kirkwood campground
+    kind: known_item
+    expect_campsite_id: 168
+    why: >
+      Must NOT return Kirkwood Lake Campground (1122). Guards against a
+      length penalty or a token-set match treating the two as equivalent.
+
+  - id: name-disambig-kirkwood-lake
+    query: kirkwood lake campground
+    kind: known_item
+    expect_campsite_id: 1122
+    why: The other half of the pair. Adding "lake" must flip the winner.
+
+  # ---- forest lookups ---------------------------------------------------
+  # search.py has a dedicated forest-name branch ahead of fusion. These pin
+  # that it still fires, since fusion could easily swallow it.
+
+  - id: forest-angeles
+    query: angeles national forest
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.forest_name = 'angeles'"
+    why: The forest branch must beat name matching on the word "national".
+
+  - id: forest-cleveland
+    query: cleveland
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.forest_name = 'cleveland'"
+    why: >
+      Bare forest slug with no "national forest" suffix, and 4+ characters so
+      it clears the length guard on the forest branch.
+
+  # ---- attribute predicates ---------------------------------------------
+  # Natural-language attribute queries. These are the ones that returned
+  # nothing at all before P2-06, because they fail a fuzzy name match and the
+  # old fuzzthresh gate dropped everything that did.
+
+  - id: attr-free-vault
+    query: free camping with a vault toilet
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.is_free = TRUE AND a.toilet_type = 'vault'"
+    why: >
+      Two attributes at once, and only 23 campsites satisfy both, so this is
+      a genuinely hard retrieval target rather than a gimme.
+
+  - id: attr-lakeside
+    query: campsite on a lake
+    kind: predicate
+    precision_at: 10
+    must_sql: "a.water_feature = 'lake'"
+    why: Single common attribute. Should be easy; a failure here is alarming.
+
+  - id: attr-creek
+    query: camping next to a creek
+    kind: predicate
+    precision_at: 10
+    must_sql: "a.water_feature = 'creek'"
+    why: >
+      Paired with attr-lakeside to catch a retriever that has collapsed all
+      water features into one undifferentiated "water" concept.
+
+  - id: attr-first-come
+    query: first come first served no reservation
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.reservation_type = 'first-come'"
+    why: >
+      Phrased as a negation ("no reservation"). Embeddings handle negation
+      badly, so this is where the lexical retriever has to carry it.
+
+  - id: attr-dispersed
+    query: dispersed camping
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.reservation_type = 'dispersed'"
+    why: Domain term of art; should match the reservation_type exactly.
+
+  - id: attr-flush-toilets
+    query: campground with flush toilets
+    kind: predicate
+    precision_at: 10
+    must_sql: "a.toilet_type = 'flush'"
+    why: Guards against flush and vault being treated as interchangeable.
+
+  - id: attr-high-elevation
+    query: high elevation camping above 8000 feet
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.elevation_ft > 8000"
+    why: >
+      Contains a number the pipeline does not parse into a filter. Honest
+      expectation: the composed document says "alpine" for these, so this
+      tests whether the elevation band in compose_document is doing work.
+
+  - id: attr-horseback
+    query: horseback riding
+    kind: predicate
+    precision_at: 10
+    must_sql: "'horseback riding' = ANY(a.activities)"
+    why: Exact activity-list match, phrased exactly as the data stores it.
+
+  - id: attr-boating-swimming
+    query: boating and swimming
+    kind: predicate
+    precision_at: 10
+    must_sql: "'boating' = ANY(a.activities) AND 'swimming' = ANY(a.activities)"
+    why: Two activities at once; both must be respected, not just the first.
+
+  - id: attr-free-lakeside
+    query: free campsites by a lake
+    kind: predicate
+    precision_at: 10
+    must_sql: "c.is_free = TRUE AND a.water_feature = 'lake'"
+    why: >
+      Combines a boolean and a facet. Also the shape most likely to expose
+      the three-state attribute bug from Phase 1, where NULL was read as
+      false and honest-but-unknown rows vanished.
+
+# ---------------------------------------------------------------------------
+# AIDEN'S SECTION: vibe queries
+# ---------------------------------------------------------------------------
+#
+# Everything above only proves the search has not got worse. These prove it
+# has got better, and no SQL predicate can express them, which is why they
+# have to come from you.
+#
+# What to write: the queries you would actually type, especially ones where
+# you would look at the results and say "no, that's wrong". The wrongness is
+# the useful part. A query you already know the search fumbles is worth more
+# here than one it handles.
+#
+# How to fill one in: type the query, look at the top 10, then list the ids
+# you would have wanted at the top in `expect_any_of` and anything that
+# should NOT be there in `reject_ids`. You do not need a complete ranking,
+# just a few that are clearly right and clearly wrong.
+#
+#   - id: vibe-quiet-fishing
+#     query: somewhere quiet to fish near a lake
+#     kind: graded
+#     expect_any_of: [1234, 5678]     # should be in the top few
+#     reject_ids: [910]               # should not be anywhere near the top
+#     why: "Quiet" is not in the database at all; I expect small, free,
+#          first-come sites rather than big reservable ones.
+#
+# Ten of these is plenty. Five is useful. To see candidate ids for a query,
+# run: python scripts/eval_search.py --explore "your query here"
+# (that flag arrives with the harness in P2-02).
+
+vibe_queries: []
