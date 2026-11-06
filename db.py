@@ -1669,3 +1669,233 @@ def apply_attribute_correction(campsite_id, attribute, claimed_value, admin_id):
     finally:
         if conn:
             conn.close()
+
+
+# --- search evaluation: queries and human relevance judgments ---------------
+#
+# These back the /eval labelling page and the eval harness. A judgment is a
+# statement about one (query, campsite) pair, independent of any ranking, so
+# labels made today score a config tried next month. See migration 0027.
+
+EVAL_GRADES = (0, 1, 2)
+
+_EVAL_QUERY_COLS = (
+    "id, query_text, intent, kind, expect_campsite_id, notes, "
+    "created_at, retired_at"
+)
+
+
+def list_eval_queries(include_retired=False):
+    """Every evaluation query with its judgment progress.
+
+    Returns a list of dicts with the query columns plus `judged` (how many
+    campsites have a grade) and `relevant` (how many scored 1 or 2), so the
+    labelling page can show progress without a second round trip per query.
+    """
+    where = "" if include_retired else "WHERE q.retired_at IS NULL"
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"""
+            SELECT {', '.join('q.' + c.strip() for c in _EVAL_QUERY_COLS.split(','))},
+                   count(j.id) AS judged,
+                   count(j.id) FILTER (WHERE j.grade > 0) AS relevant
+            FROM search_eval_queries q
+            LEFT JOIN search_judgments j ON j.query_id = q.id
+            {where}
+            GROUP BY q.id
+            ORDER BY q.retired_at NULLS FIRST, q.id
+            """
+        )
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        cur.close()
+        return rows
+    finally:
+        conn.close()
+
+
+def get_eval_query(query_id):
+    """One evaluation query, or None."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT {_EVAL_QUERY_COLS} FROM search_eval_queries WHERE id = %s",
+            (query_id,),
+        )
+        row = cur.fetchone()
+        cols = [d[0] for d in cur.description]
+        cur.close()
+        return dict(zip(cols, row)) if row else None
+    finally:
+        conn.close()
+
+
+def create_eval_query(query_text, intent=None, kind="graded",
+                      expect_campsite_id=None, notes=None):
+    """Add an evaluation query, or return the existing one with that text.
+
+    query_text is UNIQUE, so adding the same query twice returns the original
+    rather than raising. Splitting one query's judgments across two rows would
+    silently halve the evidence for it, which is worse than a no-op.
+
+    Returns (query_id, created) where created is False if it already existed.
+    """
+    text = (query_text or "").strip()
+    if not text:
+        raise ValueError("query_text cannot be blank")
+    if kind not in ("graded", "known_item"):
+        raise ValueError("kind must be 'graded' or 'known_item', got %r" % (kind,))
+    if kind == "known_item" and not expect_campsite_id:
+        raise ValueError("a known_item query needs expect_campsite_id")
+    if kind == "graded" and expect_campsite_id:
+        raise ValueError("a graded query must not set expect_campsite_id")
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO search_eval_queries
+                (query_text, intent, kind, expect_campsite_id, notes)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (query_text) DO NOTHING
+            RETURNING id
+            """,
+            (text, (intent or None), kind, expect_campsite_id, (notes or None)),
+        )
+        row = cur.fetchone()
+        if row:
+            conn.commit()
+            cur.close()
+            return row[0], True
+
+        # ON CONFLICT DO NOTHING returns no row, so fetch the existing id.
+        cur.execute(
+            "SELECT id FROM search_eval_queries WHERE query_text = %s", (text,)
+        )
+        existing = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        return existing, False
+    finally:
+        conn.close()
+
+
+def set_eval_query_retired(query_id, retired):
+    """Retire or un-retire a query. Judgments are never deleted.
+
+    Retiring drops a query out of scoring but keeps its judgments, so a query
+    that turned out to be badly worded can be withdrawn without destroying the
+    human work attached to it.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE search_eval_queries "
+            "SET retired_at = CASE WHEN %s THEN now() ELSE NULL END "
+            "WHERE id = %s",
+            (bool(retired), query_id),
+        )
+        conn.commit()
+        cur.close()
+    finally:
+        conn.close()
+
+
+def judgments_for_query(query_id):
+    """{campsite_id: grade} for one query."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT campsite_id, grade FROM search_judgments WHERE query_id = %s",
+            (query_id,),
+        )
+        out = {cid: grade for cid, grade in cur.fetchall()}
+        cur.close()
+        return out
+    finally:
+        conn.close()
+
+
+def upsert_judgment(query_id, campsite_id, grade, judged_by=None):
+    """Record or change one judgment.
+
+    Validates the grade here as well as in the CHECK constraint: a bad grade
+    arriving from a request should be a clear 400, not a database error with a
+    rolled-back transaction.
+    """
+    if grade not in EVAL_GRADES:
+        raise ValueError("grade must be one of %r, got %r" % (EVAL_GRADES, grade))
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO search_judgments
+                (query_id, campsite_id, grade, judged_by)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (query_id, campsite_id) DO UPDATE SET
+                grade = EXCLUDED.grade,
+                judged_by = EXCLUDED.judged_by,
+                updated_at = now()
+            """,
+            (query_id, campsite_id, grade, judged_by),
+        )
+        conn.commit()
+        cur.close()
+    finally:
+        conn.close()
+
+
+def delete_judgment(query_id, campsite_id):
+    """Remove a judgment, so a pair goes back to unjudged.
+
+    Distinct from grading it 0: an unjudged pair is excluded from the metrics,
+    while a 0 asserts the result is wrong. Conflating them would let "I have
+    not looked at this yet" count as evidence against the ranking.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM search_judgments WHERE query_id = %s AND campsite_id = %s",
+            (query_id, campsite_id),
+        )
+        conn.commit()
+        cur.close()
+    finally:
+        conn.close()
+
+
+def eval_progress():
+    """Headline counts for the labelling page."""
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                (SELECT count(*) FROM search_eval_queries WHERE retired_at IS NULL),
+                (SELECT count(*) FROM search_judgments),
+                (SELECT count(*) FROM search_judgments WHERE grade = 2),
+                (SELECT count(*) FROM search_judgments WHERE grade = 1),
+                (SELECT count(*) FROM search_judgments WHERE grade = 0)
+            """
+        )
+        queries, total, ideal, ok, wrong = cur.fetchone()
+        cur.close()
+        return {
+            "queries": queries,
+            "judgments": total,
+            "ideal": ideal,
+            "acceptable": ok,
+            "wrong": wrong,
+        }
+    finally:
+        conn.close()

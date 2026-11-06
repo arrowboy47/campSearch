@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Search Evaluation · Camp Search</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+	<style>
+		.eval-stats { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+		.eval-stat {
+			border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+			padding: 0.75rem 1rem; background: var(--surface); min-width: 7rem;
+		}
+		.eval-stat-value { font-size: 1.5rem; font-weight: 600; line-height: 1.1; }
+		.eval-stat-label { font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; }
+		.eval-section {
+			border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+			padding: 1.25rem; background: var(--surface); margin-bottom: 1.5rem;
+		}
+		.eval-table { width: 100%; border-collapse: collapse; }
+		.eval-table th, .eval-table td {
+			text-align: left; padding: 0.55rem 0.5rem;
+			border-bottom: 1px solid var(--border-subtle); font-size: 0.9rem;
+		}
+		.eval-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
+		.eval-q { font-weight: 600; }
+		.eval-intent { font-size: 0.8rem; opacity: 0.75; }
+		.eval-kind {
+			font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+			border: 1px solid var(--border-subtle); border-radius: 999px; padding: 0.1rem 0.5rem;
+		}
+		.eval-progress-bar {
+			height: 6px; border-radius: 3px; background: var(--border-subtle);
+			overflow: hidden; min-width: 5rem;
+		}
+		.eval-progress-fill { height: 100%; background: currentColor; opacity: 0.6; }
+		.eval-retired td { opacity: 0.45; }
+		.eval-form-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+		.eval-form-row label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; }
+		.eval-form-row input, .eval-form-row select { padding: 0.45rem 0.55rem; }
+		.eval-why { font-size: 0.88rem; line-height: 1.55; opacity: 0.85; max-width: 62ch; }
+		.eval-why code { font-size: 0.85em; }
+	</style>
+</head>
+<body class="page">
+	<header class="page-header">
+		<div class="page-header-inner">
+			<a href="/" class="brand">
+				<div class="brand-mark">🏕️</div>
+				<div class="brand-text">
+					<div class="brand-title">Camp Search</div>
+					<div class="brand-subtitle">Find open campsites with the right amenities</div>
+				</div>
+			</a>
+			{% include "_headernav.html" %}
+		</div>
+	</header>
+
+	<main class="page-main account-layout">
+		<div class="account-body" style="width: 100%;">
+			{% include "_flash.html" %}
+
+			<div class="account-head">
+				<h1>Search Evaluation</h1>
+			</div>
+
+			<p class="eval-why">
+				Every ranking knob in <code>ranking_config.py</code> is currently a guess.
+				Judging results here turns &ldquo;does the search feel better?&rdquo; into a
+				number, so a change to a weight can be shown to help or hurt instead of
+				argued about. A judgment is about one query and one campsite, not about a
+				position in a list, so these labels keep working after the ranking changes
+				&mdash; you only ever judge pairs you have not seen before.
+			</p>
+
+			<div class="eval-stats">
+				<div class="eval-stat">
+					<div class="eval-stat-value">{{ progress.queries }}</div>
+					<div class="eval-stat-label">Live queries</div>
+				</div>
+				<div class="eval-stat">
+					<div class="eval-stat-value">{{ progress.judgments }}</div>
+					<div class="eval-stat-label">Judgments</div>
+				</div>
+				<div class="eval-stat">
+					<div class="eval-stat-value">{{ progress.ideal }}</div>
+					<div class="eval-stat-label">Ideal (2)</div>
+				</div>
+				<div class="eval-stat">
+					<div class="eval-stat-value">{{ progress.acceptable }}</div>
+					<div class="eval-stat-label">Acceptable (1)</div>
+				</div>
+				<div class="eval-stat">
+					<div class="eval-stat-value">{{ progress.wrong }}</div>
+					<div class="eval-stat-label">Wrong (0)</div>
+				</div>
+			</div>
+
+			<section class="eval-section">
+				<h2>Add a query</h2>
+				<p class="eval-intent">
+					Type it exactly as you would in the search box. &ldquo;What I expected&rdquo;
+					is a note to your future self; it is not scored.
+				</p>
+				<form method="post" action="/eval/queries">
+					{{ csrf_input() | safe }}
+					<div class="eval-form-row">
+						<label style="flex: 2 1 18rem;">
+							Query
+							<input type="text" name="query_text" required
+							       placeholder="somewhere quiet to fish" />
+						</label>
+						<label style="flex: 2 1 18rem;">
+							What I expected (optional)
+							<input type="text" name="intent"
+							       placeholder="small lakeside sites, under ~20 pitches" />
+						</label>
+						<label>
+							Kind
+							<select name="kind" id="eval-kind">
+								<option value="graded">Graded (many right answers)</option>
+								<option value="known_item">Known item (one right answer)</option>
+							</select>
+						</label>
+						<label id="eval-expect-wrap" hidden>
+							Correct campsite id
+							<input type="number" name="expect_campsite_id" min="1" />
+						</label>
+						<button type="submit" class="btn">Add &amp; label</button>
+					</div>
+				</form>
+			</section>
+
+			<section class="eval-section">
+				<h2>Queries</h2>
+				{% if queries %}
+					<table class="eval-table">
+						<thead>
+							<tr>
+								<th>Query</th>
+								<th>Kind</th>
+								<th>Judged</th>
+								<th>Relevant</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for q in queries %}
+							<tr {% if q.retired_at %}class="eval-retired"{% endif %}>
+								<td>
+									<div class="eval-q">
+										<a href="/eval/{{ q.id }}">{{ q.query_text }}</a>
+										{% if q.retired_at %}<span class="eval-kind">retired</span>{% endif %}
+									</div>
+									{% if q.intent %}<div class="eval-intent">{{ q.intent }}</div>{% endif %}
+								</td>
+								<td><span class="eval-kind">{{ 'known item' if q.kind == 'known_item' else 'graded' }}</span></td>
+								<td>
+									{{ q.judged }} / {{ pool_size }}
+									<div class="eval-progress-bar">
+										<div class="eval-progress-fill"
+										     style="width: {{ (100 * q.judged / pool_size) | round | int if q.judged < pool_size else 100 }}%"></div>
+									</div>
+								</td>
+								<td>{{ q.relevant }}</td>
+								<td>
+									<form method="post" action="/eval/{{ q.id }}/retire" style="display:inline">
+										{{ csrf_input() | safe }}
+										<input type="hidden" name="retire" value="{{ '0' if q.retired_at else '1' }}" />
+										<button type="submit" class="btn btn-quiet">
+											{{ 'Restore' if q.retired_at else 'Retire' }}
+										</button>
+									</form>
+								</td>
+							</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+				{% else %}
+					<p class="eval-intent">No queries yet. Add one above.</p>
+				{% endif %}
+			</section>
+		</div>
+	</main>
+
+	<footer class="page-footer">
+		<p class="page-footer-text">Always confirm details with the official listing before traveling.</p>
+	</footer>
+	{% include "_bottomnav.html" %}
+
+	<script>
+		// Only a known-item query needs a specific campsite id, so keep that
+		// field out of the way until it is relevant.
+		(function () {
+			var kind = document.getElementById('eval-kind');
+			var wrap = document.getElementById('eval-expect-wrap');
+			if (!kind || !wrap) return;
+			function sync() { wrap.hidden = kind.value !== 'known_item'; }
+			kind.addEventListener('change', sync);
+			sync();
+		})();
+	</script>
+</body>
+</html>

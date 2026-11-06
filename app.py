@@ -28,6 +28,9 @@ from db import (
     get_pending_photos, get_open_reports, get_attribute_report_groups,
     set_photo_status, set_review_status, set_report_status,
     evaluate_attribute_reports, apply_attribute_correction,
+    list_eval_queries, get_eval_query, create_eval_query,
+    set_eval_query_retired, judgments_for_query, upsert_judgment,
+    delete_judgment, eval_progress,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -46,6 +49,7 @@ import json
 import math
 import re
 import os
+import random
 from forests import forest_label
 import psycopg2
 from content_filter import has_blocked_content
@@ -1895,5 +1899,184 @@ def serve_review_photo_admin(photo_id):
 # lets see what next
 # runs the app and runs the index route by default, I think?
 # zsh: p app.py
+
+# --- search evaluation: relevance labelling -------------------------------
+#
+# Admin-only tooling for building the relevance judgments the eval harness
+# scores against. Every ranking tunable in ranking_config.py is currently an
+# unmeasured guess; this page is how that stops being true.
+
+EVAL_POOL_SIZE = 10
+
+
+@app.route("/eval")
+@admin_required
+def eval_index():
+    """List evaluation queries and labelling progress."""
+    return render_template(
+        "eval_index.html",
+        queries=list_eval_queries(include_retired=True),
+        progress=eval_progress(),
+        pool_size=EVAL_POOL_SIZE,
+    )
+
+
+@app.route("/eval/queries", methods=["POST"])
+@admin_required
+def eval_add_query():
+    """Add an evaluation query."""
+    text = (request.form.get("query_text") or "").strip()
+    intent = (request.form.get("intent") or "").strip()
+    kind = (request.form.get("kind") or "graded").strip()
+    expect_raw = (request.form.get("expect_campsite_id") or "").strip()
+
+    if not text:
+        flash("A query needs some text.")
+        return redirect("/eval")
+
+    expect = None
+    if kind == "known_item":
+        if not expect_raw.isdigit():
+            flash("A known-item query needs the id of the one correct campsite.")
+            return redirect("/eval")
+        expect = int(expect_raw)
+        if not get_campsite_by_id(expect):
+            flash("No campsite with id %d." % expect)
+            return redirect("/eval")
+
+    try:
+        query_id, created = create_eval_query(
+            text, intent=intent, kind=kind, expect_campsite_id=expect
+        )
+    except ValueError as exc:
+        flash(str(exc))
+        return redirect("/eval")
+
+    if not created:
+        flash("That query already existed; opening it.")
+    return redirect("/eval/%d" % query_id)
+
+
+@app.route("/eval/<int:query_id>")
+@admin_required
+def eval_label(query_id):
+    """Label the result pool for one query.
+
+    Results are shuffled and their scores hidden by default. Showing a human
+    "rank 1, relevance 100.0" invites them to assume it is good, and that
+    anchoring would quietly corrupt the judgments the metrics depend on. The
+    shuffle is seeded on the query id so a reload presents the same order and
+    the page does not reshuffle under someone mid-pass.
+    """
+    query = get_eval_query(query_id)
+    if not query:
+        abort(404)
+
+    reveal = request.args.get("reveal") == "1"
+
+    try:
+        results = search_campsites(query=query["query_text"], limit=EVAL_POOL_SIZE)
+    except Exception as exc:
+        flash("Search failed: %s" % exc)
+        results = []
+
+    graded = judgments_for_query(query_id)
+
+    pool = []
+    for rank, row in enumerate(results, start=1):
+        pool.append({
+            "campsite": row,
+            "true_rank": rank,
+            "grade": graded.get(row["id"]),
+        })
+
+    # Seeded shuffle: stable across reloads, unrelated to the ranking.
+    random.Random(query_id).shuffle(pool)
+
+    # Judged pairs that this config no longer returns. They still count as
+    # evidence, and showing them is how a human notices that something they
+    # called ideal has fallen out of the results entirely.
+    returned_ids = {row["id"] for row in results}
+    dropped = [
+        {"campsite": get_campsite_by_id(cid), "grade": grade}
+        for cid, grade in sorted(graded.items())
+        if cid not in returned_ids
+    ]
+    dropped = [d for d in dropped if d["campsite"]]
+
+    queries = [q for q in list_eval_queries() ]
+    ids = [q["id"] for q in queries]
+    try:
+        position = ids.index(query_id)
+        next_id = ids[position + 1] if position + 1 < len(ids) else None
+        prev_id = ids[position - 1] if position > 0 else None
+    except ValueError:
+        next_id = prev_id = None
+
+    return render_template(
+        "eval_label.html",
+        query=query,
+        pool=pool,
+        dropped=dropped,
+        reveal=reveal,
+        judged_count=len(graded),
+        next_id=next_id,
+        prev_id=prev_id,
+        total_queries=len(queries),
+    )
+
+
+@app.route("/api/eval/judge", methods=["POST"])
+@admin_required
+def eval_judge():
+    """Record one judgment. Called per keystroke from the labelling page.
+
+    Checks the CSRF token itself. The blanket /api/ exemption in
+    _csrf_protect exists because navigator.sendBeacon cannot set headers; this
+    endpoint is a plain fetch that can, so it has no business inheriting an
+    exemption written for a constraint it does not have.
+    """
+    sent = request.headers.get("X-CSRFToken") or ""
+    if not sent or not _secrets.compare_digest(sent, session.get("_csrf", "")):
+        return jsonify({"error": "bad or missing CSRF token"}), 400
+
+    payload = request.get_json(silent=True) or {}
+    query_id = payload.get("query_id")
+    campsite_id = payload.get("campsite_id")
+    grade = payload.get("grade")
+
+    if not isinstance(query_id, int) or not isinstance(campsite_id, int):
+        return jsonify({"error": "query_id and campsite_id must be integers"}), 400
+
+    if not get_eval_query(query_id):
+        return jsonify({"error": "no such query"}), 404
+
+    user = current_user()
+
+    # grade null means "unjudge", which is not the same as grading it 0: an
+    # unjudged pair is excluded from the metrics, a 0 asserts it is wrong.
+    if grade is None:
+        delete_judgment(query_id, campsite_id)
+        return jsonify({"ok": True, "grade": None})
+
+    try:
+        upsert_judgment(query_id, campsite_id, grade, judged_by=user["id"])
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({"ok": True, "grade": grade})
+
+
+@app.route("/eval/<int:query_id>/retire", methods=["POST"])
+@admin_required
+def eval_retire_query(query_id):
+    """Retire or un-retire a query without touching its judgments."""
+    if not get_eval_query(query_id):
+        abort(404)
+    retire = request.form.get("retire") != "0"
+    set_eval_query_retired(query_id, retire)
+    flash("Query retired." if retire else "Query restored.")
+    return redirect("/eval")
+
 if __name__ == "__main__":
     app.run(debug=True)
