@@ -31,6 +31,7 @@ from db import (
     list_eval_queries, get_eval_query, create_eval_query,
     set_eval_query_retired, judgments_for_query, upsert_judgment,
     delete_judgment, eval_progress,
+    get_editable_metadata, update_campsite_metadata, cached_forecasts,
 )
 from weather import get_forecast
 from datetime import datetime, timedelta
@@ -2065,6 +2066,96 @@ def eval_judge():
         return jsonify({"error": str(exc)}), 400
 
     return jsonify({"ok": True, "grade": grade})
+
+
+def _check_eval_csrf():
+    sent = request.headers.get("X-CSRFToken") or ""
+    return bool(sent) and _secrets.compare_digest(sent, session.get("_csrf", ""))
+
+
+@app.route("/api/eval/campsite/<int:campsite_id>/metadata", methods=["GET", "POST"])
+@admin_required
+def eval_campsite_metadata(campsite_id):
+    """Read or hand-correct one campsite's metadata from the labelling page.
+
+    POST takes {field: value, ...}; only fields that actually change are
+    written, each with an audit row in campsite_edits. Checks CSRF itself for
+    the same reason eval_judge does.
+    """
+    if request.method == "GET":
+        meta = get_editable_metadata(campsite_id)
+        if meta is None:
+            return jsonify({"error": "no such campsite"}), 404
+        return jsonify({"campsite_id": campsite_id, "fields": meta})
+
+    if not _check_eval_csrf():
+        return jsonify({"error": "bad or missing CSRF token"}), 400
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict) or not payload:
+        return jsonify({"error": "send a JSON object of field: value"}), 400
+
+    try:
+        changed = update_campsite_metadata(
+            campsite_id, payload, admin_id=current_user()["id"])
+    except LookupError:
+        return jsonify({"error": "no such campsite"}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({"ok": True, "changed": changed,
+                    "fields": get_editable_metadata(campsite_id)})
+
+
+# Live forecast calls cost money and time; a labelling page has ~10 cards, so
+# cap what one click can spend.
+_EVAL_WEATHER_MAX_LIVE = 12
+
+
+@app.route("/api/eval/weather")
+@admin_required
+def eval_weather():
+    """Forecast for a set of campsites on one date, cache first.
+
+    ids=1,2,3&date=YYYY-MM-DD. Reads weather_forecasts (filled by the refresh
+    job) and only calls OpenWeather for campsites missing from it.
+    """
+    try:
+        ids = [int(i) for i in (request.args.get("ids") or "").split(",") if i][:50]
+        day = datetime.strptime(
+            request.args.get("date") or datetime.now().strftime("%Y-%m-%d"),
+            "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "ids must be integers and date YYYY-MM-DD"}), 400
+
+    out = {}
+    cached = cached_forecasts(ids, day)
+    live_calls = 0
+    for cid in ids:
+        summary = build_weather_summary(cached.get(cid))
+        source = "cache"
+        if not summary:
+            camp = get_campsite_by_id(cid)
+            lat, lon, approx = geo.effective_coords(camp) if camp else (None, None, False)
+            if lat is None:
+                out[str(cid)] = {"error": "no location"}
+                continue
+            if live_calls >= _EVAL_WEATHER_MAX_LIVE:
+                out[str(cid)] = {"error": "not cached"}
+                continue
+            live_calls += 1
+            try:
+                summary = build_weather_summary(get_forecast(lat, lon, day))
+            except Exception as exc:
+                out[str(cid)] = {"error": "fetch failed"}
+                continue
+            source = "live"
+        if summary:
+            summary["source"] = source
+            out[str(cid)] = summary
+        else:
+            out[str(cid)] = {"error": "no forecast"}
+    return jsonify({"date": day.isoformat(), "weather": out})
 
 
 @app.route("/eval/<int:query_id>/retire", methods=["POST"])

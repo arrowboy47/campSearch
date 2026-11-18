@@ -1899,3 +1899,152 @@ def eval_progress():
         }
     finally:
         conn.close()
+
+
+# --- admin metadata editing ---------------------------------------------------
+#
+# Fields an admin may hand-edit from the labelling page, and where each lives.
+# A whitelist, not a passthrough: the field name from the request is looked up
+# here and never interpolated into SQL.
+
+#   field -> (table, column, kind)
+EDITABLE_FIELDS = {
+    "name":             ("campsites", "name", "text"),
+    "overview":         ("campsites", "overview", "text"),
+    "reservation_type": ("campsites", "reservation_type", "text"),
+    "terrain":          ("campsites", "terrain", "text"),
+    "num_sites":        ("campsites", "num_sites", "int"),
+    "elevation_ft":     ("campsites", "elevation_ft", "int"),
+    "fee_min":          ("campsites", "fee_min", "num"),
+    "is_free":          ("campsites", "is_free", "bool"),
+    "toilet_type":      ("amenities", "toilet_type", "text"),
+    "water_feature":    ("amenities", "water_feature", "text"),
+    "has_water":        ("amenities", "water", "bool"),
+    "activities":       ("amenities", "activities", "list"),
+    "is_reservable":    ("reservations", "is_reservable", "bool"),
+    "is_open":          ("status_updates", "is_open", "bool"),
+}
+
+# Satellite tables are keyed by campsite_id; campsites itself by id.
+_EDIT_KEY = {"campsites": "id", "amenities": "campsite_id",
+             "reservations": "campsite_id", "status_updates": "campsite_id"}
+
+
+def _coerce_edit(field, kind, value):
+    """Coerce one submitted value. '' / None mean NULL (unknown)."""
+    if value is None or (isinstance(value, str) and value.strip() == ""):
+        return None
+    if kind == "text":
+        return str(value).strip()
+    if kind == "list":
+        items = value if isinstance(value, list) else str(value).split(",")
+        items = [str(i).strip().lower() for i in items if str(i).strip()]
+        return items or None
+    if kind == "bool":
+        if isinstance(value, bool):
+            return value
+        v = str(value).strip().lower()
+        if v in ("true", "1", "yes"):
+            return True
+        if v in ("false", "0", "no"):
+            return False
+        raise ValueError("%s must be true, false or blank" % field)
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        raise ValueError("%s must be a number" % field)
+    if n < 0:
+        raise ValueError("%s cannot be negative" % field)
+    if kind == "int":
+        if n != int(n):
+            raise ValueError("%s must be a whole number" % field)
+        return int(n)
+    return n
+
+
+def get_editable_metadata(campsite_id):
+    """Current values of every editable field for one campsite, or None."""
+    row = get_campsite_by_id(campsite_id)
+    if not row:
+        return None
+    src = {"has_water": row.get("has_water")}
+    out = {}
+    for field in EDITABLE_FIELDS:
+        out[field] = row.get(field) if field not in src else src[field]
+    return out
+
+
+def update_campsite_metadata(campsite_id, changes, admin_id):
+    """Apply a dict of field -> new value in one transaction, with audit rows.
+
+    Only fields whose value actually changes are written and audited. Raises
+    ValueError on an unknown field or a value that will not coerce; nothing is
+    written in that case. Returns {field: new_value} for the fields changed.
+    """
+    unknown = [f for f in changes if f not in EDITABLE_FIELDS]
+    if unknown:
+        raise ValueError("cannot edit: %s" % ", ".join(sorted(unknown)))
+
+    coerced = {f: _coerce_edit(f, EDITABLE_FIELDS[f][2], v)
+               for f, v in changes.items()}
+    if "name" in coerced and not coerced["name"]:
+        raise ValueError("name cannot be blank")
+
+    current = get_editable_metadata(campsite_id)
+    if current is None:
+        raise LookupError("no such campsite")
+
+    changed = {f: v for f, v in coerced.items() if v != current.get(f)}
+    if not changed:
+        return {}
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        for field, value in changed.items():
+            table, column, _kind = EDITABLE_FIELDS[field]
+            key = _EDIT_KEY[table]
+            # table/column/key come from the whitelist above, never from input.
+            cur.execute(
+                "UPDATE %s SET %s = %%s WHERE %s = %%s" % (table, column, key),
+                (value, campsite_id),
+            )
+            if cur.rowcount == 0 and table != "campsites":
+                # Satellite row does not exist yet for this campsite.
+                cur.execute(
+                    "INSERT INTO %s (campsite_id, %s) VALUES (%%s, %%s)"
+                    % (table, column),
+                    (campsite_id, value),
+                )
+            cur.execute(
+                "INSERT INTO campsite_edits "
+                "(campsite_id, admin_id, field, old_value, new_value) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (campsite_id, admin_id, field,
+                 None if current.get(field) is None else str(current[field]),
+                 None if value is None else str(value)),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return changed
+
+
+def cached_forecasts(campsite_ids, forecast_date):
+    """{campsite_id: forecast_json} for rows already in weather_forecasts."""
+    if not campsite_ids:
+        return {}
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT campsite_id, forecast_json FROM weather_forecasts "
+            "WHERE campsite_id = ANY(%s) AND forecast_date = %s",
+            (list(campsite_ids), forecast_date),
+        )
+        return {cid: fj for cid, fj in cur.fetchall()}
+    finally:
+        conn.close()
