@@ -1,6 +1,6 @@
 # campsearch-pg
 
-Postgres 16 for CampSearch. Runs on **thebigbox** (`glassslipper@192.168.1.178`),
+Postgres 16 for CampSearch. Runs on **thebigbox** (`<user>@<thebigbox-ip>`),
 bound to `127.0.0.1:5434` only — never exposed on the LAN. Reached from a dev box
 over an SSH tunnel, same model as the Personal Data Warehouse DB.
 
