@@ -19,7 +19,7 @@ mkdir -p ~/.config/campsearch
 cat > ~/.config/campsearch/refresh.env <<'EOF'
 DATABASE_URL=postgresql://campsearch:PASSWORD@localhost:5435/camping
 OPENWEATHER_API_KEY=...
-RIDB_API_KEY=96b63a3f-a8ae-41c3-99ba-45748555a8e4
+RIDB_API_KEY=<your-ridb-key>
 EOF
 chmod 600 ~/.config/campsearch/refresh.env
 # NOTE port 5435 (the timer's tunnel), not 5434.

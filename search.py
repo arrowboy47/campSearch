@@ -1,20 +1,32 @@
 from rapidfuzz import fuzz
 from db import get_connection
+from fusion import reciprocal_rank_fusion
+from ranking_config import DEFAULT_CONFIG, RankingConfig
 import math
 import re
 
-# Popularity bonus: how many result-list click-throughs a campsite has had
-# (campsites.pick_count, migration 0017) nudges its score. Log-scaled so the
-# first few picks matter and a runaway favourite can't dominate, and hard-capped
-# well below the gap between a real name match and a fuzzy one.
-_POPULARITY_WEIGHT = 2.2
-_POPULARITY_CAP = 8.0
 
+def _popularity_bonus(pick_count, popularity_weight=None, popularity_cap=None):
+    """Calculate log-scaled popularity bonus capped at popularity_cap.
 
-def _popularity_bonus(pick_count):
+    Popularity bonus: how many result-list click-throughs a campsite has had
+    (campsites.pick_count, migration 0017) nudges its score. Log-scaled so the
+    first few picks matter and a runaway favourite can't dominate, and hard-capped
+    well below the gap between a real name match and a fuzzy one.
+
+    Args:
+        pick_count: number of times this site has been picked/clicked.
+        popularity_weight: coefficient for log-scaled bonus (defaults to config).
+        popularity_cap: ceiling on the bonus (defaults to config).
+    """
+    if popularity_weight is None:
+        popularity_weight = DEFAULT_CONFIG.popularity_weight
+    if popularity_cap is None:
+        popularity_cap = DEFAULT_CONFIG.popularity_cap
+
     if not pick_count or pick_count < 1:
         return 0.0
-    return min(_POPULARITY_CAP, _POPULARITY_WEIGHT * math.log1p(pick_count))
+    return min(popularity_cap, popularity_weight * math.log1p(pick_count))
 
 
 def normalize(text):
@@ -203,7 +215,9 @@ def unknown_attrs_for(row, filters):
     return sorted(list(set(unknown)))
 
 
-def _fetch_filtered(filters, hard_limit=5000):
+def _fetch_filtered(filters, hard_limit=None):
+    if hard_limit is None:
+        hard_limit = DEFAULT_CONFIG.candidate_hard_limit
     conn = get_connection()
     cur = conn.cursor()
     frag, params = _build_where(filters)
@@ -238,14 +252,124 @@ def _name_score(name_flat, nq):
     )
 
 
-def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
-    """Faceted search. Filters run in SQL; an optional text query then scores
-    what's left. With no query, results come back sorted by forest then name.
+def _by_forest_then_name(items):
+    items.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))
+    return items
+
+
+def _name_ranked_ids(rows, nq, fuzzthresh, bucket=0.0):
+    """Rank the prefiltered rows by name relevance, best first.
+
+    fuzzthresh applies *here only*. It used to gate the whole result set,
+    which meant anything that failed a name match was dropped outright; that
+    is why natural-language search was absent rather than merely weak. Now it
+    only bounds what this one retriever is willing to vouch for, and a
+    campsite the lexical or semantic retriever found still survives fusion.
+
+    Scores are quantized into bands of `bucket` points before ranking, so
+    two names separated only by a scoring artifact tie instead of taking
+    ranks 1 and 2. The true score is still what gets reported.
+
+    Returns:
+        ([(id, banded_score)] best first, {id: true_name_score}). The scored
+        form is what the fusion step needs in order to treat equally relevant
+        names as a tie rather than as consecutive ranks.
+    """
+    scored = []
+    true_scores = {}
+    for row in rows:
+        name_score = _name_score(normalize(row["name"]), nq)
+        if name_score < fuzzthresh:
+            continue
+        banded = (name_score // bucket) if bucket else name_score
+        scored.append((row["id"], banded))
+        true_scores[row["id"]] = name_score
+
+    scored.sort(key=lambda pair: -pair[1])
+    return scored, true_scores
+
+
+def _lexical_ranked_ids(query, allowed_ids, config):
+    """BM25 ranking over the corpus, restricted to the prefiltered ids.
+
+    Degrades to an empty list rather than raising: a lexical index that cannot
+    be built must not take the search page down with it.
+    """
+    try:
+        import lexical
+        hits = lexical.get_index(config=config).search(
+            query, limit=config.lexical_candidates
+        )
+    except Exception:
+        return []
+    return [cid for cid, _ in hits if cid in allowed_ids]
+
+
+def _semantic_ranked_ids(query, allowed_ids, config):
+    """Embedding ranking, restricted to the prefiltered ids.
+
+    Already degrades to [] when the embedding service is unreachable; the
+    try/except covers the database and import paths too.
+    """
+    try:
+        import semantic
+        hits = semantic.search(query, limit=config.semantic_candidates, config=config)
+    except Exception:
+        return []
+    return [cid for cid, _ in hits if cid in allowed_ids]
+
+
+def search_campsites(query=None, *, config=None, fuzzthresh=None, limit=None, **filters):
+    """Faceted search: structured prefilter in SQL, then hybrid retrieval.
+
+    The pipeline is prefilter, retrieve, fuse, rank:
+
+    1. Filters run in SQL, narrowing the corpus to the candidate set. A filter
+       that is None or empty is not added to the WHERE clause.
+    2. Three retrievers rank that set independently: name/fuzzy, BM25 lexical,
+       and embedding similarity. Each is optional and each degrades to nothing
+       on failure.
+    3. Reciprocal rank fusion combines them by rank, because their scores are
+       not comparable quantities. See `fusion.py`.
+    4. The fused order is rescaled to 0-100, the unknown-attribute penalty is
+       subtracted, and genuine ties are broken by popularity.
+
+    Popularity changed meaning here, deliberately. It used to be a 0-to-8
+    additive bonus on a 0-100 name score, which could and did overturn a
+    better name match. That cannot survive rank fusion: a fused score
+    rescaled to 0-100 puts adjacent ranks about 1.6 points apart at the
+    default rrf_k=60, so a fixed 8-point bonus would not nudge the ranking,
+    it would be the ranking; at a small rrf_k the same 8 points would stop
+    mattering at all. Whether popularity did anything would depend entirely
+    on rrf_k, which is not a property it should have.
+
+    So relevance now decides outright and popularity only breaks ties between
+    results the retrievers scored equally. The log-scaled, capped curve is
+    still what orders those ties, so a handful of early picks still separates
+    a site from an unpicked one and a runaway favourite still cannot buy its
+    way past a better match.
+
+    Args:
+        query: optional text query. With no query, results come back sorted by
+            forest then name.
+        config: RankingConfig instance. Defaults to DEFAULT_CONFIG.
+        fuzzthresh: minimum name score for the name retriever. Overrides config.
+        limit: maximum results to return. Overrides config.
+        **filters: faceted filters (is_open, forest, water, toilet, free_only,
+                   fee_max, reservable, camping_type, elev_min, elev_max,
+                   terrain, water_feature, activities).
 
     Accepted filters: is_open, forest, water, toilet ('any'|'flush'|'vault'),
     free_only, fee_max, reservable, camping_type ('dispersed'|'developed'),
     elev_min, elev_max, terrain (list), water_feature (list), activities (list).
     """
+
+    if config is None:
+        config = DEFAULT_CONFIG
+
+    # Explicit keyword arguments override config values
+    actual_fuzzthresh = fuzzthresh if fuzzthresh is not None else config.fuzzthresh
+    actual_limit = limit if limit is not None else config.result_limit
 
     rows = _fetch_filtered(filters)
     if not rows:
@@ -255,13 +379,9 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
     for row in rows:
         row["unknown_attrs"] = unknown_attrs_for(row, filters)
 
-    def _by_forest_then_name(items):
-        items.sort(key=lambda x: ((x["forest_name"] or "").lower(), (x["name"] or "").lower()))
-        return items
-
     nq = normalize(query) if query else ""
     if not nq:
-        return _by_forest_then_name(rows)[:limit]
+        return _by_forest_then_name(rows)[:actual_limit]
 
     # Forest-name search: the query is a substring of a forest slug and matches
     # more forests than site names (e.g. "stanislaus", "shasta"). Needs >=4
@@ -270,23 +390,85 @@ def search_campsites(query=None, *, fuzzthresh=62, limit=200, **filters):
         forest_hits = [r for r in rows if nq in normalize(r["forest_name"])]
         name_substr = sum(1 for r in rows if nq in normalize(r["name"]))
         if forest_hits and len(forest_hits) > name_substr:
-            return _by_forest_then_name(forest_hits)[:limit]
+            return _by_forest_then_name(forest_hits)[:actual_limit]
+
+    by_id = {r["id"]: r for r in rows}
+
+    # The retrievers get the raw query, not nq. normalize() strips *all*
+    # whitespace so that "pine crest" matches "Pinecrest", which is right for
+    # fuzzy name matching and wrong for anything that tokenizes: it would turn
+    # "lake fishing" into the single unknown token "lakefishing".
+    raw_query = (query or "").strip()
+
+    name_scored, name_scores = _name_ranked_ids(
+        rows, nq, actual_fuzzthresh, bucket=config.name_score_bucket
+    )
+    lexical_ids = (
+        _lexical_ranked_ids(raw_query, by_id, config)
+        if config.rrf_weight_lexical else []
+    )
+    semantic_ids = (
+        _semantic_ranked_ids(raw_query, by_id, config)
+        if config.rrf_weight_semantic else []
+    )
+
+    fused = reciprocal_rank_fusion(
+        [
+            (config.rrf_weight_name, name_scored),
+            (config.rrf_weight_lexical, lexical_ids),
+            (config.rrf_weight_semantic, semantic_ids),
+        ],
+        k=config.rrf_k,
+    )
+    if not fused:
+        return []
+
+    # Rescale the fused order onto 0-100 so the unknown-attribute penalty
+    # keeps the scale it was calibrated against. A raw RRF score sits around
+    # 0.02, where a penalty expressed in relevance points would annihilate a
+    # result rather than demote it.
+    top_fused = fused[0][1]
 
     scored = []
-    for row in rows:
-        name_score = _name_score(normalize(row["name"]), nq)
-        if name_score < fuzzthresh:
-            continue
-        # Popularity only breaks ties / nudges; the name match still leads.
-        total = name_score + _popularity_bonus(row.get("pick_count"))
-        scored.append(dict(row, score=total, name_score=name_score))
+    for cid, fused_score in fused:
+        row = by_id[cid]
+        relevance = 100.0 * fused_score / top_fused if top_fused else 0.0
+        penalty = config.unknown_attr_penalty * len(row.get("unknown_attrs") or ())
+        total = relevance - penalty
+        scored.append(dict(
+            row,
+            score=total,
+            relevance=relevance,
+            fused_score=fused_score,
+            name_score=name_scores.get(cid, 0.0),
+        ))
 
-    scored.sort(key=lambda x: (-x["score"], -(x.get("pick_count") or 0), (x["name"] or "").lower()))
-    return scored[:limit]
+    # Popularity breaks exact ties only, so it can reorder equally relevant
+    # results and nothing else.
+    #
+    # Raw pick_count is deliberately NOT a further tie-break. The bonus is
+    # monotone in pick_count, so a raw-count key would only ever matter where
+    # the bonus had tied two sites, which is exactly where popularity_cap did
+    # its job. Keeping it would restore the uncapped ordering behind the cap's
+    # back and make the cap untestable.
+    scored.sort(key=lambda x: (
+        -x["score"],
+        -_popularity_bonus(
+            x.get("pick_count"), config.popularity_weight, config.popularity_cap
+        ),
+        (x["name"] or "").lower(),
+    ))
+    return scored[:actual_limit]
 
 
-def get_campsite_by_name(query, fuzzthresh=62, limit=10):
-    """Backward-compatible wrapper: text-only search, no facets."""
+def get_campsite_by_name(query, fuzzthresh=None, limit=None):
+    """Backward-compatible wrapper: text-only search, no facets.
+
+    Args:
+        query: text query to search for.
+        fuzzthresh: minimum score for fuzzy matches (overrides config).
+        limit: maximum results (overrides config).
+    """
     return search_campsites(query=query, fuzzthresh=fuzzthresh, limit=limit)
 
 
